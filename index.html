@@ -7,22 +7,34 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script>
       tailwind.config = {
         theme: {
           extend: {
             fontFamily: {
               sans: ['Inter', 'sans-serif'],
+              display: ['Space Grotesk', 'sans-serif'],
+              mono: ['JetBrains Mono', 'monospace'],
             },
             animation: {
               'fade-in-up': 'fadeInUp 0.5s ease-out',
               'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              'marquee': 'marquee 120s linear infinite', /* Slowed down from 25s */
+              'scan': 'scan 4s ease-in-out infinite',
             },
             keyframes: {
               fadeInUp: {
                 '0%': { opacity: '0', transform: 'translateY(10px)' },
                 '100%': { opacity: '1', transform: 'translateY(0)' },
+              },
+              marquee: {
+                '0%': { transform: 'translateX(0%)' },
+                '100%': { transform: 'translateX(-50%)' }, /* Changed to -50% for smoother loop */
+              },
+              scan: {
+                '0%, 100%': { top: '0%' },
+                '50%': { top: '100%' },
               }
             }
           }
@@ -36,18 +48,20 @@
         height: 6px;
       }
       ::-webkit-scrollbar-track {
-        background: #0f172a; 
+        background: #09090b; 
       }
       ::-webkit-scrollbar-thumb {
-        background: #334155; 
+        background: #27272a; 
         border-radius: 3px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #475569; 
+        background: #3f3f46; 
       }
       body {
         font-family: 'Inter', sans-serif;
       }
+      .font-display { font-family: 'Space Grotesk', sans-serif; }
+      .font-mono { font-family: 'JetBrains Mono', monospace; }
     </style>
     <!-- Polyfill for process.env -->
     <script>
@@ -75,7 +89,7 @@
          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
          crossorigin=""></script>
 </head>
-  <body class="bg-slate-950 text-slate-50 antialiased font-sans overflow-x-hidden selection:bg-indigo-500 selection:text-white">
+  <body class="bg-zinc-950 text-zinc-50 antialiased font-sans overflow-x-hidden selection:bg-orange-500 selection:text-white">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>
