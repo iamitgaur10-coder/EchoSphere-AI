@@ -2,10 +2,13 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { AnalysisResponse, Feedback } from '../types';
 
 // The API key must be obtained exclusively from the environment variable.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// We fallback to an empty string to prevent constructor errors if the env var is missing during initial load.
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 
 export const analyzeFeedbackContent = async (text: string): Promise<AnalysisResponse> => {
   try {
+    if (!process.env.API_KEY) throw new Error("API Key is missing");
+
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: `Analyze the following public feedback for a city planning tool. 
@@ -48,13 +51,15 @@ export const analyzeFeedbackContent = async (text: string): Promise<AnalysisResp
       summary: 'Analysis unavailable',
       riskScore: 0,
       ecoImpactScore: 50,
-      ecoImpactReasoning: 'Analysis failed'
+      ecoImpactReasoning: 'Analysis failed (Check API Key)'
     };
   }
 };
 
 export const generateSurveyQuestions = async (orgName: string, focusArea: string): Promise<string[]> => {
   try {
+    if (!process.env.API_KEY) throw new Error("API Key is missing");
+
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: `Generate 5 engaging, short, and relevant feedback questions for a public engagement platform.
@@ -95,6 +100,8 @@ export const generateSurveyQuestions = async (orgName: string, focusArea: string
 
 export const generateExecutiveReport = async (feedbackList: Feedback[]): Promise<string> => {
   try {
+    if (!process.env.API_KEY) throw new Error("API Key is missing");
+
     const context = feedbackList.map(f => `- [${f.category}] ${f.content} (Sentiment: ${f.sentiment})`).join('\n');
     
     const response = await ai.models.generateContent({
@@ -110,6 +117,6 @@ export const generateExecutiveReport = async (feedbackList: Feedback[]): Promise
     return response.text || "Unable to generate report.";
   } catch (error) {
     console.error("Report Generation Error:", error);
-    return "AI reporting service is currently unavailable.";
+    return "AI reporting service is currently unavailable. Please check your API Key configuration.";
   }
 }
