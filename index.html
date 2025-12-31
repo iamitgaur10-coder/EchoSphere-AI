@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script>
       tailwind.config = {
+        darkMode: 'class', // Enabled manual toggling
         theme: {
           extend: {
             fontFamily: {
@@ -20,7 +21,7 @@
             animation: {
               'fade-in-up': 'fadeInUp 0.5s ease-out',
               'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-              'marquee': 'marquee 120s linear infinite', /* Slowed down from 25s */
+              'marquee': 'marquee 120s linear infinite',
               'scan': 'scan 4s ease-in-out infinite',
             },
             keyframes: {
@@ -30,7 +31,7 @@
               },
               marquee: {
                 '0%': { transform: 'translateX(0%)' },
-                '100%': { transform: 'translateX(-50%)' }, /* Changed to -50% for smoother loop */
+                '100%': { transform: 'translateX(-50%)' },
               },
               scan: {
                 '0%, 100%': { top: '0%' },
@@ -48,14 +49,14 @@
         height: 6px;
       }
       ::-webkit-scrollbar-track {
-        background: #09090b; 
+        background: transparent; 
       }
       ::-webkit-scrollbar-thumb {
-        background: #27272a; 
+        background: #52525b; 
         border-radius: 3px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #3f3f46; 
+        background: #71717a; 
       }
       body {
         font-family: 'Inter', sans-serif;
@@ -90,7 +91,7 @@
          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
          crossorigin=""></script>
 </head>
-  <body class="bg-zinc-950 text-zinc-50 antialiased font-sans overflow-x-hidden selection:bg-orange-500 selection:text-white">
+  <body class="bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 antialiased font-sans overflow-x-hidden selection:bg-orange-500 selection:text-white transition-colors duration-300">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>

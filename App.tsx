@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle, AlertCircle, Terminal, Cloud, Database, UserPlus, LogIn } from 'lucide-react';
+import { X, CheckCircle, AlertCircle, Terminal, Cloud, Database, UserPlus, LogIn, Moon, Sun } from 'lucide-react';
 import PublicView from './components/PublicView';
 import AdminDashboard from './components/AdminDashboard';
 import Wizard from './components/Wizard';
@@ -33,6 +33,9 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('landing');
   const [account, setAccount] = useState<AccountSetup | null>(null);
   
+  // Theme State
+  const [isDarkMode, setIsDarkMode] = useState(true);
+
   // Auth State
   const [showLogin, setShowLogin] = useState(false);
   const [isSignUpMode, setIsSignUpMode] = useState(false);
@@ -55,9 +58,21 @@ const App: React.FC = () => {
     if (storedAccount) {
       setAccount(storedAccount);
     }
-    // Check mode
     setSystemMode(dataService.isProduction() ? 'CLOUD' : 'LOCAL');
+    
+    // Initialize Theme
+    document.documentElement.classList.add('dark');
   }, []);
+
+  const toggleTheme = () => {
+    if (isDarkMode) {
+      document.documentElement.classList.remove('dark');
+      setIsDarkMode(false);
+    } else {
+      document.documentElement.classList.add('dark');
+      setIsDarkMode(true);
+    }
+  };
 
   const handleProtectedAction = (targetView: ViewState) => {
     if (isAuthenticated) {
@@ -106,7 +121,13 @@ const App: React.FC = () => {
       case 'wizard':
         return <Wizard onComplete={handleProvision} onCancel={() => setCurrentView('landing')} />;
       case 'public':
-        return <PublicView onBack={() => setCurrentView('landing')} showToast={(msg) => showToast(msg)} />;
+        return (
+          <PublicView 
+            onBack={() => setCurrentView('landing')} 
+            showToast={(msg) => showToast(msg)} 
+            isDarkMode={isDarkMode}
+          />
+        );
       case 'admin':
         return <AdminDashboard onBack={() => setCurrentView('landing')} />;
       case 'landing':
@@ -123,16 +144,25 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="font-sans antialiased bg-zinc-950 text-zinc-200 min-h-screen selection:bg-orange-500 selection:text-white">
+    <div className="font-sans antialiased min-h-screen transition-colors duration-300">
         
         {/* System Status Indicator */}
         <div className="fixed top-0 left-0 right-0 h-1 z-[100] flex">
             {systemMode === 'CLOUD' ? (
                 <div className="flex-1 bg-green-500 shadow-[0_0_10px_#22c55e]"></div>
             ) : (
-                <div className="flex-1 bg-zinc-800"></div>
+                <div className="flex-1 bg-zinc-800 dark:bg-zinc-700"></div>
             )}
         </div>
+
+        {/* Global Theme Toggle */}
+        <button 
+            onClick={toggleTheme}
+            className="fixed top-4 right-4 z-[9999] p-2 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-lg text-zinc-600 dark:text-zinc-400 hover:text-orange-500 dark:hover:text-orange-500 transition-all"
+            title="Toggle Theme"
+        >
+            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+        </button>
 
         {renderView()}
         
@@ -141,14 +171,14 @@ const App: React.FC = () => {
         {/* Global Admin Login Modal */}
         {showLogin && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in-up">
-                <div className="bg-zinc-950 border border-zinc-800 text-zinc-200 rounded-lg shadow-2xl p-8 w-full max-w-sm relative overflow-hidden">
+                <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-200 rounded-lg shadow-2xl p-8 w-full max-w-sm relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-orange-500 to-transparent opacity-50"></div>
                     
                     <div className="text-center mb-6">
-                        <div className="mx-auto w-12 h-12 bg-zinc-900 border border-zinc-800 rounded-lg flex items-center justify-center mb-4 text-orange-500">
+                        <div className="mx-auto w-12 h-12 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg flex items-center justify-center mb-4 text-orange-500">
                              <Terminal size={24} />
                         </div>
-                        <h3 className="text-xl font-display font-bold text-white tracking-tight">{isSignUpMode ? 'Register Operator' : 'System Access'}</h3>
+                        <h3 className="text-xl font-display font-bold dark:text-white tracking-tight">{isSignUpMode ? 'Register Operator' : 'System Access'}</h3>
                         <div className="flex items-center justify-center space-x-2 mt-2">
                              <span className="text-[10px] font-mono text-zinc-500">CONNECTION:</span>
                              {systemMode === 'CLOUD' ? (
@@ -166,7 +196,7 @@ const App: React.FC = () => {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="OPERATOR_EMAIL"
-                                className="w-full p-3 bg-black border border-zinc-800 rounded focus:border-orange-500 outline-none text-sm font-mono text-center placeholder-zinc-700 transition-colors text-white"
+                                className="w-full p-3 bg-zinc-50 dark:bg-black border border-zinc-300 dark:border-zinc-800 rounded focus:border-orange-500 outline-none text-sm font-mono text-center placeholder-zinc-500 dark:placeholder-zinc-700 transition-colors text-black dark:text-white"
                                 autoFocus
                             />
                         </div>
@@ -176,13 +206,13 @@ const App: React.FC = () => {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="ACCESS_KEY (Password)"
-                                className="w-full p-3 bg-black border border-zinc-800 rounded focus:border-orange-500 outline-none text-sm font-mono text-center placeholder-zinc-700 transition-colors text-white"
+                                className="w-full p-3 bg-zinc-50 dark:bg-black border border-zinc-300 dark:border-zinc-800 rounded focus:border-orange-500 outline-none text-sm font-mono text-center placeholder-zinc-500 dark:placeholder-zinc-700 transition-colors text-black dark:text-white"
                             />
                         </div>
                         <button 
                             type="submit"
                             disabled={isAuthLoading}
-                            className={`w-full py-3 text-black font-display font-bold text-sm tracking-wide rounded uppercase transition-all flex justify-center ${isSignUpMode ? 'bg-orange-500 hover:bg-orange-400' : 'bg-zinc-100 hover:bg-white'}`}
+                            className={`w-full py-3 text-black font-display font-bold text-sm tracking-wide rounded uppercase transition-all flex justify-center ${isSignUpMode ? 'bg-orange-500 hover:bg-orange-400' : 'bg-zinc-200 dark:bg-zinc-100 hover:bg-zinc-300 dark:hover:bg-white'}`}
                         >
                             {isAuthLoading ? "Processing..." : (isSignUpMode ? "Initialize Account" : "Authenticate")}
                         </button>
@@ -191,7 +221,7 @@ const App: React.FC = () => {
                             <button
                                 type="button"
                                 onClick={() => setIsSignUpMode(!isSignUpMode)}
-                                className="text-[10px] font-mono text-zinc-500 hover:text-white flex items-center space-x-1"
+                                className="text-[10px] font-mono text-zinc-500 hover:text-zinc-900 dark:hover:text-white flex items-center space-x-1"
                             >
                                 {isSignUpMode ? (
                                     <><span>ALREADY_REGISTERED?</span> <LogIn size={10} /></>

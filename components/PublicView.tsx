@@ -8,9 +8,10 @@ import { dataService } from '../services/dataService';
 interface PublicViewProps {
   onBack: () => void;
   showToast?: (msg: string) => void;
+  isDarkMode?: boolean;
 }
 
-const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast }) => {
+const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode = true }) => {
   const [feedbackList, setFeedbackList] = useState<Feedback[]>([]);
   const [account, setAccount] = useState<AccountSetup | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
@@ -51,19 +52,19 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast }) => {
   };
 
   return (
-    <div className="relative h-screen w-full flex flex-col bg-zinc-950 overflow-hidden">
+    <div className="relative h-screen w-full flex flex-col bg-zinc-50 dark:bg-zinc-950 overflow-hidden">
       {/* Header Overlay */}
       <header className="absolute top-0 left-0 right-0 z-20 p-4 pointer-events-none">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <button 
             onClick={onBack}
-            className="pointer-events-auto flex items-center space-x-2 px-4 py-2 bg-zinc-900/80 backdrop-blur-md shadow-2xl rounded border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-600 transition-all group"
+            className="pointer-events-auto flex items-center space-x-2 px-4 py-2 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md shadow-2xl rounded border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:border-zinc-400 dark:hover:border-zinc-600 transition-all group"
           >
             <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
             <span className="hidden sm:inline font-mono text-xs uppercase tracking-wide">Return_Base</span>
           </button>
 
-          <div className="hidden md:flex pointer-events-auto px-5 py-2 bg-zinc-900/80 backdrop-blur-md shadow-2xl rounded border border-orange-900/50 text-orange-500 items-center space-x-3">
+          <div className="hidden md:flex pointer-events-auto px-5 py-2 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md shadow-2xl rounded border border-orange-500/20 dark:border-orange-900/50 text-orange-600 dark:text-orange-500 items-center space-x-3">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
@@ -78,13 +79,14 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast }) => {
         <MapArea 
           feedbackList={feedbackList} 
           onMapClick={handleMapClick}
-          center={account?.center} 
+          center={account?.center}
+          isDarkMode={isDarkMode}
         />
         
         {/* Floating Action Badge */}
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
-            <div className="bg-zinc-900/90 backdrop-blur-md text-zinc-300 px-6 py-3 rounded-full shadow-[0_0_30px_rgba(0,0,0,0.5)] flex items-center space-x-3 border border-zinc-700 animate-bounce-slow">
-                <div className="bg-orange-600 p-1.5 rounded-full shadow-lg text-black">
+            <div className="bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md text-zinc-600 dark:text-zinc-300 px-6 py-3 rounded-full shadow-[0_0_30px_rgba(0,0,0,0.2)] dark:shadow-[0_0_30px_rgba(0,0,0,0.5)] flex items-center space-x-3 border border-zinc-200 dark:border-zinc-700 animate-bounce-slow">
+                <div className="bg-orange-600 p-1.5 rounded-full shadow-lg text-white dark:text-black">
                     <Plus size={16} />
                 </div>
                 <span className="text-xs font-mono uppercase tracking-wider">Tap Map to Initialize Report</span>
@@ -95,7 +97,7 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast }) => {
         <div className="absolute bottom-6 left-6 z-10 hidden md:block w-72 pointer-events-none">
             <div className="space-y-2">
                 {liveFeed.map((msg, i) => (
-                    <div key={i} className={`bg-black/80 backdrop-blur-sm p-2 rounded border-l-2 border-orange-500 text-[10px] font-mono text-zinc-400 flex items-center space-x-2 animate-fade-in-left shadow-lg`} style={{ opacity: 1 - (i * 0.3) }}>
+                    <div key={i} className={`bg-white/80 dark:bg-black/80 backdrop-blur-sm p-2 rounded border-l-2 border-orange-500 text-[10px] font-mono text-zinc-600 dark:text-zinc-400 flex items-center space-x-2 animate-fade-in-left shadow-lg`} style={{ opacity: 1 - (i * 0.3) }}>
                         <Activity size={10} className="text-orange-500" />
                         <span className="truncate">{msg}</span>
                     </div>

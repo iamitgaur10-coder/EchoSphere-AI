@@ -15,7 +15,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
 
-  // Fake "Data Stream" for the marquee - Doubled length for smooth looping
+  // Fake "Data Stream" for the marquee
   const baseData = Array(10).fill(0).map((_, i) => ({
     id: `DAT-${Math.floor(Math.random() * 9000) + 1000}`,
     lat: (40.7 + Math.random() * 0.1).toFixed(4),
@@ -23,7 +23,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
     status: Math.random() > 0.5 ? 'ANALYZING' : 'LOGGED'
   }));
   
-  // Duplicate 4 times for a very long seamless stream
   const dataStream = [...baseData, ...baseData, ...baseData, ...baseData];
 
   const handleRunDemo = () => {
@@ -41,27 +40,27 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-200 font-sans overflow-x-hidden selection:bg-orange-500 selection:text-white">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-200 font-sans overflow-x-hidden selection:bg-orange-500 selection:text-white transition-colors duration-300">
       
       {/* --- Floating Nav --- */}
       <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[90%] md:w-auto">
-        <div className="bg-zinc-900/90 backdrop-blur-md border border-zinc-800 rounded-full px-4 py-3 md:px-6 md:py-3 flex items-center justify-between md:space-x-6 shadow-2xl transition-all hover:bg-zinc-900">
+        <div className="bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md border border-zinc-200 dark:border-zinc-800 rounded-full px-4 py-3 md:px-6 md:py-3 flex items-center justify-between md:space-x-6 shadow-2xl transition-all hover:bg-white dark:hover:bg-zinc-900">
             <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
-                <span className="font-display font-bold text-white tracking-tight text-sm md:text-base">EchoSphere_OS</span>
+                <span className="font-display font-bold text-zinc-900 dark:text-white tracking-tight text-sm md:text-base">EchoSphere_OS</span>
             </div>
-            <div className="hidden md:block h-4 w-[1px] bg-zinc-700"></div>
+            <div className="hidden md:block h-4 w-[1px] bg-zinc-300 dark:bg-zinc-700"></div>
             <div className="flex items-center space-x-4 text-xs font-mono">
                 {account ? (
-                    <button onClick={onEnterPublic} className="hover:text-white transition-colors truncate max-w-[100px] md:max-w-none">
+                    <button onClick={onEnterPublic} className="text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white transition-colors truncate max-w-[100px] md:max-w-none">
                         Tenant: {account.organizationName}
                     </button>
                 ) : (
-                    <button onClick={onEnterWizard} className="hover:text-white transition-colors">
+                    <button onClick={onEnterWizard} className="text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white transition-colors">
                         [PROVISION]
                     </button>
                 )}
-                <button onClick={onEnterAdmin} className="text-zinc-500 hover:text-white transition-colors">
+                <button onClick={onEnterAdmin} className="text-zinc-500 hover:text-black dark:hover:text-white transition-colors">
                     // ADMIN
                 </button>
             </div>
@@ -69,10 +68,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
       </nav>
 
       {/* --- Section 1: The Blueprint Hero --- */}
-      <section className="relative min-h-screen flex flex-col justify-center pt-24 px-6 lg:px-12 border-b border-zinc-900 overflow-hidden">
+      <section className="relative min-h-screen flex flex-col justify-center pt-24 px-6 lg:px-12 border-b border-zinc-200 dark:border-zinc-900 overflow-hidden">
         
-        {/* Background Texture - Dark City Map */}
-        <div className="absolute inset-0 z-0 opacity-20 pointer-events-none grayscale mix-blend-screen">
+        {/* Background Texture */}
+        <div className="absolute inset-0 z-0 opacity-10 dark:opacity-20 pointer-events-none grayscale mix-blend-screen">
              <img 
                 src="https://images.unsplash.com/photo-1549488497-8a176881c195?q=80&w=2070&auto=format&fit=crop" 
                 className="w-full h-full object-cover" 
@@ -81,42 +80,43 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
         </div>
         
         {/* Gradient Overlay for Fade */}
-        <div className="absolute inset-0 z-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent"></div>
-        <div className="absolute inset-0 z-0 bg-gradient-to-r from-zinc-950 via-zinc-950/80 to-transparent"></div>
+        <div className="absolute inset-0 z-0 bg-gradient-to-t from-zinc-50 dark:from-zinc-950 via-zinc-50/80 dark:via-zinc-950/80 to-transparent"></div>
+        <div className="absolute inset-0 z-0 bg-gradient-to-r from-zinc-50 dark:from-zinc-950 via-zinc-50/80 dark:via-zinc-950/80 to-transparent"></div>
 
         {/* Grid Overlay */}
-        <div className="absolute inset-0 z-0" style={{ backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)', backgroundSize: '60px 60px' }}></div>
+        <div className="absolute inset-0 z-0 dark:block hidden" style={{ backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)', backgroundSize: '60px 60px' }}></div>
+        <div className="absolute inset-0 z-0 dark:hidden block" style={{ backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px)', backgroundSize: '60px 60px' }}></div>
 
         <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-12 lg:gap-24 items-center relative z-10 pb-20">
             
             {/* Left: Typography */}
             <div className="space-y-8">
-                <div className="inline-flex items-center space-x-2 border border-orange-500/30 bg-orange-900/10 px-3 py-1 rounded text-orange-400 text-[10px] font-mono tracking-widest uppercase backdrop-blur-md">
+                <div className="inline-flex items-center space-x-2 border border-orange-500/30 bg-orange-500/10 px-3 py-1 rounded text-orange-600 dark:text-orange-400 text-[10px] font-mono tracking-widest uppercase backdrop-blur-md">
                     <Activity size={12} />
                     <span>System Online • v3.0</span>
                 </div>
                 
-                <h1 className="font-display text-5xl lg:text-8xl font-medium tracking-tighter text-white leading-[0.9]">
+                <h1 className="font-display text-5xl lg:text-8xl font-medium tracking-tighter text-zinc-900 dark:text-white leading-[0.9]">
                     Decode <br/>
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-zinc-500 via-zinc-200 to-white">Urban Noise.</span>
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-zinc-600 via-zinc-400 to-zinc-900 dark:from-zinc-500 dark:via-zinc-200 dark:to-white">Urban Noise.</span>
                 </h1>
                 
-                <p className="text-zinc-400 max-w-lg text-lg leading-relaxed border-l-2 border-zinc-800 pl-6">
+                <p className="text-zinc-600 dark:text-zinc-400 max-w-lg text-lg leading-relaxed border-l-2 border-zinc-300 dark:border-zinc-800 pl-6">
                     A geospatial operating system that turns chaotic public feedback into structured, actionable intelligence using Gemini 3.0.
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pt-4">
                     <button 
                         onClick={onEnterPublic}
-                        className="group relative px-8 py-4 bg-white text-black font-display font-bold text-sm tracking-wide transition-all hover:bg-zinc-200 w-full sm:w-auto text-center"
+                        className="group relative px-8 py-4 bg-zinc-900 dark:bg-white text-white dark:text-black font-display font-bold text-sm tracking-wide transition-all hover:bg-zinc-700 dark:hover:bg-zinc-200 w-full sm:w-auto text-center"
                     >
                         LAUNCH_PUBLIC_VIEW
-                        <div className="absolute inset-0 border border-white translate-x-1 translate-y-1 group-hover:translate-x-2 group-hover:translate-y-2 transition-transform -z-10 bg-black/5"></div>
+                        <div className="absolute inset-0 border border-zinc-900 dark:border-white translate-x-1 translate-y-1 group-hover:translate-x-2 group-hover:translate-y-2 transition-transform -z-10 bg-black/5"></div>
                     </button>
                     
                     <button 
                         onClick={onEnterWizard}
-                        className="px-8 py-4 border border-zinc-700 bg-black/20 backdrop-blur-sm text-zinc-300 font-display font-medium text-sm tracking-wide hover:border-zinc-500 hover:text-white transition-colors w-full sm:w-auto text-center"
+                        className="px-8 py-4 border border-zinc-300 dark:border-zinc-700 bg-white/50 dark:bg-black/20 backdrop-blur-sm text-zinc-700 dark:text-zinc-300 font-display font-medium text-sm tracking-wide hover:border-zinc-500 hover:text-black dark:hover:text-white transition-colors w-full sm:w-auto text-center"
                     >
                         DEPLOY NEW INSTANCE
                     </button>
@@ -126,18 +126,18 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
             {/* Right: 3D Interface Simulation (Larger) */}
             <div className="relative h-[600px] hidden lg:block perspective-1000">
                 {/* The Tilted Plane */}
-                <div className="absolute inset-0 bg-zinc-900/90 border border-zinc-700 rounded-xl shadow-2xl transform rotate-y-12 rotate-x-6 hover:rotate-y-0 hover:rotate-x-0 transition-transform duration-1000 overflow-hidden group">
+                <div className="absolute inset-0 bg-white/50 dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl transform rotate-y-12 rotate-x-6 hover:rotate-y-0 hover:rotate-x-0 transition-transform duration-1000 overflow-hidden group">
                     
                     {/* Fake Header */}
-                    <div className="h-10 border-b border-zinc-800 bg-zinc-950 flex items-center px-4 space-x-2">
+                    <div className="h-10 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 flex items-center px-4 space-x-2">
                         <div className="w-3 h-3 rounded-full bg-red-500/20 border border-red-500"></div>
                         <div className="w-3 h-3 rounded-full bg-yellow-500/20 border border-yellow-500"></div>
                         <div className="w-3 h-3 rounded-full bg-green-500/20 border border-green-500"></div>
-                        <div className="flex-1 text-center font-mono text-[10px] text-zinc-600">Map_View_Controller.tsx • Live Stream</div>
+                        <div className="flex-1 text-center font-mono text-[10px] text-zinc-400 dark:text-zinc-600">Map_View_Controller.tsx • Live Stream</div>
                     </div>
 
                     {/* Fake Map Content */}
-                    <div className="relative h-full bg-zinc-900">
+                    <div className="relative h-full bg-zinc-100 dark:bg-zinc-900">
                          {/* Map Image Underlay */}
                         <img 
                             src="https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=2074&auto=format&fit=crop"
@@ -156,460 +156,138 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
                             <div className="relative">
                                 <div className="w-12 h-12 bg-orange-500/20 rounded-full animate-ping absolute -left-4 -top-4"></div>
                                 <div className="w-4 h-4 bg-orange-500 rounded-full border-2 border-white relative z-10 shadow-[0_0_15px_rgba(249,115,22,1)]"></div>
-                                <div className="absolute left-8 top-0 bg-zinc-950/90 text-[10px] font-mono p-3 rounded-sm border-l-2 border-orange-500 whitespace-nowrap text-orange-100 shadow-xl backdrop-blur-md">
+                                <div className="absolute left-8 top-0 bg-white/90 dark:bg-zinc-950/90 text-[10px] font-mono p-3 rounded-sm border-l-2 border-orange-500 whitespace-nowrap text-zinc-900 dark:text-orange-100 shadow-xl backdrop-blur-md">
                                     <span className="text-zinc-500 block mb-1">INCIDENT #9021</span>
                                     &gt; ALERT: Pothole Detected <br/>
-                                    &gt; RISK: <span className="text-red-400">CRITICAL</span>
-                                </div>
-                            </div>
-                        </div>
-
-                         <div className="absolute bottom-1/3 right-1/4">
-                            <div className="relative">
-                                <div className="w-3 h-3 bg-blue-500 rounded-full border border-blue-400 shadow-[0_0_10px_rgba(59,130,246,1)]"></div>
-                                <div className="absolute right-6 top-0 text-[10px] font-mono text-blue-400">
-                                    USER_VERIFIED
+                                    &gt; RISK: <span className="text-red-500 dark:text-red-400">CRITICAL</span>
                                 </div>
                             </div>
                         </div>
 
                         {/* Floating UI Elements inside 3D */}
-                        <div className="absolute bottom-6 left-6 right-6 bg-zinc-950/90 backdrop-blur-lg border border-zinc-800 p-4 rounded font-mono text-xs text-zinc-400 shadow-2xl">
+                        <div className="absolute bottom-6 left-6 right-6 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-lg border border-zinc-200 dark:border-zinc-800 p-4 rounded font-mono text-xs text-zinc-600 dark:text-zinc-400 shadow-2xl">
                             <div className="flex justify-between mb-2">
-                                <span className="text-white">ANALYSIS_QUEUE</span>
+                                <span className="text-zinc-900 dark:text-white">ANALYSIS_QUEUE</span>
                                 <span className="text-green-500 flex items-center gap-1"><span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> ACTIVE</span>
                             </div>
                             <div className="space-y-2">
-                                <div className="h-1 w-full bg-zinc-800 rounded overflow-hidden">
+                                <div className="h-1 w-full bg-zinc-200 dark:bg-zinc-800 rounded overflow-hidden">
                                     <div className="h-full bg-gradient-to-r from-orange-600 to-orange-400 w-3/4 animate-pulse"></div>
-                                </div>
-                                <div className="grid grid-cols-3 gap-2 text-[10px] text-zinc-600">
-                                    <div className="border border-zinc-800 p-1 text-center">CPU: 42%</div>
-                                    <div className="border border-zinc-800 p-1 text-center">MEM: 1.2GB</div>
-                                    <div className="border border-zinc-800 p-1 text-center">NET: 40Mb/s</div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                {/* Decorative Elements behind */}
-                <div className="absolute -top-20 -right-20 w-96 h-96 bg-orange-600/10 rounded-full blur-[120px] pointer-events-none"></div>
-                <div className="absolute bottom-0 left-0 w-full h-full border-2 border-zinc-800/30 -z-10 transform translate-x-4 translate-y-4 rounded-xl border-dashed"></div>
             </div>
         </div>
 
-        {/* --- Global Metrics Strip (Fills visual space) --- */}
-        <div className="absolute bottom-12 left-0 right-0 z-20 border-t border-zinc-800 bg-zinc-950/80 backdrop-blur-md hidden lg:flex divide-x divide-zinc-800">
+        {/* --- Global Metrics Strip --- */}
+        <div className="absolute bottom-12 left-0 right-0 z-20 border-t border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md hidden lg:flex divide-x divide-zinc-200 dark:divide-zinc-800">
              <div className="flex-1 p-4 flex items-center justify-center space-x-3">
-                <Globe2 className="text-zinc-600" size={20} />
+                <Globe2 className="text-zinc-400 dark:text-zinc-600" size={20} />
                 <div>
                     <div className="text-xs text-zinc-500 font-mono uppercase">Active Regions</div>
-                    <div className="text-lg font-display text-white">124</div>
+                    <div className="text-lg font-display text-zinc-900 dark:text-white">124</div>
                 </div>
              </div>
              <div className="flex-1 p-4 flex items-center justify-center space-x-3">
-                <Database className="text-zinc-600" size={20} />
+                <Database className="text-zinc-400 dark:text-zinc-600" size={20} />
                 <div>
                     <div className="text-xs text-zinc-500 font-mono uppercase">Data Points</div>
-                    <div className="text-lg font-display text-white">8.2M+</div>
+                    <div className="text-lg font-display text-zinc-900 dark:text-white">8.2M+</div>
                 </div>
              </div>
              <div className="flex-1 p-4 flex items-center justify-center space-x-3">
-                <Network className="text-zinc-600" size={20} />
+                <Network className="text-zinc-400 dark:text-zinc-600" size={20} />
                 <div>
                     <div className="text-xs text-zinc-500 font-mono uppercase">AI Predictions</div>
-                    <div className="text-lg font-display text-white">94.8%</div>
+                    <div className="text-lg font-display text-zinc-900 dark:text-white">94.8%</div>
                 </div>
              </div>
              <div className="flex-1 p-4 flex items-center justify-center space-x-3">
-                <Cpu className="text-zinc-600" size={20} />
+                <Cpu className="text-zinc-400 dark:text-zinc-600" size={20} />
                 <div>
                     <div className="text-xs text-zinc-500 font-mono uppercase">System Latency</div>
-                    <div className="text-lg font-display text-green-500">12ms</div>
+                    <div className="text-lg font-display text-green-600 dark:text-green-500">12ms</div>
                 </div>
              </div>
         </div>
 
         {/* --- Infinite Data Marquee --- */}
-        <div className="absolute bottom-0 left-0 right-0 h-12 bg-zinc-950 border-t border-zinc-800 flex items-center overflow-hidden z-20">
+        <div className="absolute bottom-0 left-0 right-0 h-12 bg-white dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800 flex items-center overflow-hidden z-20">
             <div className="flex items-center space-x-12 animate-marquee whitespace-nowrap">
                 {dataStream.map((item, i) => (
                     <div key={i} className="flex items-center space-x-3 font-mono text-[10px] text-zinc-500 opacity-60">
-                        <span className="text-zinc-700">ID: {item.id}</span>
+                        <span className="text-zinc-700 dark:text-zinc-500">ID: {item.id}</span>
                         <span>LAT: {item.lat}</span>
                         <span>LNG: {item.lng}</span>
-                        <span className={item.status === 'ANALYZING' ? 'text-orange-500' : 'text-green-800'}>[{item.status}]</span>
+                        <span className={item.status === 'ANALYZING' ? 'text-orange-500' : 'text-green-700 dark:text-green-800'}>[{item.status}]</span>
                     </div>
                 ))}
             </div>
         </div>
       </section>
 
-      {/* --- Section 2: Neural Architecture (New) --- */}
-      <section className="py-24 bg-black border-b border-zinc-900 relative">
+      {/* --- Section 2: Neural Architecture --- */}
+      <section className="py-24 bg-zinc-100 dark:bg-black border-b border-zinc-200 dark:border-zinc-900 relative">
         <div className="max-w-6xl mx-auto px-6">
             <div className="mb-16">
-                <h2 className="font-display text-3xl font-medium text-white">The Neural Architecture</h2>
+                <h2 className="font-display text-3xl font-medium text-zinc-900 dark:text-white">The Neural Architecture</h2>
                 <p className="text-zinc-500 mt-2">End-to-end intelligence pipeline.</p>
             </div>
             
             <div className="grid md:grid-cols-3 gap-8 relative">
-                {/* Connecting Line (Desktop) */}
-                <div className="hidden md:block absolute top-12 left-0 w-full h-[2px] bg-gradient-to-r from-zinc-800 via-orange-500/50 to-zinc-800 -z-10"></div>
+                {/* Connecting Line */}
+                <div className="hidden md:block absolute top-12 left-0 w-full h-[2px] bg-gradient-to-r from-zinc-300 dark:from-zinc-800 via-orange-500/50 to-zinc-300 dark:to-zinc-800 -z-10"></div>
 
                 {/* Node 1 */}
-                <div className="bg-zinc-950 border border-zinc-800 p-8 rounded-2xl relative group hover:border-zinc-700 transition-colors">
-                    <div className="w-12 h-12 bg-zinc-900 border border-zinc-700 rounded-xl flex items-center justify-center mb-6 z-10 relative group-hover:bg-zinc-800">
-                        <Share2 size={24} className="text-blue-400" />
+                <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 p-8 rounded-2xl relative group hover:border-zinc-400 dark:hover:border-zinc-700 transition-colors">
+                    <div className="w-12 h-12 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl flex items-center justify-center mb-6 z-10 relative group-hover:bg-zinc-100 dark:group-hover:bg-zinc-800">
+                        <Share2 size={24} className="text-blue-500 dark:text-blue-400" />
                     </div>
-                    <h3 className="font-display text-lg text-white mb-2">Multimodal Ingest</h3>
-                    <p className="text-sm text-zinc-500 leading-relaxed">
+                    <h3 className="font-display text-lg text-zinc-900 dark:text-white mb-2">Multimodal Ingest</h3>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-500 leading-relaxed">
                         Aggregates unstructured data from mobile apps, IoT sensors, social feeds, and legacy 311 systems in real-time.
                     </p>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                        <span className="text-[10px] border border-zinc-800 px-2 py-1 rounded text-zinc-500 font-mono">JSON</span>
-                        <span className="text-[10px] border border-zinc-800 px-2 py-1 rounded text-zinc-500 font-mono">AUDIO</span>
-                        <span className="text-[10px] border border-zinc-800 px-2 py-1 rounded text-zinc-500 font-mono">VIDEO</span>
-                    </div>
                 </div>
 
                 {/* Node 2 (Center) */}
-                <div className="bg-zinc-950 border border-orange-500/30 p-8 rounded-2xl relative shadow-[0_0_30px_rgba(249,115,22,0.1)]">
+                <div className="bg-white dark:bg-zinc-950 border border-orange-500/30 p-8 rounded-2xl relative shadow-[0_0_30px_rgba(249,115,22,0.1)]">
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-orange-500 text-black text-[10px] font-bold uppercase tracking-wider rounded-full">Core Engine</div>
-                    <div className="w-12 h-12 bg-orange-900/20 border border-orange-500/50 rounded-xl flex items-center justify-center mb-6 z-10 relative">
+                    <div className="w-12 h-12 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-500/50 rounded-xl flex items-center justify-center mb-6 z-10 relative">
                         <Cpu size={24} className="text-orange-500" />
                     </div>
-                    <h3 className="font-display text-lg text-white mb-2">Gemini 3.0 Processing</h3>
-                    <p className="text-sm text-zinc-400 leading-relaxed">
+                    <h3 className="font-display text-lg text-zinc-900 dark:text-white mb-2">Gemini 3.0 Processing</h3>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
                         The neural core analyzes sentiment, categorizes urgency, predicts trends, and verifies authenticity instantly.
                     </p>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                        <span className="text-[10px] bg-orange-500/10 text-orange-400 border border-orange-500/20 px-2 py-1 rounded font-mono">NLP</span>
-                        <span className="text-[10px] bg-orange-500/10 text-orange-400 border border-orange-500/20 px-2 py-1 rounded font-mono">VISION</span>
-                    </div>
                 </div>
 
                 {/* Node 3 */}
-                <div className="bg-zinc-950 border border-zinc-800 p-8 rounded-2xl relative group hover:border-zinc-700 transition-colors">
-                    <div className="w-12 h-12 bg-zinc-900 border border-zinc-700 rounded-xl flex items-center justify-center mb-6 z-10 relative group-hover:bg-zinc-800">
-                        <Zap size={24} className="text-green-400" />
+                <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 p-8 rounded-2xl relative group hover:border-zinc-400 dark:hover:border-zinc-700 transition-colors">
+                    <div className="w-12 h-12 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl flex items-center justify-center mb-6 z-10 relative group-hover:bg-zinc-100 dark:group-hover:bg-zinc-800">
+                        <Zap size={24} className="text-green-500 dark:text-green-400" />
                     </div>
-                    <h3 className="font-display text-lg text-white mb-2">Automated Action</h3>
-                    <p className="text-sm text-zinc-500 leading-relaxed">
+                    <h3 className="font-display text-lg text-zinc-900 dark:text-white mb-2">Automated Action</h3>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-500 leading-relaxed">
                         Triggers work orders, updates public dashboards, and generates executive policy briefs without human intervention.
                     </p>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                        <span className="text-[10px] border border-zinc-800 px-2 py-1 rounded text-zinc-500 font-mono">API</span>
-                        <span className="text-[10px] border border-zinc-800 px-2 py-1 rounded text-zinc-500 font-mono">WEBHOOKS</span>
-                    </div>
                 </div>
             </div>
         </div>
       </section>
 
-      {/* --- Section 3: The Logic Engine (Updated) --- */}
-      <section className="py-24 px-6 border-b border-zinc-900 bg-zinc-950 relative overflow-hidden">
-        {/* Background Texture */}
-        <div className="absolute inset-0 z-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5 pointer-events-none"></div>
-
-        <div className="max-w-5xl mx-auto relative z-10">
-            <div className="mb-12 text-center md:text-left">
-                <h2 className="font-display text-3xl md:text-4xl font-medium text-white mb-4">The Logic Engine</h2>
-                <p className="text-zinc-500 max-w-xl text-lg">Don't just collect dots on a map. Understand them. <br/>Experience the Gemini 3.0 processing pipeline.</p>
-            </div>
-
-            <div className="grid lg:grid-cols-5 gap-0 border border-zinc-800 rounded-xl overflow-hidden bg-zinc-900 shadow-2xl ring-1 ring-white/5">
-                
-                {/* LEFT: Input Terminal */}
-                <div className="lg:col-span-3 bg-zinc-900 flex flex-col border-b lg:border-b-0 lg:border-r border-zinc-800 relative group">
-                    {/* Terminal Header */}
-                    <div className="h-10 bg-zinc-950 border-b border-zinc-800 flex items-center px-4 justify-between">
-                        <div className="flex space-x-2">
-                            <div className="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/50"></div>
-                            <div className="w-3 h-3 rounded-full bg-yellow-500/20 border border-yellow-500/50"></div>
-                            <div className="w-3 h-3 rounded-full bg-green-500/20 border border-green-500/50"></div>
-                        </div>
-                        <div className="text-[10px] font-mono text-zinc-500">input_stream.txt</div>
-                        <div className="w-10"></div> {/* Spacer */}
-                    </div>
-
-                    {/* Editor Area */}
-                    <div className="flex-1 p-0 relative flex">
-                         {/* Line Numbers */}
-                         <div className="w-12 bg-zinc-950/50 border-r border-zinc-800 pt-4 flex flex-col items-end pr-3 space-y-1 select-none">
-                            {[1,2,3,4,5,6,7,8].map(n => (
-                                <div key={n} className="text-[10px] font-mono text-zinc-700">{n}</div>
-                            ))}
-                         </div>
-                         
-                         {/* Text Area */}
-                         <textarea 
-                            value={demoText}
-                            onChange={(e) => setDemoText(e.target.value)}
-                            className="flex-1 bg-transparent border-none outline-none p-4 font-mono text-sm text-zinc-300 resize-none h-64 focus:ring-0 leading-relaxed"
-                            spellCheck="false"
-                         />
-                    </div>
-
-                    {/* Bottom Action Bar */}
-                    <div className="p-4 bg-zinc-950 border-t border-zinc-800 flex justify-between items-center">
-                        <div className="flex items-center space-x-2 text-[10px] text-zinc-500 font-mono">
-                             <span>CHARS: {demoText.length}</span>
-                             <span>•</span>
-                             <span>UTF-8</span>
-                        </div>
-                        <button 
-                            onClick={handleRunDemo}
-                            disabled={isAnalyzing}
-                            className="bg-white text-black hover:bg-orange-500 hover:text-white px-4 py-2 rounded text-xs font-bold transition-all flex items-center space-x-2"
-                        >
-                            {isAnalyzing ? <Scan className="animate-spin" size={14} /> : <Play size={14} />}
-                            <span>PROCESS_DATA</span>
-                        </button>
-                    </div>
-                </div>
-
-                {/* RIGHT: Visual Output */}
-                <div className="lg:col-span-2 bg-black relative min-h-[300px] overflow-hidden flex flex-col">
-                     {/* Grid Background */}
-                     <div className="absolute inset-0 opacity-20" style={{ 
-                         backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px)', 
-                         backgroundSize: '20px 20px' 
-                     }}></div>
-
-                     {/* Content Container */}
-                     <div className="relative z-10 flex-1 flex flex-col p-6">
-                        {/* Header */}
-                         <div className="flex justify-between items-center mb-6">
-                            <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">Analysis_Output</span>
-                            <div className="flex items-center space-x-1">
-                                 <div className={`w-1.5 h-1.5 rounded-full ${isAnalyzing ? 'bg-orange-500 animate-pulse' : analysisResult ? 'bg-green-500' : 'bg-zinc-700'}`}></div>
-                                 <span className="text-[10px] font-mono text-zinc-500">{isAnalyzing ? 'BUSY' : analysisResult ? 'DONE' : 'IDLE'}</span>
-                            </div>
-                         </div>
-
-                         {/* Main Display Area */}
-                         <div className="flex-1 flex items-center justify-center">
-                            {isAnalyzing ? (
-                                 // Loading State
-                                 <div className="flex flex-col items-center space-y-4">
-                                      <div className="w-16 h-16 border-2 border-zinc-800 border-t-orange-500 rounded-full animate-spin"></div>
-                                      <div className="font-mono text-xs text-orange-500 animate-pulse">Running Neural Models...</div>
-                                 </div>
-                            ) : analysisResult ? (
-                                 // Result State
-                                 <div className="w-full space-y-4 animate-fade-in-up">
-                                      <div className="bg-zinc-900/80 border border-zinc-800 p-4 rounded-lg">
-                                           <div className="text-[10px] text-zinc-500 uppercase mb-1">Detected Sentiment</div>
-                                           <div className="flex items-center justify-between">
-                                               <span className="text-white font-display text-lg">{analysisResult.sentiment}</span>
-                                               <div className={`w-2 h-2 rounded-full ${analysisResult.sentiment === 'Negative' ? 'bg-red-500' : 'bg-green-500'} shadow-[0_0_8px_currentColor]`}></div>
-                                           </div>
-                                      </div>
-                                      <div className="bg-zinc-900/80 border border-zinc-800 p-4 rounded-lg">
-                                           <div className="text-[10px] text-zinc-500 uppercase mb-2">Urgency</div>
-                                           <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden mb-1">
-                                                <div className="h-full bg-gradient-to-r from-orange-500 to-red-500 w-[85%]"></div>
-                                           </div>
-                                           <div className="text-right text-xs font-mono text-zinc-400">{analysisResult.urgency}</div>
-                                      </div>
-                                      <div className="bg-zinc-900/80 border border-zinc-800 p-4 rounded-lg flex justify-between items-center">
-                                           <div className="text-[10px] text-zinc-500 uppercase">Routing</div>
-                                           <div className="text-xs font-mono text-white bg-zinc-800 px-2 py-1 rounded">{analysisResult.dept}</div>
-                                      </div>
-                                 </div>
-                            ) : (
-                                 // Idle State Visualization
-                                 <div className="relative w-40 h-40 flex items-center justify-center opacity-30">
-                                      {/* Radar Circles */}
-                                      <div className="absolute inset-0 border border-zinc-700 rounded-full"></div>
-                                      <div className="absolute inset-8 border border-zinc-800 rounded-full"></div>
-                                      <div className="absolute inset-16 border border-zinc-800 rounded-full bg-zinc-900"></div>
-                                      
-                                      {/* Rotating Scanner */}
-                                      <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-transparent via-transparent to-zinc-500/20 animate-[spin_4s_linear_infinite]"></div>
-                                      
-                                      <div className="text-[10px] font-mono text-zinc-500 text-center">
-                                          AWAITING<br/>INPUT
-                                      </div>
-                                 </div>
-                            )}
-                         </div>
-
-                         {/* Footer Metrics */}
-                         {!analysisResult && !isAnalyzing && (
-                            <div className="grid grid-cols-2 gap-2 mt-4 opacity-50">
-                                 <div className="bg-zinc-900 border border-zinc-800 p-2 rounded flex flex-col">
-                                     <span className="text-[8px] text-zinc-500 font-mono">LATENCY</span>
-                                     <span className="text-xs text-zinc-300 font-mono">12ms</span>
-                                 </div>
-                                 <div className="bg-zinc-900 border border-zinc-800 p-2 rounded flex flex-col">
-                                     <span className="text-[8px] text-zinc-500 font-mono">UPTIME</span>
-                                     <span className="text-xs text-zinc-300 font-mono">99.9%</span>
-                                 </div>
-                            </div>
-                         )}
-                     </div>
-                </div>
-            </div>
-        </div>
-      </section>
-
-      {/* --- Section 4: Command Center Visual (New) --- */}
-      <section className="relative py-32 bg-zinc-950 overflow-hidden border-b border-zinc-900">
-         <div className="max-w-7xl mx-auto px-6 relative z-10 text-center">
-             <div className="mb-12">
-                <h2 className="font-display text-4xl text-white font-medium">Total Situational Awareness</h2>
-                <p className="text-zinc-500 mt-4 max-w-2xl mx-auto">
-                    The visual command center gives administrators a god's eye view of city operations, powered by real-time data streams.
-                </p>
-             </div>
-
-             {/* UI Mockup Container */}
-             <div className="relative rounded-xl border border-zinc-800 bg-zinc-900/50 shadow-2xl overflow-hidden aspect-video max-w-5xl mx-auto group">
-                {/* Background Map Image */}
-                <div className="absolute inset-0 bg-cover bg-center opacity-60 mix-blend-luminosity" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&q=80&w=2000')" }}></div>
-                
-                {/* Overlay UI Elements - Glassmorphism */}
-                <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-zinc-950/20"></div>
-
-                {/* Top Bar */}
-                <div className="absolute top-0 left-0 right-0 h-12 bg-zinc-950/80 backdrop-blur border-b border-zinc-800 flex items-center justify-between px-4">
-                    <div className="flex items-center space-x-4">
-                        <div className="font-mono text-xs text-orange-500">LIVE_OPERATIONS</div>
-                        <div className="h-4 w-[1px] bg-zinc-700"></div>
-                        <div className="font-mono text-xs text-zinc-400">SECTOR_7</div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                        <span className="text-xs font-mono text-zinc-300">ONLINE</span>
-                    </div>
-                </div>
-
-                {/* Floating Widgets */}
-                <div className="absolute top-20 left-8 w-64 bg-zinc-950/80 backdrop-blur border border-zinc-800 rounded-lg p-4 text-left">
-                    <div className="text-[10px] text-zinc-500 font-mono mb-2 uppercase">Heatmap Density</div>
-                    <div className="flex items-end space-x-1 h-12 mb-2">
-                         <div className="w-1/5 bg-orange-900/50 h-[30%] rounded-t"></div>
-                         <div className="w-1/5 bg-orange-700/50 h-[60%] rounded-t"></div>
-                         <div className="w-1/5 bg-orange-500 h-[80%] rounded-t"></div>
-                         <div className="w-1/5 bg-orange-700/50 h-[50%] rounded-t"></div>
-                         <div className="w-1/5 bg-orange-900/50 h-[40%] rounded-t"></div>
-                    </div>
-                    <div className="text-xs text-white font-mono">High Activity: Downtown</div>
-                </div>
-
-                <div className="absolute top-20 right-8 w-56 bg-zinc-950/80 backdrop-blur border border-zinc-800 rounded-lg p-4 text-left">
-                     <div className="text-[10px] text-zinc-500 font-mono mb-2 uppercase">Incoming Feed</div>
-                     <div className="space-y-2">
-                        <div className="flex items-center space-x-2 border-b border-zinc-800 pb-2">
-                            <img src="https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=50&h=50&fit=crop" className="w-8 h-8 rounded bg-zinc-800 object-cover" />
-                            <div className="text-[10px] text-zinc-300 leading-tight">Structure damage reported on 4th.</div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                             <div className="w-8 h-8 rounded bg-zinc-800 flex items-center justify-center text-zinc-500"><Activity size={12}/></div>
-                             <div className="text-[10px] text-zinc-300 leading-tight">Sensor 402 offline.</div>
-                        </div>
-                     </div>
-                </div>
-                
-                {/* Center Reticle */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 border border-orange-500/30 rounded-full flex items-center justify-center">
-                    <div className="w-28 h-28 border border-white/10 rounded-full animate-[spin_10s_linear_infinite]"></div>
-                    <div className="w-1 h-1 bg-orange-500 rounded-full absolute"></div>
-                    <div className="absolute w-full h-[1px] bg-orange-500/20"></div>
-                    <div className="absolute h-full w-[1px] bg-orange-500/20"></div>
-                </div>
-             </div>
-         </div>
-      </section>
-
-      {/* --- Section 5: Expanded Feature Matrix (Bento Grid) --- */}
-      <section className="py-24 px-6 bg-zinc-950">
-        <div className="max-w-6xl mx-auto">
-            <h2 className="font-display text-3xl font-medium text-white mb-12">Capability Matrix</h2>
-            <div className="grid md:grid-cols-3 gap-px bg-zinc-800 border border-zinc-800">
-                {/* Feature 1 */}
-                <div className="bg-zinc-950 p-10 hover:bg-zinc-900 transition-colors">
-                    <div className="w-10 h-10 flex items-center justify-center mb-6 text-orange-500 bg-orange-500/10 rounded-lg">
-                        <Globe2 size={20} />
-                    </div>
-                    <h3 className="font-display text-lg text-white mb-2">Spatial Context</h3>
-                    <p className="text-sm text-zinc-500 leading-relaxed">
-                        Full 3D context logging including orientation and user telemetry.
-                    </p>
-                </div>
-                
-                {/* Feature 2 */}
-                <div className="bg-zinc-950 p-10 hover:bg-zinc-900 transition-colors">
-                    <div className="w-10 h-10 flex items-center justify-center mb-6 text-blue-500 bg-blue-500/10 rounded-lg">
-                        <Fingerprint size={20} />
-                    </div>
-                    <h3 className="font-display text-lg text-white mb-2">Civic Verification</h3>
-                    <p className="text-sm text-zinc-500 leading-relaxed">
-                        Anti-spam systems verify humanity and location proximity.
-                    </p>
-                </div>
-
-                {/* Feature 3 */}
-                <div className="bg-zinc-950 p-10 hover:bg-zinc-900 transition-colors">
-                    <div className="w-10 h-10 flex items-center justify-center mb-6 text-green-500 bg-green-500/10 rounded-lg">
-                        <Hexagon size={20} />
-                    </div>
-                    <h3 className="font-display text-lg text-white mb-2">Eco-Impact Grading</h3>
-                    <p className="text-sm text-zinc-500 leading-relaxed">
-                        Automatic environmental impact scoring for every report.
-                    </p>
-                </div>
-
-                 {/* Feature 4 */}
-                 <div className="bg-zinc-950 p-10 hover:bg-zinc-900 transition-colors">
-                    <div className="w-10 h-10 flex items-center justify-center mb-6 text-purple-500 bg-purple-500/10 rounded-lg">
-                        <Layers size={20} />
-                    </div>
-                    <h3 className="font-display text-lg text-white mb-2">Multi-Tenant</h3>
-                    <p className="text-sm text-zinc-500 leading-relaxed">
-                        Isolated database schemas for secure, scalable city deployment.
-                    </p>
-                </div>
-
-                {/* Feature 5 */}
-                <div className="bg-zinc-950 p-10 hover:bg-zinc-900 transition-colors">
-                    <div className="w-10 h-10 flex items-center justify-center mb-6 text-pink-500 bg-pink-500/10 rounded-lg">
-                        <Scan size={20} />
-                    </div>
-                    <h3 className="font-display text-lg text-white mb-2">Computer Vision</h3>
-                    <p className="text-sm text-zinc-500 leading-relaxed">
-                        Gemini identifies objects, damage levels, and hazards in photos.
-                    </p>
-                </div>
-
-                {/* Feature 6 */}
-                <div className="bg-zinc-950 p-10 hover:bg-zinc-900 transition-colors">
-                    <div className="w-10 h-10 flex items-center justify-center mb-6 text-yellow-500 bg-yellow-500/10 rounded-lg">
-                        <BarChart3 size={20} />
-                    </div>
-                    <h3 className="font-display text-lg text-white mb-2">Predictive Reports</h3>
-                    <p className="text-sm text-zinc-500 leading-relaxed">
-                        Forecast emerging issues before they become critical failures.
-                    </p>
-                </div>
-            </div>
-        </div>
-      </section>
-
-      {/* --- Section 6: Deployed Sectors (New) --- */}
-      <section className="py-24 px-6 bg-black border-t border-zinc-900">
+      {/* --- Section 6: Deployed Sectors --- */}
+      <section className="py-24 px-6 bg-zinc-50 dark:bg-black border-t border-zinc-200 dark:border-zinc-900">
         <div className="max-w-6xl mx-auto">
              <div className="flex flex-col md:flex-row justify-between items-end mb-12">
                 <div>
-                    <h2 className="font-display text-3xl font-medium text-white">Deployed Sectors</h2>
+                    <h2 className="font-display text-3xl font-medium text-zinc-900 dark:text-white">Deployed Sectors</h2>
                     <p className="text-zinc-500 mt-2">Adaptable for any civic domain.</p>
                 </div>
                 <div className="hidden md:flex space-x-2">
                     <div className="w-12 h-1 bg-orange-500"></div>
-                    <div className="w-4 h-1 bg-zinc-800"></div>
+                    <div className="w-4 h-1 bg-zinc-300 dark:bg-zinc-800"></div>
                 </div>
              </div>
 
@@ -620,10 +298,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
                     { icon: <Trees size={24} />, title: "Parks & Rec", desc: "Facility maintenance, trail mapping, and event feedback." },
                     { icon: <Shield size={24} />, title: "Disaster Ops", desc: "Real-time damage logs and resource coordination." }
                  ].map((item, i) => (
-                     <div key={i} className="group border border-zinc-800 p-6 rounded-xl hover:bg-zinc-900 transition-all cursor-default">
-                        <div className="mb-4 text-zinc-400 group-hover:text-white transition-colors">{item.icon}</div>
-                        <h4 className="font-bold text-white mb-2">{item.title}</h4>
-                        <p className="text-xs text-zinc-500 leading-relaxed group-hover:text-zinc-400">{item.desc}</p>
+                     <div key={i} className="group border border-zinc-200 dark:border-zinc-800 p-6 rounded-xl hover:bg-white dark:hover:bg-zinc-900 transition-all cursor-default">
+                        <div className="mb-4 text-zinc-400 dark:text-zinc-400 group-hover:text-orange-500 dark:group-hover:text-white transition-colors">{item.icon}</div>
+                        <h4 className="font-bold text-zinc-900 dark:text-white mb-2">{item.title}</h4>
+                        <p className="text-xs text-zinc-500 leading-relaxed group-hover:text-zinc-600 dark:group-hover:text-zinc-400">{item.desc}</p>
                      </div>
                  ))}
              </div>
@@ -631,12 +309,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
       </section>
 
       {/* --- Footer --- */}
-      <footer className="py-12 px-6 border-t border-zinc-900 text-center bg-zinc-950">
+      <footer className="py-12 px-6 border-t border-zinc-200 dark:border-zinc-900 text-center bg-zinc-100 dark:bg-zinc-950">
         <div className="flex items-center justify-center space-x-2 mb-4 opacity-50 grayscale hover:grayscale-0 transition-all">
             <div className="w-4 h-4 bg-orange-500 rounded-sm"></div>
-            <span className="font-display font-bold text-white tracking-tight">EchoSphere_OS</span>
+            <span className="font-display font-bold text-zinc-900 dark:text-white tracking-tight">EchoSphere_OS</span>
         </div>
-        <p className="text-xs text-zinc-600 font-mono">
+        <p className="text-xs text-zinc-500 font-mono">
             SYSTEM_STATUS: NOMINAL <br/>
             © 2024 ARCHITECTURAL SYSTEMS INC.
         </p>

@@ -12,11 +12,12 @@ interface MapAreaProps {
   interactive?: boolean;
   center?: Location;
   showSelectionMarker?: boolean;
+  isDarkMode?: boolean;
 }
 
 const DEFAULT_CENTER = [40.7128, -74.0060];
 
-// Category styling map (Neon/Cyberpunk colors)
+// Category styling map
 const CATEGORY_STYLES: Record<string, { color: string, icon: React.ReactNode }> = {
   'Sanitation': { color: '#ef4444', icon: <Trash2 size={14} color="black" /> }, // Red
   'Infrastructure': { color: '#f97316', icon: <HardHat size={14} color="black" /> }, // Orange
@@ -27,12 +28,16 @@ const CATEGORY_STYLES: Record<string, { color: string, icon: React.ReactNode }> 
   'General': { color: '#94a3b8', icon: <HelpCircle size={14} color="black" /> } // Slate
 };
 
+// Hardcoded list to ensure render even if object keys fail
+const PREDEFINED_CATEGORIES = ['All', 'Sanitation', 'Infrastructure', 'Safety', 'Traffic', 'Sustainability', 'Culture', 'General'];
+
 const MapArea: React.FC<MapAreaProps> = ({ 
   feedbackList, 
   onMapClick, 
   interactive = true, 
   center,
-  showSelectionMarker = false
+  showSelectionMarker = false,
+  isDarkMode = true
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [mapInstance, setMapInstance] = useState<any | null>(null);
@@ -66,6 +71,21 @@ const MapArea: React.FC<MapAreaProps> = ({
     
     return () => clearInterval(checkLeaflet);
   }, []);
+
+  // -- Dynamic Tile Update on Theme Change --
+  useEffect(() => {
+      if (!mapInstance || !layers) return;
+      if (isSatellite) return; // Satellite overrides theme
+
+      mapInstance.removeLayer(layers.dark);
+      mapInstance.removeLayer(layers.light);
+
+      if (isDarkMode) {
+          mapInstance.addLayer(layers.dark);
+      } else {
+          mapInstance.addLayer(layers.light);
+      }
+  }, [isDarkMode, mapInstance, layers, isSatellite]);
 
   // -- Fly to Center Update --
   useEffect(() => {
@@ -112,15 +132,18 @@ const MapArea: React.FC<MapAreaProps> = ({
         attributionControl: false
       });
 
-      // CartoDB Dark Matter Tiles for the "OS" look
-      const streetLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png', {
-          maxZoom: 20
-      });
-
+      // CartoDB Dark Matter (Dark Mode)
+      const darkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 20 });
+      // CartoDB Positron (Light Mode)
+      const lightLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 20 });
+      // Satellite
       const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
 
-      streetLayer.addTo(map);
-      setLayers({ street: streetLayer, satellite: satelliteLayer });
+      // Initial Add
+      if (isDarkMode) darkLayer.addTo(map);
+      else lightLayer.addTo(map);
+
+      setLayers({ dark: darkLayer, light: lightLayer, satellite: satelliteLayer });
 
       map.on('click', (e: any) => {
           if (!interactive) return;
@@ -182,13 +205,15 @@ const MapArea: React.FC<MapAreaProps> = ({
   useEffect(() => {
       if (!mapInstance || !layers) return;
       if (isSatellite) {
-          mapInstance.removeLayer(layers.street);
+          mapInstance.removeLayer(layers.dark);
+          mapInstance.removeLayer(layers.light);
           mapInstance.addLayer(layers.satellite);
       } else {
           mapInstance.removeLayer(layers.satellite);
-          mapInstance.addLayer(layers.street);
+          if (isDarkMode) mapInstance.addLayer(layers.dark);
+          else mapInstance.addLayer(layers.light);
       }
-  }, [isSatellite, mapInstance, layers]);
+  }, [isSatellite, mapInstance, layers, isDarkMode]);
 
   // -- Render Markers --
   useEffect(() => {
@@ -238,12 +263,12 @@ const MapArea: React.FC<MapAreaProps> = ({
           const marker = L.marker([lat, lng], { icon: customIcon }).addTo(mapInstance);
           
           const popupContent = `
-            <div class="font-sans min-w-[200px] bg-zinc-950 text-zinc-200 p-1">
-                <div class="flex items-center justify-between mb-2 pb-2 border-b border-zinc-800">
+            <div class="font-sans min-w-[200px] bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-200 p-1">
+                <div class="flex items-center justify-between mb-2 pb-2 border-b border-zinc-200 dark:border-zinc-800">
                     <span class="text-[10px] font-mono font-bold uppercase tracking-wide text-zinc-500">${fb.category}</span>
-                    <span class="text-[10px] bg-zinc-900 px-1.5 py-0.5 rounded text-zinc-500 border border-zinc-800">${new Date(fb.timestamp).toLocaleDateString()}</span>
+                    <span class="text-[10px] bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 rounded text-zinc-500 border border-zinc-200 dark:border-zinc-800">${new Date(fb.timestamp).toLocaleDateString()}</span>
                 </div>
-                <div class="text-xs text-white font-medium mb-3 leading-snug">"${fb.content}"</div>
+                <div class="text-xs font-medium mb-3 leading-snug">"${fb.content}"</div>
                 <div class="flex items-center space-x-2">
                     <div class="h-1.5 w-1.5 rounded-full ${fb.sentiment === 'positive' ? 'bg-green-500' : fb.sentiment === 'negative' ? 'bg-red-500' : 'bg-yellow-500'}"></div>
                     <span class="text-[10px] text-zinc-400 capitalize font-mono">${fb.sentiment}</span>
@@ -252,21 +277,18 @@ const MapArea: React.FC<MapAreaProps> = ({
           `;
 
           marker.bindPopup(popupContent, {
-             className: 'dark-popup'
+             className: isDarkMode ? 'dark-popup' : 'light-popup'
           });
           markersRef.current.push(marker);
       });
 
-  }, [feedbackList, mapInstance, activeFilter]);
-
-  // Unique Categories for Filter
-  const categories = ['All', ...Array.from(new Set(feedbackList.map(f => f.category)))];
+  }, [feedbackList, mapInstance, activeFilter, isDarkMode]);
 
   return (
-    <div className="relative w-full h-full bg-zinc-900 overflow-hidden group">
+    <div className="relative w-full h-full bg-zinc-50 dark:bg-zinc-900 overflow-hidden group transition-colors duration-300">
       
       {!isMapLoaded && (
-          <div className="absolute inset-0 flex items-center justify-center bg-zinc-950 z-10">
+          <div className="absolute inset-0 flex items-center justify-center bg-zinc-50 dark:bg-zinc-950 z-10">
               <Loader2 className="animate-spin text-orange-600" size={32} />
           </div>
       )}
@@ -276,37 +298,37 @@ const MapArea: React.FC<MapAreaProps> = ({
             {/* --- CENTRAL COMMAND SEARCH BAR --- */}
             <div className="absolute top-24 md:top-6 left-1/2 -translate-x-1/2 w-[90%] md:w-[400px] z-[500] transition-all duration-300">
                 <form onSubmit={handleSearch} className="relative group/search">
-                    <div className="relative flex items-center bg-zinc-900/90 backdrop-blur-md shadow-2xl rounded border border-zinc-700 hover:border-zinc-600 transition-colors">
-                        <Search className="ml-4 text-zinc-500" size={14} />
+                    <div className="relative flex items-center bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md shadow-2xl rounded border border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors">
+                        <Search className="ml-4 text-zinc-400 dark:text-zinc-500" size={14} />
                         <input 
                             type="text" 
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="SEARCH_LOCUS..."
-                            className={`w-full py-3 px-3 bg-transparent outline-none text-zinc-200 placeholder-zinc-600 text-xs font-mono uppercase`}
+                            className={`w-full py-3 px-3 bg-transparent outline-none text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-600 text-xs font-mono uppercase`}
                         />
                         {searchQuery && (
-                            <button type="button" onClick={() => setSearchQuery('')} className="p-2 mr-1 text-zinc-500 hover:text-zinc-300"><X size={12} /></button>
+                            <button type="button" onClick={() => setSearchQuery('')} className="p-2 mr-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"><X size={12} /></button>
                         )}
                         {isSearching && <Loader2 size={14} className="mr-4 animate-spin text-orange-500" />}
                     </div>
                 </form>
                 {searchError && (
-                    <div className="absolute top-full mt-2 left-0 right-0 bg-red-900/50 border border-red-500/30 text-red-200 text-xs py-2 px-4 rounded text-center animate-fade-in-up font-mono">
+                    <div className="absolute top-full mt-2 left-0 right-0 bg-red-100 dark:bg-red-900/50 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-200 text-xs py-2 px-4 rounded text-center animate-fade-in-up font-mono">
                         ERR_LOC_NOT_FOUND
                     </div>
                 )}
 
                 {/* --- FLOATING FILTER PILLS --- */}
-                <div className="mt-3 flex items-center justify-center space-x-2 overflow-x-auto no-scrollbar py-1 mask-linear-fade">
-                    {categories.slice(0, 4).map(cat => (
+                <div className="mt-3 flex items-center space-x-2 overflow-x-auto no-scrollbar py-1 mask-linear-fade">
+                    {PREDEFINED_CATEGORIES.map(cat => (
                         <button
                             key={cat}
                             onClick={() => setActiveFilter(cat)}
-                            className={`whitespace-nowrap px-3 py-1.5 rounded-sm text-[10px] font-mono uppercase tracking-wide border transition-all ${
+                            className={`whitespace-nowrap px-3 py-1.5 rounded-sm text-[10px] font-mono uppercase tracking-wide border transition-all flex-shrink-0 ${
                                 activeFilter === cat 
-                                ? 'bg-orange-600 text-black border-orange-600 font-bold' 
-                                : 'bg-zinc-900/90 text-zinc-500 border-zinc-700 hover:text-zinc-300 hover:border-zinc-500'
+                                ? 'bg-orange-600 text-white dark:text-black border-orange-600 font-bold' 
+                                : 'bg-white/90 dark:bg-zinc-900/90 text-zinc-600 dark:text-zinc-500 border-zinc-200 dark:border-zinc-700 hover:text-zinc-900 dark:hover:text-zinc-300 hover:border-zinc-400 dark:hover:border-zinc-500'
                             }`}
                         >
                             {cat}
@@ -319,7 +341,7 @@ const MapArea: React.FC<MapAreaProps> = ({
             <div className="absolute top-24 md:top-6 right-4 z-[500] flex flex-col space-y-3">
                 <button 
                     onClick={handleManualLocate}
-                    className="bg-zinc-900/90 backdrop-blur p-3 rounded shadow-lg border border-zinc-700 text-zinc-500 hover:text-orange-500 hover:border-orange-500 transition-colors"
+                    className="bg-white/90 dark:bg-zinc-900/90 backdrop-blur p-3 rounded shadow-lg border border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:text-orange-500 hover:border-orange-500 transition-colors"
                     title="LOCATE_USER"
                 >
                     {isLocating ? <Loader2 size={16} className="animate-spin" /> : <Navigation size={16} className={userLocationMarkerRef.current ? "fill-orange-500 text-orange-600" : ""} />}
@@ -327,7 +349,7 @@ const MapArea: React.FC<MapAreaProps> = ({
 
                 <button 
                     onClick={(e) => { e.stopPropagation(); setIsSatellite(!isSatellite); }}
-                    className="bg-zinc-900/90 backdrop-blur p-3 rounded shadow-lg border border-zinc-700 text-zinc-500 hover:text-orange-500 hover:border-orange-500 transition-colors"
+                    className="bg-white/90 dark:bg-zinc-900/90 backdrop-blur p-3 rounded shadow-lg border border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:text-orange-500 hover:border-orange-500 transition-colors"
                     title="TOGGLE_LAYER"
                 >
                     {isSatellite ? <Layers size={16} /> : <Box size={16} />}
@@ -336,7 +358,7 @@ const MapArea: React.FC<MapAreaProps> = ({
         </>
       )}
 
-      <div ref={mapRef} className="w-full h-full z-0 outline-none bg-zinc-900" />
+      <div ref={mapRef} className="w-full h-full z-0 outline-none bg-zinc-200 dark:bg-zinc-900" />
       
       <style>{`
         /* Dark Leaflet Popups */
@@ -353,8 +375,24 @@ const MapArea: React.FC<MapAreaProps> = ({
         .dark-popup .leaflet-popup-close-button {
             color: #71717a !important; /* zinc-500 */
         }
+
+        /* Light Leaflet Popups */
+        .light-popup .leaflet-popup-content-wrapper {
+            background: #ffffff;
+            color: #18181b;
+            border: 1px solid #e4e4e7;
+            border-radius: 4px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .light-popup .leaflet-popup-tip {
+            background: #ffffff;
+        }
+        .light-popup .leaflet-popup-close-button {
+            color: #a1a1aa !important;
+        }
+
         .leaflet-container {
-            background: #09090b !important;
+            background: transparent !important;
         }
 
         .no-scrollbar::-webkit-scrollbar {
