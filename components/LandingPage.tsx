@@ -206,7 +206,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
                     <div className="relative h-full bg-zinc-100 dark:bg-zinc-900 overflow-hidden">
                          {/* Map Image Underlay */}
                         <img 
-                            src="https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=2074&auto=format&fit=crop"
+                            src="https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?q=80&w=2000&auto=format&fit=crop"
                             className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500 opacity-50 mix-blend-multiply grayscale dark:opacity-20 dark:mix-blend-screen"
                             alt="City Map"
                         />
