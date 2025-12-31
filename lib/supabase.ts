@@ -12,7 +12,8 @@ const FALLBACK_ENV = {
     
     // Ensure these keys are also correct from your Supabase Dashboard > Settings > API
     VITE_SUPABASE_ANON_KEY: "sb_publishable_wOamHu58UreJnCTz5tHfUw_bmG7_M03",
-    VITE_API_KEY: "AIzaSyArN7otlgUTAp-Bf_QPM9dDCnAHp2lOtsc"
+    VITE_API_KEY: "AIzaSyArN7otlgUTAp-Bf_QPM9dDCnAHp2lOtsc",
+    VITE_SITE_URL: "" // Optional: Set this to your production URL (e.g. https://myapp.vercel.app)
 };
 
 // Helper to clean values (remove accidental quotes from build tools)
@@ -38,6 +39,9 @@ const reliableGet = (key: string) => {
         } else if (key === 'VITE_API_KEY') {
             // @ts-ignore
             value = import.meta.env.VITE_API_KEY;
+        } else if (key === 'VITE_SITE_URL') {
+            // @ts-ignore
+            value = import.meta.env.VITE_SITE_URL;
         }
     } catch (e) {}
 
@@ -82,16 +86,19 @@ if (supabaseUrl && supabaseKey && supabaseUrl !== 'undefined') {
 export const isSupabaseConfigured = () => !!supabase;
 
 export const getGeminiApiKey = () => reliableGet('VITE_API_KEY');
+export const getSiteUrl = () => reliableGet('VITE_SITE_URL');
 
 export const getEnvDebugInfo = () => {
     const url = reliableGet('VITE_SUPABASE_URL');
     const key = reliableGet('VITE_SUPABASE_ANON_KEY');
     const ai = reliableGet('VITE_API_KEY');
+    const site = reliableGet('VITE_SITE_URL');
     
     return {
         urlStatus: url ? (url.length > 10 ? 'Configured' : 'Too Short') : 'Missing',
         keyStatus: key ? 'Configured' : 'Missing',
-        aiStatus: ai ? 'Configured' : 'Missing'
+        aiStatus: ai ? 'Configured' : 'Missing',
+        siteUrlStatus: site ? 'Configured' : 'Auto-detect'
     };
 };
 
@@ -121,5 +128,6 @@ export const resetAppConfiguration = () => {
     localStorage.removeItem('VITE_SUPABASE_URL');
     localStorage.removeItem('VITE_SUPABASE_ANON_KEY');
     localStorage.removeItem('VITE_API_KEY');
+    localStorage.removeItem('VITE_SITE_URL');
     window.location.reload();
 };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle, AlertCircle, Terminal, Sun, Moon, Database, Key, CloudLightning, ShieldCheck, XCircle, HardDrive, HelpCircle } from 'lucide-react';
+import { X, CheckCircle, AlertCircle, Terminal, Sun, Moon, Database, Key, CloudLightning, ShieldCheck, XCircle, HardDrive, HelpCircle, Globe } from 'lucide-react';
 import PublicView from './components/PublicView';
 import AdminDashboard from './components/AdminDashboard';
 import Wizard from './components/Wizard';
@@ -116,6 +116,13 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onBypass, isDarkMode, toggleT
                         <span className={`flex items-center ${debugInfo.aiStatus === 'Configured' ? 'text-green-600 dark:text-green-500' : 'text-red-500'}`}>
                             {debugInfo.aiStatus === 'Configured' ? <ShieldCheck size={14} className="mr-1" /> : <XCircle size={14} className="mr-1" />}
                             {debugInfo.aiStatus}
+                        </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-zinc-500 dark:text-zinc-400">Site URL (Prod)</span>
+                        <span className={`flex items-center ${debugInfo.siteUrlStatus === 'Configured' ? 'text-green-600 dark:text-green-500' : 'text-zinc-500'}`}>
+                            {debugInfo.siteUrlStatus === 'Configured' ? <ShieldCheck size={14} className="mr-1" /> : <Globe size={14} className="mr-1" />}
+                            {debugInfo.siteUrlStatus}
                         </span>
                     </div>
                 </div>

@@ -4,7 +4,7 @@ export const APP_CONFIG = {
     DEFAULT_ZOOM: 13,
     TILES: {
       DARK: 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png',
-      LIGHT: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      LIGHT: 'https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}{r}.png', // Switched to B&W Positron tiles
       SATELLITE: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
     }
   },

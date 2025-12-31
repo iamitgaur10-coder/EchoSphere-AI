@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Globe2, ArrowRight, MapPin, BarChart3, Radio, Scan, Zap, Activity, Hexagon, Fingerprint, MousePointer2, Database, Network, Cpu, Share2, Shield, Truck, Trees, Siren, Layers, Play, Mic, PenTool, LayoutDashboard, Building2 } from 'lucide-react';
+import { Globe2, ArrowRight, MapPin, BarChart3, Radio, Scan, Zap, Activity, Hexagon, Fingerprint, MousePointer2, Database, Network, Cpu, Share2, Shield, Truck, Trees, Siren, Layers, Play, Mic, PenTool, LayoutDashboard, Building2, MousePointerClick } from 'lucide-react';
 import { AccountSetup, Organization, Feedback } from '../types';
 import { APP_CONFIG } from '../config/constants';
 import { dataService } from '../services/dataService';
@@ -21,6 +21,9 @@ const VISUAL_FEEDBACK: Feedback[] = [
     { id: 'v2', location: { x: -118.24, y: 34.06 }, content: 'Park clean up needed', sentiment: 'neutral', category: 'Sanitation', timestamp: new Date(), votes: 0 },
     { id: 'v3', location: { x: -118.235, y: 34.045 }, content: 'Great new bike lane', sentiment: 'positive', category: 'Infrastructure', timestamp: new Date(), votes: 0 },
     { id: 'v4', location: { x: -118.26, y: 34.055 }, content: 'Suspicious activity', sentiment: 'negative', category: 'Safety', timestamp: new Date(), votes: 0 },
+    { id: 'v5', location: { x: -118.245, y: 34.04 }, content: 'Pothole repair', sentiment: 'neutral', category: 'Infrastructure', timestamp: new Date(), votes: 0 },
+    { id: 'v6', location: { x: -118.255, y: 34.065 }, content: 'Noise complaint', sentiment: 'negative', category: 'General', timestamp: new Date(), votes: 0 },
+    { id: 'v7', location: { x: -118.23, y: 34.052 }, content: 'New tree planting', sentiment: 'positive', category: 'Sustainability', timestamp: new Date(), votes: 0 },
 ];
 
 const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, onEnterWizard, account, isDarkMode = false }) => {
@@ -202,7 +205,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
             </div>
 
             {/* Right: 3D Interface Simulation */}
-            <div className="relative h-[600px] hidden lg:block perspective-1000">
+            <div className="relative h-[750px] hidden lg:block perspective-1000 -mr-12">
                 {/* The Tilted Plane */}
                 <div className="absolute inset-0 bg-white dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl transform rotate-y-12 rotate-x-6 hover:rotate-y-0 hover:rotate-x-0 transition-transform duration-1000 overflow-hidden group">
                     
@@ -212,17 +215,18 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
                         <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
                         <div className="w-3 h-3 rounded-full bg-green-500"></div>
                         <div className="flex-1 text-center font-mono text-xs text-zinc-400 dark:text-zinc-600">Live Map View (LA)</div>
+                        <MousePointerClick size={14} className="text-zinc-400" />
                     </div>
 
                     {/* Map Content */}
                     <div className="relative h-full bg-zinc-100 dark:bg-zinc-900 overflow-hidden">
                         
                          {/* Live Leaflet Map */}
-                         <div className="absolute inset-0 w-full h-full z-10">
+                         <div className="absolute inset-0 w-full h-full z-10 grayscale hover:grayscale-0 transition-all duration-700">
                             <MapArea 
                                 feedbackList={VISUAL_FEEDBACK}
                                 onMapClick={() => {}}
-                                interactive={false}
+                                interactive={true}
                                 center={LA_CENTER}
                                 isDarkMode={isDarkMode}
                             />
@@ -231,15 +235,23 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
                          {/* Subtle Grid Overlay */}
                         <div className="absolute inset-0 pointer-events-none z-20 opacity-10 mix-blend-overlay" style={{ backgroundImage: 'radial-gradient(circle, #f97316 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
                         
+                        {/* Interactive Hint Overlay (Fades out on hover) */}
+                        <div className="absolute inset-0 flex items-center justify-center z-40 pointer-events-none group-hover:opacity-0 transition-opacity duration-500">
+                             <div className="bg-black/20 backdrop-blur-sm px-4 py-2 rounded-full text-white text-xs font-bold uppercase tracking-widest flex items-center gap-2 border border-white/20">
+                                <MousePointer2 size={14} className="animate-bounce" />
+                                Interact
+                             </div>
+                        </div>
+
                         {/* Floating UI Elements inside 3D */}
-                        <div className="absolute bottom-6 left-6 right-6 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-lg border border-zinc-200 dark:border-zinc-800 p-4 rounded-lg text-sm text-zinc-600 dark:text-zinc-400 shadow-xl z-30">
+                        <div className="absolute bottom-6 left-6 right-6 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-lg border border-zinc-200 dark:border-zinc-800 p-4 rounded-lg text-sm text-zinc-600 dark:text-zinc-400 shadow-xl z-30 pointer-events-none">
                             <div className="flex justify-between mb-2">
                                 <span className="text-zinc-900 dark:text-white font-medium">AI Analysis</span>
                                 <span className="text-green-600 font-bold text-xs flex items-center gap-1"><span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> ACTIVE</span>
                             </div>
                             <div className="space-y-2">
                                 <div className="h-1.5 w-full bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
-                                    <div className="h-full bg-gradient-to-r from-orange-500 to-amber-500 w-3/4"></div>
+                                    <div className="h-full bg-gradient-to-r from-orange-500 to-amber-500 w-3/4 animate-pulse"></div>
                                 </div>
                             </div>
                         </div>
