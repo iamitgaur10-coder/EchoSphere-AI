@@ -32,7 +32,7 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
 
   // 2. Real-time Subscription (Priority 4)
   useEffect(() => {
-    if (!isSupabaseConfigured()) return;
+    if (!isSupabaseConfigured() || !currentOrg) return;
 
     // Subscribe to INSERT events on the 'feedback' table
     const channel = supabase!
@@ -43,14 +43,14 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
         (payload) => {
           const newRow = payload.new;
           
-          // Filter for current organization (Client-side filtering for MVP)
-          // In production, RLS handles this, but here we double check
-          // Need to grab Org ID from local storage or state if possible, or just show all for demo
+          // STRICT MULTI-TENANCY CHECK
+          // Only process this event if it belongs to the currently viewed organization
+          if (newRow.organization_id !== currentOrg.id) return;
           
           const newFeedback: Feedback = {
             id: newRow.id,
             organizationId: newRow.organization_id,
-            location: newRow.location,
+            location: newRow.location, // Supabase client handles JSON parsing for jsonb columns usually
             content: newRow.content,
             timestamp: new Date(newRow.timestamp),
             sentiment: newRow.sentiment,
@@ -61,7 +61,11 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
           };
 
           // Update Map Data
-          setFeedbackList((prev) => [newFeedback, ...prev]);
+          setFeedbackList((prev) => {
+             // Avoid duplicates if optimistic update already added it
+             if (prev.some(f => f.id === newFeedback.id)) return prev;
+             return [newFeedback, ...prev];
+          });
 
           // Update Live Feed Ticker
           const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -76,7 +80,7 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
     return () => {
       supabase!.removeChannel(channel);
     };
-  }, [showToast]);
+  }, [currentOrg, showToast]); // Added currentOrg dependency to ensure filter works
 
   const handleMapClick = (loc: Location) => {
     setSelectedLocation(loc);
@@ -84,11 +88,9 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
 
   const handleFeedbackSubmit = async (newFeedback: Feedback) => {
     // Optimistic update happens in dataService.saveFeedback
-    // The Realtime subscription will likely trigger a duplicate add if we aren't careful,
-    // but React Key reconciliation usually handles ID dupes or we can dedup.
     await dataService.saveFeedback(newFeedback);
     
-    // We fetch fresh to ensure sync
+    // We fetch fresh to ensure sync, though Realtime will also catch it
     const fresh = await dataService.getFeedback();
     setFeedbackList(fresh);
     
