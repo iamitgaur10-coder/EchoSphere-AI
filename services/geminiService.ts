@@ -8,18 +8,23 @@ import { APP_CONFIG } from '../config/constants';
 // 3. LocalStorage (Setup Wizard)
 const getApiKey = () => {
     // 1. Check process.env (Standard Node/System)
-    // @ts-ignore
-    if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
+    try {
         // @ts-ignore
-        return process.env.API_KEY;
-    }
+        if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
+            // @ts-ignore
+            return process.env.API_KEY;
+        }
+    } catch (e) {}
 
     // 2. Check Vite Env (Static Replacement)
-    // @ts-ignore
-    if (import.meta.env && import.meta.env.VITE_API_KEY) {
+    // Wrapped in try/catch to avoid "ReferenceError" if import.meta is not defined
+    try {
         // @ts-ignore
-        return import.meta.env.VITE_API_KEY;
-    }
+        if (import.meta.env.VITE_API_KEY) {
+            // @ts-ignore
+            return import.meta.env.VITE_API_KEY;
+        }
+    } catch (e) {}
     
     // 3. Check Local Storage
     return localStorage.getItem('VITE_API_KEY') || '';

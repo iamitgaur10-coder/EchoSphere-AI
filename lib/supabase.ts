@@ -11,25 +11,37 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
  */
 const reliableGet = (key: string) => {
     // 1. Direct Vite Env Access (Required for Vercel/Vite)
-    // We use @ts-ignore to bypass strict type checks
+    // We use try/catch to handle cases where import.meta might be undefined
+    // but we DO NOT check 'import.meta.env &&' because that object often doesn't exist
+    // at runtime, even if the variable replacement ("https://...") happened.
     try {
         if (key === 'VITE_SUPABASE_URL') {
             // @ts-ignore
-            return (import.meta.env && import.meta.env.VITE_SUPABASE_URL) || '';
+            return import.meta.env.VITE_SUPABASE_URL || '';
         }
         if (key === 'VITE_SUPABASE_ANON_KEY') {
             // @ts-ignore
-            return (import.meta.env && import.meta.env.VITE_SUPABASE_ANON_KEY) || '';
+            return import.meta.env.VITE_SUPABASE_ANON_KEY || '';
         }
         if (key === 'VITE_API_KEY') {
             // @ts-ignore
-            return (import.meta.env && import.meta.env.VITE_API_KEY) || '';
+            return import.meta.env.VITE_API_KEY || '';
         }
     } catch (e) {
-        console.warn("EchoSphere: Error accessing import.meta.env", e);
+        // Fallback for environments where import.meta is strictly forbidden
+        // console.warn("EchoSphere: Error accessing import.meta.env", e);
     }
 
-    // 2. Fallback to LocalStorage (Setup Wizard)
+    // 2. Check process.env (Standard Node/System & Index.html Polyfill)
+    try {
+        // @ts-ignore
+        if (typeof process !== 'undefined' && process.env && process.env[key]) {
+            // @ts-ignore
+            return process.env[key];
+        }
+    } catch (e) {}
+
+    // 3. Fallback to LocalStorage (Setup Wizard)
     if (typeof window !== 'undefined') {
         return localStorage.getItem(key) || '';
     }
@@ -42,7 +54,7 @@ const supabaseKey = reliableGet('VITE_SUPABASE_ANON_KEY');
 // Initialize Client if keys exist
 export let supabase: SupabaseClient | null = null;
 
-if (supabaseUrl && supabaseKey) {
+if (supabaseUrl && supabaseKey && supabaseUrl !== 'undefined') {
     try {
         supabase = createClient(supabaseUrl, supabaseKey);
     } catch (e) {
