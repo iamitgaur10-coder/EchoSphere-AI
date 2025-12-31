@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowRight, ArrowLeft, Check, Wand2, MapPin, Building2, Layers, Loader2, AlertCircle } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Check, Wand2, MapPin, Building2, Layers, Loader2, AlertCircle, Share2, Copy, ExternalLink } from 'lucide-react';
 import { generateSurveyQuestions } from '../services/geminiService';
 import { AccountSetup, Location } from '../types';
 import { dataService } from '../services/dataService';
@@ -15,6 +15,7 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const [formData, setFormData] = useState<AccountSetup>({
     organizationName: '',
     regionCode: '',
@@ -46,16 +47,30 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel }) => {
     setIsSaving(false);
     
     if (result) {
-        onComplete(formData);
+        // Success! Generate Link
+        const origin = window.location.origin;
+        const link = `${origin}/?org=${result.slug}`;
+        setGeneratedLink(link);
+        setStep(4); // Move to Success Step
     } else {
-        // If result is null, it means cloud provisioning failed (check console)
         if (dataService.isProduction()) {
             setError("Failed to create organization in database. Check your connection or API keys.");
         } else {
-            // Local mode always succeeds
+            // Local mode fallback
             onComplete(formData);
         }
     }
+  };
+  
+  const handleFinalize = () => {
+      onComplete(formData);
+  };
+
+  const copyLink = () => {
+      if (generatedLink) {
+          navigator.clipboard.writeText(generatedLink);
+          alert("Link copied to clipboard!");
+      }
   };
 
   const renderStep1 = () => (
@@ -154,6 +169,42 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel }) => {
     </div>
   );
 
+  const renderStep4 = () => (
+      <div className="flex flex-col items-center justify-center h-full animate-fade-in-up space-y-8 text-center">
+          <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center border border-green-500/50 shadow-[0_0_30px_rgba(34,197,94,0.3)]">
+              <Check size={40} className="text-green-500" />
+          </div>
+          
+          <div className="space-y-2">
+              <h2 className="text-2xl font-display font-bold text-white">Organization Ready!</h2>
+              <p className="text-zinc-400 text-sm max-w-sm mx-auto">
+                  Your tenant has been provisioned successfully. Share this link with your users to start collecting feedback.
+              </p>
+          </div>
+
+          <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-lg p-2 flex items-center space-x-2">
+              <div className="flex-1 bg-black rounded px-3 py-2 text-xs font-mono text-zinc-300 truncate text-left border border-zinc-800">
+                  {generatedLink}
+              </div>
+              <button onClick={copyLink} className="p-2 hover:bg-zinc-800 rounded text-zinc-500 hover:text-white transition-colors" title="Copy">
+                  <Copy size={16} />
+              </button>
+              <a href={generatedLink || '#'} target="_blank" rel="noreferrer" className="p-2 hover:bg-zinc-800 rounded text-zinc-500 hover:text-white transition-colors" title="Open">
+                  <ExternalLink size={16} />
+              </a>
+          </div>
+
+          <div className="pt-4">
+               <button 
+                  onClick={handleFinalize}
+                  className="px-8 py-3 bg-white text-black font-bold text-sm uppercase tracking-widest rounded hover:bg-zinc-200 transition-all shadow-lg"
+              >
+                  Go to Dashboard
+              </button>
+          </div>
+      </div>
+  );
+
   return (
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
       <div className="bg-zinc-950 w-full max-w-2xl rounded-lg shadow-2xl border border-zinc-800 overflow-hidden flex flex-col max-h-[90vh]">
@@ -164,11 +215,16 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel }) => {
             <p className="text-zinc-500 text-xs">Set up your organization details</p>
           </div>
           <div className="flex items-center space-x-2 text-sm">
-            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step >= 1 ? 'bg-orange-600 text-black' : 'bg-zinc-800 text-zinc-600'}`}>1</span>
-            <div className="w-6 h-[1px] bg-zinc-800"></div>
-            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step >= 2 ? 'bg-orange-600 text-black' : 'bg-zinc-800 text-zinc-600'}`}>2</span>
-            <div className="w-6 h-[1px] bg-zinc-800"></div>
-            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step >= 3 ? 'bg-orange-600 text-black' : 'bg-zinc-800 text-zinc-600'}`}>3</span>
+            {[1, 2, 3].map(i => (
+                <React.Fragment key={i}>
+                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                        step >= i ? 'bg-orange-600 text-black' : 'bg-zinc-800 text-zinc-600'
+                    }`}>
+                        {i}
+                    </span>
+                    {i < 3 && <div className="w-6 h-[1px] bg-zinc-800"></div>}
+                </React.Fragment>
+            ))}
           </div>
         </div>
 
@@ -177,41 +233,44 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel }) => {
           {step === 1 && renderStep1()}
           {step === 2 && renderStep2()}
           {step === 3 && renderStep3()}
+          {step === 4 && renderStep4()}
         </div>
 
-        {/* Footer */}
-        <div className="p-6 bg-zinc-900 border-t border-zinc-800 flex justify-between">
-            {step > 1 ? (
-                <button onClick={handleBack} disabled={isSaving} className="flex items-center space-x-2 px-4 py-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded transition-colors text-xs uppercase font-bold">
-                    <ArrowLeft size={14} />
-                    <span>Back</span>
-                </button>
-            ) : (
-                <button onClick={onCancel} disabled={isSaving} className="px-4 py-2 text-zinc-500 hover:text-red-400 transition-colors text-xs uppercase font-bold">
-                    Cancel
-                </button>
-            )}
+        {/* Footer (Hidden on Success Step) */}
+        {step < 4 && (
+            <div className="p-6 bg-zinc-900 border-t border-zinc-800 flex justify-between">
+                {step > 1 ? (
+                    <button onClick={handleBack} disabled={isSaving} className="flex items-center space-x-2 px-4 py-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded transition-colors text-xs uppercase font-bold">
+                        <ArrowLeft size={14} />
+                        <span>Back</span>
+                    </button>
+                ) : (
+                    <button onClick={onCancel} disabled={isSaving} className="px-4 py-2 text-zinc-500 hover:text-red-400 transition-colors text-xs uppercase font-bold">
+                        Cancel
+                    </button>
+                )}
 
-            {step < 3 ? (
-                <button 
-                    onClick={handleNext} 
-                    disabled={step === 1 && (!formData.organizationName || !formData.regionCode)}
-                    className="flex items-center space-x-2 px-6 py-2 bg-orange-600 text-black font-bold text-xs uppercase tracking-widest rounded hover:bg-orange-500 disabled:bg-zinc-800 disabled:text-zinc-600 disabled:cursor-not-allowed transition-all"
-                >
-                    <span>Next</span>
-                    <ArrowRight size={14} />
-                </button>
-            ) : (
-                <button 
-                    onClick={handleLaunch}
-                    disabled={isSaving} 
-                    className="flex items-center space-x-2 px-6 py-2 bg-green-600 text-black font-bold text-xs uppercase tracking-widest rounded hover:bg-green-500 transition-all shadow-lg disabled:opacity-50"
-                >
-                    {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-                    <span>{isSaving ? 'Launching...' : 'Launch'}</span>
-                </button>
-            )}
-        </div>
+                {step < 3 ? (
+                    <button 
+                        onClick={handleNext} 
+                        disabled={step === 1 && (!formData.organizationName || !formData.regionCode)}
+                        className="flex items-center space-x-2 px-6 py-2 bg-orange-600 text-black font-bold text-xs uppercase tracking-widest rounded hover:bg-orange-500 disabled:bg-zinc-800 disabled:text-zinc-600 disabled:cursor-not-allowed transition-all"
+                    >
+                        <span>Next</span>
+                        <ArrowRight size={14} />
+                    </button>
+                ) : (
+                    <button 
+                        onClick={handleLaunch}
+                        disabled={isSaving} 
+                        className="flex items-center space-x-2 px-6 py-2 bg-green-600 text-black font-bold text-xs uppercase tracking-widest rounded hover:bg-green-500 transition-all shadow-lg disabled:opacity-50"
+                    >
+                        {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                        <span>{isSaving ? 'Launch' : 'Launch'}</span>
+                    </button>
+                )}
+            </div>
+        )}
       </div>
       
       <style>{`

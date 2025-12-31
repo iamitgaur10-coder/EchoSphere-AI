@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, TrendingUp, AlertTriangle, MessageSquare, ThumbsUp, ThumbsDown, Minus, Leaf, Download, FileText, Loader2, RefreshCw, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, TrendingUp, AlertTriangle, MessageSquare, ThumbsUp, ThumbsDown, Minus, Leaf, Download, FileText, Loader2, RefreshCw, Image as ImageIcon, Share2, Copy, Check } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Feedback, Organization } from '../types';
 import { generateExecutiveReport } from '../services/geminiService';
@@ -22,6 +22,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
   const [reportText, setReportText] = useState<string | null>(null);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isCopied, setIsCopied] = useState(false);
 
   // Load real data
   const loadData = async () => {
@@ -81,6 +82,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
 
   const refreshData = () => {
     loadData();
+  };
+
+  const handleCopyLink = () => {
+      if (!currentOrg) return;
+      const origin = window.location.origin;
+      const link = `${origin}/?org=${currentOrg.slug}`;
+      navigator.clipboard.writeText(link);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
   };
 
   // Aggregate data for charts
@@ -159,18 +169,31 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
              {isSupabaseConfigured() && (
                  <div className="flex items-center space-x-2 px-3 py-1 bg-green-900/20 border border-green-900/50 rounded-full">
                     <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                    <span className="text-[10px] text-green-500 font-bold uppercase tracking-wider">Live Feed</span>
+                    <span className="text-[10px] text-green-500 font-bold uppercase tracking-wider hidden sm:inline">Live Feed</span>
                  </div>
              )}
+             
+             {/* Share Button */}
+             {currentOrg && (
+                <button 
+                    onClick={handleCopyLink}
+                    className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-500 px-3 py-1.5 rounded transition-colors text-black text-xs font-bold uppercase tracking-wide"
+                    title="Copy Public Link"
+                >
+                    {isCopied ? <Check size={14} /> : <Share2 size={14} />}
+                    <span className="hidden sm:inline">{isCopied ? 'Copied' : 'Share Link'}</span>
+                </button>
+             )}
+
              <button onClick={refreshData} className="p-2 hover:bg-zinc-900 rounded text-zinc-500 hover:text-white transition-colors" title="Refresh Data">
                 <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
              </button>
              <button 
                 onClick={handleDownloadCSV}
-                className="flex items-center space-x-2 bg-zinc-900 hover:bg-zinc-800 px-3 py-1.5 rounded border border-zinc-700 transition-colors text-zinc-300 text-xs font-medium"
+                className="flex items-center space-x-2 bg-zinc-900 hover:bg-zinc-800 px-3 py-1.5 rounded border border-zinc-700 transition-colors text-zinc-300 text-xs font-medium hidden sm:flex"
              >
                 <Download size={14} />
-                <span>Export Data</span>
+                <span>Export</span>
              </button>
           </div>
         </div>

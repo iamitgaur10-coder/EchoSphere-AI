@@ -54,14 +54,32 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    const storedAccount = dataService.getAccount();
-    if (storedAccount) {
-      setAccount(storedAccount);
-    }
+    // 1. Initialize System Mode
     setSystemMode(dataService.isProduction() ? 'CLOUD' : 'LOCAL');
     
-    // Initialize Theme
+    // 2. Initialize Theme
     document.documentElement.classList.add('dark');
+
+    // 3. Initialize Data / Multi-tenancy from URL
+    const initApp = async () => {
+        const currentOrg = await dataService.getCurrentOrganization();
+        
+        if (currentOrg) {
+            // Map the Organization object back to AccountSetup structure for the LandingPage UI
+            const accountConfig: AccountSetup = {
+                organizationName: currentOrg.name,
+                regionCode: currentOrg.slug,
+                focusArea: currentOrg.focusArea,
+                center: currentOrg.center,
+                questions: [] // Questions are loaded dynamically usually, but basic setup is fine
+            };
+            setAccount(accountConfig);
+            
+            // Optional: If specific view requested in future, handle here
+        }
+    };
+    initApp();
+
   }, []);
 
   const toggleTheme = () => {
@@ -110,6 +128,7 @@ const App: React.FC = () => {
   };
 
   const handleProvision = (config: AccountSetup) => {
+    // Wizard complete
     dataService.saveAccount(config);
     setAccount(config);
     setCurrentView('admin');
@@ -124,7 +143,7 @@ const App: React.FC = () => {
         return (
           <PublicView 
             onBack={() => setCurrentView('landing')} 
-            showToast={(msg) => showToast(msg)} 
+            showToast={(msg, type) => showToast(msg, type)} 
             isDarkMode={isDarkMode}
           />
         );
