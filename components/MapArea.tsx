@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Box, Layers, Loader2 } from 'lucide-react';
 import { Location, Feedback } from '../types';
 
-declare var google: any;
+declare var L: any;
 
 interface MapAreaProps {
   feedbackList: Feedback[];
@@ -11,118 +11,154 @@ interface MapAreaProps {
 }
 
 // Default Center (New York City)
-const DEFAULT_CENTER = { lat: 40.7128, lng: -74.0060 };
+const DEFAULT_CENTER = [40.7128, -74.0060];
 
 const MapArea: React.FC<MapAreaProps> = ({ feedbackList, onMapClick, interactive = true }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [mapInstance, setMapInstance] = useState<any | null>(null);
-  const [is3DMode, setIs3DMode] = useState(false);
+  const [layers, setLayers] = useState<any | null>(null);
+  const [isSatellite, setIsSatellite] = useState(false);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const markersRef = useRef<any[]>([]);
 
-  // Initialize Map
+  // Initialize Leaflet Map
   useEffect(() => {
     if (!mapRef.current) return;
     
-    const checkGoogle = setInterval(() => {
-        if ((window as any).google) {
-            clearInterval(checkGoogle);
+    // Check for Leaflet global variable
+    const checkLeaflet = setInterval(() => {
+        if ((window as any).L) {
+            clearInterval(checkLeaflet);
             initMap();
         }
     }, 100);
     
-    return () => clearInterval(checkGoogle);
+    return () => clearInterval(checkLeaflet);
   }, []);
 
   const initMap = () => {
-      // Access google from global scope (declared as any) or window
-      if (!google) return;
+      if (mapInstance) return; // Already initialized
 
-      const map = new google.maps.Map(mapRef.current as HTMLElement, {
-          center: DEFAULT_CENTER,
-          zoom: 17, // High zoom for 3D effect
-          mapId: 'DEMO_MAP_ID', // Required for some advanced features
-          disableDefaultUI: false,
-          mapTypeId: 'satellite',
-          heading: 0,
-          tilt: 0,
+      const map = L.map(mapRef.current, {
+        center: DEFAULT_CENTER,
+        zoom: 16,
+        zoomControl: false
       });
 
-      map.addListener('click', (e: any) => {
+      // Define Layers
+      const streetLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+          subdomains: 'abcd',
+          maxZoom: 20
+      });
+
+      const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+          attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+      });
+
+      // Add default layer
+      streetLayer.addTo(map);
+
+      // Save layers for toggling
+      setLayers({ street: streetLayer, satellite: satelliteLayer });
+
+      // Click Handler
+      map.on('click', (e: any) => {
           if (!interactive) return;
-          const lat = e.latLng.lat();
-          const lng = e.latLng.lng();
-          // We treat Location type as {x: lng, y: lat} for Real Maps, 
-          // though types.ts says 0-100, we overload it here for the Real Map implementation
-          onMapClick({ x: lng, y: lat }); 
+          const { lat, lng } = e.latlng;
+          // Return as x (lng) and y (lat)
+          onMapClick({ x: lng, y: lat });
       });
 
       setMapInstance(map);
       setIsMapLoaded(true);
+
+      // Fix for Leaflet partial rendering issues on load
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 200);
   };
 
-  // Handle 3D Toggle
+  // Handle Layer Toggle
   useEffect(() => {
-      if (!mapInstance) return;
+      if (!mapInstance || !layers) return;
       
-      if (is3DMode) {
-          mapInstance.setTilt(45);
-          mapInstance.setHeading(90);
-          mapInstance.setMapTypeId('hybrid');
+      if (isSatellite) {
+          mapInstance.removeLayer(layers.street);
+          mapInstance.addLayer(layers.satellite);
       } else {
-          mapInstance.setTilt(0);
-          mapInstance.setHeading(0);
-          mapInstance.setMapTypeId('roadmap');
+          mapInstance.removeLayer(layers.satellite);
+          mapInstance.addLayer(layers.street);
       }
-  }, [is3DMode, mapInstance]);
+  }, [isSatellite, mapInstance, layers]);
 
   // Handle Markers
   useEffect(() => {
-      if (!mapInstance || !google) return;
+      if (!mapInstance || !L) return;
 
       // Clear existing markers
-      markersRef.current.forEach(m => m.setMap(null));
+      markersRef.current.forEach(m => m.remove());
       markersRef.current = [];
 
       // Add new markers
       feedbackList.forEach(fb => {
-          // Check if location is real geo (lat/lng) or legacy percentage
-          // If x is small (< 100) and y is small (< 100), it's percentage data from old mock.
-          // We map old mock data to NYC area for demo purposes if needed, or skip.
           let lat = fb.location.y;
           let lng = fb.location.x;
 
-          // Simple heuristic: if it looks like percentage, project it to NYC
+          // Legacy percent-based data support logic (simple projection)
           if (Math.abs(lat) <= 100 && Math.abs(lng) <= 100) {
-              lat = DEFAULT_CENTER.lat + (fb.location.y - 50) * 0.0001;
-              lng = DEFAULT_CENTER.lng + (fb.location.x - 50) * 0.0001;
+              lat = DEFAULT_CENTER[0] + (fb.location.y - 50) * 0.0001;
+              lng = DEFAULT_CENTER[1] + (fb.location.x - 50) * 0.0001;
           }
 
-          const marker = new google.maps.Marker({
-              position: { lat, lng },
-              map: mapInstance,
-              title: fb.category,
-              animation: google.maps.Animation.DROP,
-              // Color coding markers based on sentiment?
-              // Standard API markers are red, but we could use custom icons. 
-              // For MVP keeping standard.
-          });
+          // Custom Icon
+          const getMarkerColor = (sentiment: string) => {
+             if (sentiment === 'positive') return '#22c55e';
+             if (sentiment === 'negative') return '#ef4444';
+             return '#eab308';
+          };
           
-          // Add info window
-          const infoWindow = new google.maps.InfoWindow({
-              content: `
-                <div style="color: black; padding: 4px;">
-                    <h3 style="font-weight: bold;">${fb.category}</h3>
-                    <p>${fb.content}</p>
-                    <small>Sentiment: ${fb.sentiment}</small>
+          const iconHtml = `
+            <div style="
+              background-color: ${getMarkerColor(fb.sentiment)};
+              width: 24px;
+              height: 24px;
+              border-radius: 50%;
+              border: 2px solid white;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            "></div>
+          `;
+
+          const customIcon = L.divIcon({
+            html: iconHtml,
+            className: 'custom-marker',
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+          });
+
+          const marker = L.marker([lat, lng], { icon: customIcon }).addTo(mapInstance);
+          
+          // Popup
+          const popupContent = `
+            <div style="min-width: 200px; font-family: sans-serif;">
+                <div style="font-weight: bold; margin-bottom: 4px; color: #1e293b;">${fb.category}</div>
+                <div style="font-size: 13px; color: #475569; margin-bottom: 8px;">${fb.content}</div>
+                <div style="
+                    display: inline-block;
+                    padding: 2px 8px;
+                    border-radius: 9999px;
+                    font-size: 10px;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    background-color: ${fb.sentiment === 'positive' ? '#dcfce7' : fb.sentiment === 'negative' ? '#fee2e2' : '#fef9c3'};
+                    color: ${fb.sentiment === 'positive' ? '#166534' : fb.sentiment === 'negative' ? '#991b1b' : '#854d0e'};
+                ">
+                    ${fb.sentiment}
                 </div>
-              `
-          });
+            </div>
+          `;
 
-          marker.addListener('click', () => {
-              infoWindow.open(mapInstance, marker);
-          });
-
+          marker.bindPopup(popupContent);
           markersRef.current.push(marker);
       });
 
@@ -136,23 +172,23 @@ const MapArea: React.FC<MapAreaProps> = ({ feedbackList, onMapClick, interactive
           <div className="absolute inset-0 flex items-center justify-center bg-slate-100 z-10">
               <div className="flex flex-col items-center space-y-2">
                  <Loader2 className="animate-spin text-indigo-600" size={32} />
-                 <p className="text-sm text-slate-500">Connecting to Google Maps...</p>
+                 <p className="text-sm text-slate-500">Initializing Map...</p>
               </div>
           </div>
       )}
 
-      {/* 3D Toggle Control */}
+      {/* Layer Toggle Control */}
       {interactive && isMapLoaded && (
         <button 
-          onClick={(e) => { e.stopPropagation(); setIs3DMode(!is3DMode); }}
-          className="absolute top-4 right-16 z-20 bg-white/90 p-2 rounded-lg shadow-md hover:bg-white text-slate-700 font-medium text-xs flex items-center space-x-2 border border-slate-200"
+          onClick={(e) => { e.stopPropagation(); setIsSatellite(!isSatellite); }}
+          className="absolute top-4 right-4 z-[500] bg-white/90 p-2 rounded-lg shadow-md hover:bg-white text-slate-700 font-medium text-xs flex items-center space-x-2 border border-slate-200"
         >
-          {is3DMode ? <Layers size={16} /> : <Box size={16} />}
-          <span>{is3DMode ? "2D Map" : "3D Mode"}</span>
+          {isSatellite ? <Layers size={16} /> : <Box size={16} />}
+          <span>{isSatellite ? "Street View" : "Satellite"}</span>
         </button>
       )}
 
-      <div ref={mapRef} className="w-full h-full" />
+      <div ref={mapRef} className="w-full h-full z-0" />
     </div>
   );
 };
