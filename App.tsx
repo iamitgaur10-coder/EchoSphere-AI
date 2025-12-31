@@ -252,6 +252,10 @@ const App: React.FC = () => {
                     setIsAuthenticated(true);
                     setShowLogin(false);
                     showToast("Verified & Logged In Successfully!");
+                } else if (event === 'SIGNED_OUT') {
+                    setIsAuthenticated(false);
+                    setCurrentView('landing');
+                    showToast("Logged out successfully");
                 }
             });
             
@@ -327,6 +331,13 @@ const App: React.FC = () => {
     }
   };
 
+  const handleSignOut = async () => {
+    await authService.signOut();
+    setIsAuthenticated(false);
+    setCurrentView('landing');
+    showToast("Logged out successfully");
+  };
+
   const handleProvision = (config: AccountSetup) => {
     dataService.saveAccount(config);
     setAccount(config);
@@ -356,7 +367,7 @@ const App: React.FC = () => {
           />
         );
       case 'admin':
-        return <AdminDashboard onBack={() => setCurrentView('landing')} />;
+        return <AdminDashboard onBack={() => setCurrentView('landing')} onSignOut={handleSignOut} />;
       case 'landing':
       default:
         return (
@@ -365,6 +376,7 @@ const App: React.FC = () => {
             onEnterAdmin={() => handleProtectedAction('admin')}
             onEnterWizard={() => handleProtectedAction('wizard')}
             account={account}
+            isDarkMode={isDarkMode}
           />
         );
     }

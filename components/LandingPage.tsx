@@ -1,17 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { Globe2, ArrowRight, MapPin, BarChart3, Radio, Scan, Zap, Activity, Hexagon, Fingerprint, MousePointer2, Database, Network, Cpu, Share2, Shield, Truck, Trees, Siren, Layers, Play, Mic, PenTool, LayoutDashboard, Building2 } from 'lucide-react';
-import { AccountSetup, Organization } from '../types';
+import { AccountSetup, Organization, Feedback } from '../types';
 import { APP_CONFIG } from '../config/constants';
 import { dataService } from '../services/dataService';
+import MapArea from './MapArea';
 
 interface LandingPageProps {
   onEnterPublic: () => void;
   onEnterAdmin: () => void;
   onEnterWizard: () => void;
   account: AccountSetup | null;
+  isDarkMode?: boolean;
 }
 
-const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, onEnterWizard, account }) => {
+const LA_CENTER = { x: -118.2437, y: 34.0522 };
+
+// Mock data for the visual map effect
+const VISUAL_FEEDBACK: Feedback[] = [
+    { id: 'v1', location: { x: -118.25, y: 34.05 }, content: 'Traffic light sync issue', sentiment: 'negative', category: 'Traffic', timestamp: new Date(), votes: 0 },
+    { id: 'v2', location: { x: -118.24, y: 34.06 }, content: 'Park clean up needed', sentiment: 'neutral', category: 'Sanitation', timestamp: new Date(), votes: 0 },
+    { id: 'v3', location: { x: -118.235, y: 34.045 }, content: 'Great new bike lane', sentiment: 'positive', category: 'Infrastructure', timestamp: new Date(), votes: 0 },
+    { id: 'v4', location: { x: -118.26, y: 34.055 }, content: 'Suspicious activity', sentiment: 'negative', category: 'Safety', timestamp: new Date(), votes: 0 },
+];
+
+const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, onEnterWizard, account, isDarkMode = false }) => {
   const [tutorialMode, setTutorialMode] = useState<'citizen' | 'admin'>('citizen');
   const [availableOrgs, setAvailableOrgs] = useState<Organization[]>([]);
   const [showOrgList, setShowOrgList] = useState(false);
@@ -195,40 +207,32 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
                 <div className="absolute inset-0 bg-white dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl transform rotate-y-12 rotate-x-6 hover:rotate-y-0 hover:rotate-x-0 transition-transform duration-1000 overflow-hidden group">
                     
                     {/* Fake Header */}
-                    <div className="h-10 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 flex items-center px-4 space-x-2">
+                    <div className="h-10 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 flex items-center px-4 space-x-2 relative z-20">
                         <div className="w-3 h-3 rounded-full bg-red-500"></div>
                         <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
                         <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                        <div className="flex-1 text-center font-mono text-xs text-zinc-400 dark:text-zinc-600">Live Map View</div>
+                        <div className="flex-1 text-center font-mono text-xs text-zinc-400 dark:text-zinc-600">Live Map View (LA)</div>
                     </div>
 
-                    {/* Fake Map Content */}
+                    {/* Map Content */}
                     <div className="relative h-full bg-zinc-100 dark:bg-zinc-900 overflow-hidden">
-                         {/* Map Image Underlay */}
-                        <img 
-                            src="https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?q=80&w=2000&auto=format&fit=crop"
-                            className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500 opacity-50 mix-blend-multiply grayscale dark:opacity-20 dark:mix-blend-screen"
-                            alt="City Map"
-                        />
                         
-                        {/* Map Grid */}
-                        <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle, #f97316 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
-                        
-                        {/* Data Points */}
-                        <div className="absolute top-1/4 left-1/4">
-                            <div className="relative">
-                                <div className="w-12 h-12 bg-orange-500/20 rounded-full animate-ping absolute -left-4 -top-4"></div>
-                                <div className="w-4 h-4 bg-orange-500 rounded-full border-2 border-white relative z-10 shadow-lg"></div>
-                                <div className="absolute left-8 top-0 bg-white/90 dark:bg-zinc-950/90 text-xs p-3 rounded-lg border-l-4 border-orange-500 whitespace-nowrap text-zinc-900 dark:text-orange-100 shadow-xl backdrop-blur-md">
-                                    <span className="text-zinc-500 block mb-1 text-[10px] uppercase font-bold">New Report</span>
-                                    Pothole reported on Main St. <br/>
-                                    <span className="text-red-600 dark:text-red-400 font-bold text-[10px] uppercase">High Priority</span>
-                                </div>
-                            </div>
-                        </div>
+                         {/* Live Leaflet Map */}
+                         <div className="absolute inset-0 w-full h-full z-10">
+                            <MapArea 
+                                feedbackList={VISUAL_FEEDBACK}
+                                onMapClick={() => {}}
+                                interactive={false}
+                                center={LA_CENTER}
+                                isDarkMode={isDarkMode}
+                            />
+                         </div>
 
+                         {/* Subtle Grid Overlay */}
+                        <div className="absolute inset-0 pointer-events-none z-20 opacity-10 mix-blend-overlay" style={{ backgroundImage: 'radial-gradient(circle, #f97316 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
+                        
                         {/* Floating UI Elements inside 3D */}
-                        <div className="absolute bottom-6 left-6 right-6 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-lg border border-zinc-200 dark:border-zinc-800 p-4 rounded-lg text-sm text-zinc-600 dark:text-zinc-400 shadow-xl">
+                        <div className="absolute bottom-6 left-6 right-6 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-lg border border-zinc-200 dark:border-zinc-800 p-4 rounded-lg text-sm text-zinc-600 dark:text-zinc-400 shadow-xl z-30">
                             <div className="flex justify-between mb-2">
                                 <span className="text-zinc-900 dark:text-white font-medium">AI Analysis</span>
                                 <span className="text-green-600 font-bold text-xs flex items-center gap-1"><span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> ACTIVE</span>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, TrendingUp, AlertTriangle, MessageSquare, ThumbsUp, ThumbsDown, Minus, Leaf, Download, FileText, Loader2, RefreshCw, Image as ImageIcon, Share2, Copy, Check, ChevronDown } from 'lucide-react';
+import { ArrowLeft, TrendingUp, AlertTriangle, MessageSquare, ThumbsUp, ThumbsDown, Minus, Leaf, Download, FileText, Loader2, RefreshCw, Image as ImageIcon, Share2, Copy, Check, ChevronDown, LogOut } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Feedback, Organization } from '../types';
 import { generateExecutiveReport } from '../services/geminiService';
@@ -14,11 +14,12 @@ const COLORS = {
 
 interface AdminDashboardProps {
   onBack: () => void;
+  onSignOut: () => void;
 }
 
 const PAGE_SIZE = 20;
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onSignOut }) => {
   const [data, setData] = useState<Feedback[]>([]);
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
   const [reportText, setReportText] = useState<string | null>(null);
@@ -236,6 +237,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
              >
                 <Download size={14} />
                 <span>Export</span>
+             </button>
+             
+             <div className="h-6 w-[1px] bg-zinc-200 dark:bg-zinc-800 mx-2"></div>
+             
+             <button 
+                onClick={onSignOut}
+                className="flex items-center space-x-2 text-zinc-500 hover:text-red-600 dark:hover:text-red-500 transition-colors px-2 py-1.5"
+                title="Sign Out"
+             >
+                 <LogOut size={16} />
+                 <span className="hidden sm:inline text-xs font-bold uppercase">Log Out</span>
              </button>
           </div>
         </div>
