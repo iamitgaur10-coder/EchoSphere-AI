@@ -1,12 +1,27 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { AnalysisResponse, Feedback } from '../types';
 
-// The API key must be obtained exclusively from the environment variable.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+// Helper to reliably get env vars
+const getEnvVar = (key: string) => {
+  // @ts-ignore
+  if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key]) {
+    // @ts-ignore
+    return import.meta.env[key];
+  }
+  if (typeof process !== 'undefined' && process.env && process.env[key]) {
+    return process.env[key];
+  }
+  return '';
+};
+
+// Check for standard API_KEY or VITE_ prefixed version
+const apiKey = getEnvVar('API_KEY') || getEnvVar('VITE_API_KEY');
+
+const ai = new GoogleGenAI({ apiKey: apiKey });
 
 export const analyzeFeedbackContent = async (text: string, imageBase64?: string): Promise<AnalysisResponse> => {
   try {
-    if (!process.env.API_KEY) throw new Error("API Key is missing");
+    if (!apiKey) throw new Error("API Key is missing. Please set VITE_API_KEY or API_KEY in your environment.");
 
     const parts: any[] = [];
     
@@ -76,7 +91,7 @@ export const analyzeFeedbackContent = async (text: string, imageBase64?: string)
 
 export const generateSurveyQuestions = async (orgName: string, focusArea: string): Promise<string[]> => {
   try {
-    if (!process.env.API_KEY) throw new Error("API Key is missing");
+    if (!apiKey) throw new Error("API Key is missing");
 
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
@@ -118,7 +133,7 @@ export const generateSurveyQuestions = async (orgName: string, focusArea: string
 
 export const generateExecutiveReport = async (feedbackList: Feedback[]): Promise<string> => {
   try {
-    if (!process.env.API_KEY) throw new Error("API Key is missing");
+    if (!apiKey) throw new Error("API Key is missing");
 
     const context = feedbackList.map(f => `- [${f.category}] ${f.content} (Sentiment: ${f.sentiment})`).join('\n');
     
