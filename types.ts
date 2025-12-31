@@ -1,8 +1,8 @@
 export type ViewState = 'landing' | 'public' | 'admin' | 'wizard';
 
 export interface Location {
-  x: number; // Percentage 0-100
-  y: number; // Percentage 0-100
+  x: number; // Longitude (e.g. -74.0060)
+  y: number; // Latitude (e.g. 40.7128)
 }
 
 export interface Feedback {

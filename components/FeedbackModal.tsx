@@ -102,10 +102,10 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="flex items-center space-x-2 text-sm text-slate-500 bg-slate-50 p-3 rounded-lg">
             <span className="font-mono text-xs bg-slate-200 px-2 py-1 rounded">
-              LAT: {location.y.toFixed(2)}%
+              LAT: {location.y.toFixed(4)}
             </span>
             <span className="font-mono text-xs bg-slate-200 px-2 py-1 rounded">
-              LNG: {location.x.toFixed(2)}%
+              LNG: {location.x.toFixed(4)}
             </span>
             <span>Pin Location</span>
           </div>

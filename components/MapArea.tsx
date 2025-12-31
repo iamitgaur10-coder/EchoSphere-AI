@@ -8,20 +8,33 @@ interface MapAreaProps {
   feedbackList: Feedback[];
   onMapClick: (loc: Location) => void;
   interactive?: boolean;
+  center?: Location; // Optional override for map center
+  showSelectionMarker?: boolean; // If true, show a pin at the 'center' location
 }
 
 // Default Center (New York City) - Fallback
 const DEFAULT_CENTER = [40.7128, -74.0060];
 
-const MapArea: React.FC<MapAreaProps> = ({ feedbackList, onMapClick, interactive = true }) => {
+const MapArea: React.FC<MapAreaProps> = ({ 
+  feedbackList, 
+  onMapClick, 
+  interactive = true, 
+  center,
+  showSelectionMarker = false
+}) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [mapInstance, setMapInstance] = useState<any | null>(null);
   const [layers, setLayers] = useState<any | null>(null);
   const [isSatellite, setIsSatellite] = useState(false);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
+  
   const userLocationMarkerRef = useRef<any | null>(null);
+  const selectionMarkerRef = useRef<any | null>(null);
   const markersRef = useRef<any[]>([]);
+
+  // Determine initial center
+  const initialCenter = center ? [center.y, center.x] : DEFAULT_CENTER;
 
   // Initialize Leaflet Map
   useEffect(() => {
@@ -38,11 +51,53 @@ const MapArea: React.FC<MapAreaProps> = ({ feedbackList, onMapClick, interactive
     return () => clearInterval(checkLeaflet);
   }, []);
 
+  // Effect to update view if center prop changes
+  useEffect(() => {
+    if (mapInstance && center) {
+        // Fly to the new center smoothly
+        mapInstance.flyTo([center.y, center.x], 13);
+    }
+  }, [center, mapInstance]);
+
+  // Handle Selection Marker (for Wizard)
+  useEffect(() => {
+    if (!mapInstance || !L) return;
+
+    if (showSelectionMarker && center) {
+        if (selectionMarkerRef.current) {
+            selectionMarkerRef.current.remove();
+        }
+        
+        // Create a distinct marker for the "Tenant Center"
+        const centerIcon = L.divIcon({
+            html: `
+                <div style="
+                    color: #4f46e5; 
+                    filter: drop-shadow(0 4px 3px rgb(0 0 0 / 0.3));
+                ">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+                        <circle cx="12" cy="10" r="3" fill="white"/>
+                    </svg>
+                </div>
+            `,
+            className: 'center-pin-marker',
+            iconSize: [40, 40],
+            iconAnchor: [20, 40]
+        });
+
+        selectionMarkerRef.current = L.marker([center.y, center.x], { icon: centerIcon }).addTo(mapInstance);
+    } else if (selectionMarkerRef.current) {
+        selectionMarkerRef.current.remove();
+        selectionMarkerRef.current = null;
+    }
+  }, [center, showSelectionMarker, mapInstance]);
+
   const initMap = () => {
       if (mapInstance) return; // Already initialized
 
       const map = L.map(mapRef.current, {
-        center: DEFAULT_CENTER,
+        center: initialCenter,
         zoom: 13, // Start slightly zoomed out
         zoomControl: false
       });
@@ -105,8 +160,8 @@ const MapArea: React.FC<MapAreaProps> = ({ feedbackList, onMapClick, interactive
       // Fix for Leaflet partial rendering issues on load
       setTimeout(() => {
         map.invalidateSize();
-        // Auto-locate on load if interactive
-        if (interactive) {
+        // Only auto-locate if we are using default center (no specific tenant center provided) and interactive
+        if (interactive && !center) {
             map.locate({ setView: true, maxZoom: 16 });
         }
       }, 500);

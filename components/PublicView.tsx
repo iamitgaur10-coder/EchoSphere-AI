@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Plus } from 'lucide-react';
 import MapArea from './MapArea';
 import FeedbackModal from './FeedbackModal';
-import { Feedback, Location } from '../types';
+import { Feedback, Location, AccountSetup } from '../types';
 import { dataService } from '../services/dataService';
 
 interface PublicViewProps {
@@ -11,11 +11,16 @@ interface PublicViewProps {
 
 const PublicView: React.FC<PublicViewProps> = ({ onBack }) => {
   const [feedbackList, setFeedbackList] = useState<Feedback[]>([]);
+  const [account, setAccount] = useState<AccountSetup | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
 
   // Load data from "backend" (localStorage) on mount
   useEffect(() => {
     setFeedbackList(dataService.getFeedback());
+    const storedAccount = dataService.getAccount();
+    if (storedAccount) {
+        setAccount(storedAccount);
+    }
   }, []);
 
   const handleMapClick = (loc: Location) => {
@@ -56,7 +61,8 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack }) => {
       <div className="flex-1 relative z-0">
         <MapArea 
           feedbackList={feedbackList} 
-          onMapClick={handleMapClick} 
+          onMapClick={handleMapClick}
+          center={account?.center} // Pass the tenant's configured region center
         />
         
         {/* Helper Badge */}

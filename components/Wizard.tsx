@@ -16,7 +16,7 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel }) => {
     organizationName: '',
     regionCode: '',
     focusArea: 'Urban Development',
-    center: { x: 50, y: 50 },
+    center: { x: -74.0060, y: 40.7128 }, // Default to NYC (Real Geo Coords)
     questions: []
   });
 
@@ -75,28 +75,19 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel }) => {
 
   const renderStep2 = () => (
     <div className="space-y-4 animate-fade-in-up h-[400px] flex flex-col">
-      <p className="text-sm text-slate-600">Click on the map to define the center of your engagement zone.</p>
+      <div className="flex justify-between items-center">
+        <p className="text-sm text-slate-600">Click on the map to define the center of your engagement zone.</p>
+        <div className="text-xs font-mono text-slate-400">
+            {formData.center.y.toFixed(4)}, {formData.center.x.toFixed(4)}
+        </div>
+      </div>
       <div className="flex-1 relative rounded-lg overflow-hidden border border-slate-300">
         <MapArea
           feedbackList={[]}
           onMapClick={(loc) => setFormData({ ...formData, center: loc })}
+          center={formData.center}
+          showSelectionMarker={true}
         />
-        {/* Simulating the polygon overlay */}
-        <div 
-            className="absolute border-4 border-indigo-500/30 bg-indigo-500/10 rounded-full pointer-events-none transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300"
-            style={{ 
-                left: `${formData.center.x}%`, 
-                top: `${formData.center.y}%`,
-                width: '30%',
-                height: '40%'
-            }}
-        />
-        <div 
-            className="absolute transform -translate-x-1/2 -translate-y-full pointer-events-none"
-            style={{ left: `${formData.center.x}%`, top: `${formData.center.y}%` }}
-        >
-            <MapPin className="text-indigo-600 drop-shadow-md" size={40} fill="currentColor" />
-        </div>
       </div>
     </div>
   );
