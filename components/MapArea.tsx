@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Layers, Loader2, Locate, Navigation } from 'lucide-react';
+import { Box, Layers, Loader2, Locate, Navigation, Search, X } from 'lucide-react';
 import { Location, Feedback } from '../types';
+import { searchLocation } from '../services/geoService';
 
 declare var L: any;
 
@@ -28,6 +29,11 @@ const MapArea: React.FC<MapAreaProps> = ({
   const [isSatellite, setIsSatellite] = useState(false);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
+  
+  // Search State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState(false);
   
   const userLocationMarkerRef = useRef<any | null>(null);
   const selectionMarkerRef = useRef<any | null>(null);
@@ -174,6 +180,26 @@ const MapArea: React.FC<MapAreaProps> = ({
     mapInstance.locate({ setView: true, maxZoom: 16 });
   };
 
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!searchQuery.trim() || !mapInstance) return;
+
+    setIsSearching(true);
+    setSearchError(false);
+    
+    const result = await searchLocation(searchQuery);
+    
+    if (result) {
+        mapInstance.flyTo([result.lat, result.lon], 14);
+        // Optional: If this is the Wizard, we might want to auto-select this point? 
+        // For now, we just fly there and let the user click.
+    } else {
+        setSearchError(true);
+    }
+    setIsSearching(false);
+  };
+
   // Handle Layer Toggle
   useEffect(() => {
       if (!mapInstance || !layers) return;
@@ -202,7 +228,6 @@ const MapArea: React.FC<MapAreaProps> = ({
           let lng = fb.location.x;
 
           // Legacy percent-based data support logic (simple projection fallback)
-          // Only applies if coordinates look like percentages (0-100)
           if (Math.abs(lat) <= 100 && Math.abs(lng) <= 100) {
               lat = DEFAULT_CENTER[0] + (fb.location.y - 50) * 0.0001;
               lng = DEFAULT_CENTER[1] + (fb.location.x - 50) * 0.0001;
@@ -281,28 +306,60 @@ const MapArea: React.FC<MapAreaProps> = ({
           </div>
       )}
 
-      {/* Map Controls */}
+      {/* Interactive Controls Overlay */}
       {interactive && isMapLoaded && (
-        <div className="absolute top-4 right-4 z-[500] flex flex-col space-y-2">
-            
-            {/* Locate Me */}
-            <button 
-                onClick={handleManualLocate}
-                className="bg-white/90 p-2.5 rounded-lg shadow-md hover:bg-white text-slate-700 hover:text-indigo-600 transition-colors border border-slate-200"
-                title="Use My Location"
-            >
-                {isLocating ? <Loader2 size={20} className="animate-spin" /> : <Navigation size={20} className={userLocationMarkerRef.current ? "fill-indigo-500 text-indigo-600" : ""} />}
-            </button>
+        <>
+            {/* Search Bar (Top Center/Left) */}
+            <div className="absolute top-4 left-4 right-16 md:right-auto md:w-80 z-[500]">
+                <form onSubmit={handleSearch} className="relative shadow-md rounded-lg">
+                    <input 
+                        type="text" 
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search city, street..."
+                        className={`w-full p-3 pl-10 pr-10 rounded-lg outline-none border transition-all ${searchError ? 'border-red-400 bg-red-50 text-red-900 placeholder-red-400' : 'border-white bg-white/90 focus:bg-white text-slate-800'}`}
+                    />
+                    <div className="absolute left-3 top-3 text-slate-400">
+                        <Search size={18} />
+                    </div>
+                    {searchQuery && (
+                        <button 
+                            type="button"
+                            onClick={() => { setSearchQuery(''); setSearchError(false); }}
+                            className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
+                        >
+                            <X size={16} />
+                        </button>
+                    )}
+                    {isSearching && (
+                        <div className="absolute right-10 top-3">
+                             <Loader2 size={16} className="animate-spin text-indigo-500" />
+                        </div>
+                    )}
+                </form>
+            </div>
 
-            {/* View Toggle */}
-            <button 
-                onClick={(e) => { e.stopPropagation(); setIsSatellite(!isSatellite); }}
-                className="bg-white/90 p-2.5 rounded-lg shadow-md hover:bg-white text-slate-700 hover:text-indigo-600 transition-colors border border-slate-200"
-                title="Toggle Satellite View"
-            >
-                {isSatellite ? <Layers size={20} /> : <Box size={20} />}
-            </button>
-        </div>
+            {/* Map Tools (Top Right) */}
+            <div className="absolute top-4 right-4 z-[500] flex flex-col space-y-2">
+                {/* Locate Me */}
+                <button 
+                    onClick={handleManualLocate}
+                    className="bg-white/90 p-2.5 rounded-lg shadow-md hover:bg-white text-slate-700 hover:text-indigo-600 transition-colors border border-slate-200"
+                    title="Use My Location"
+                >
+                    {isLocating ? <Loader2 size={20} className="animate-spin" /> : <Navigation size={20} className={userLocationMarkerRef.current ? "fill-indigo-500 text-indigo-600" : ""} />}
+                </button>
+
+                {/* View Toggle */}
+                <button 
+                    onClick={(e) => { e.stopPropagation(); setIsSatellite(!isSatellite); }}
+                    className="bg-white/90 p-2.5 rounded-lg shadow-md hover:bg-white text-slate-700 hover:text-indigo-600 transition-colors border border-slate-200"
+                    title="Toggle Satellite View"
+                >
+                    {isSatellite ? <Layers size={20} /> : <Box size={20} />}
+                </button>
+            </div>
+        </>
       )}
 
       <div ref={mapRef} className="w-full h-full z-0" />

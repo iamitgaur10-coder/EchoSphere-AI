@@ -1,10 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, MapPin, Globe2, Sparkles, Building2, Lock, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Layout, MapPin, Globe2, Sparkles, Building2, Lock, ArrowRight, ShieldCheck, X, CheckCircle, AlertCircle } from 'lucide-react';
 import PublicView from './components/PublicView';
 import AdminDashboard from './components/AdminDashboard';
 import Wizard from './components/Wizard';
 import { ViewState, AccountSetup } from './types';
 import { dataService } from './services/dataService';
+
+// -- Toast Component --
+interface ToastProps {
+  message: string;
+  type: 'success' | 'error';
+  onClose: () => void;
+}
+const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
+    useEffect(() => {
+        const timer = setTimeout(onClose, 4000);
+        return () => clearTimeout(timer);
+    }, [onClose]);
+
+    return (
+        <div className={`fixed bottom-6 right-6 z-[9999] flex items-center space-x-3 px-6 py-4 rounded-xl shadow-2xl backdrop-blur-md animate-fade-in-up transition-all ${type === 'success' ? 'bg-slate-900/90 text-white border border-green-500/30' : 'bg-red-500/90 text-white border border-red-400/30'}`}>
+            {type === 'success' ? <CheckCircle size={24} className="text-green-400" /> : <AlertCircle size={24} className="text-white" />}
+            <p className="font-medium">{message}</p>
+            <button onClick={onClose} className="ml-4 opacity-70 hover:opacity-100"><X size={16} /></button>
+        </div>
+    );
+};
+// --------------------
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('landing');
@@ -15,6 +37,13 @@ const App: React.FC = () => {
   const [pendingView, setPendingView] = useState<ViewState>('landing');
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Toast State
+  const [toast, setToast] = useState<{msg: string, type: 'success' | 'error'} | null>(null);
+
+  const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
+      setToast({ msg, type });
+  };
 
   // Load account from "backend" on start
   useEffect(() => {
@@ -40,8 +69,9 @@ const App: React.FC = () => {
         setIsAuthenticated(true);
         setShowLogin(false);
         setCurrentView(pendingView);
+        showToast("Authenticated as Administrator");
     } else {
-        alert("Invalid Password (Try 'admin')");
+        showToast("Invalid Password (Try 'admin')", 'error');
     }
   };
 
@@ -51,6 +81,7 @@ const App: React.FC = () => {
     setAccount(config);
     // After provisioning, go to Admin to see the "dashboard" for this new tenant
     setCurrentView('admin');
+    showToast(`Tenant "${config.organizationName}" provisioned successfully!`);
   };
 
   const renderView = () => {
@@ -58,7 +89,7 @@ const App: React.FC = () => {
       case 'wizard':
         return <Wizard onComplete={handleProvision} onCancel={() => setCurrentView('landing')} />;
       case 'public':
-        return <PublicView onBack={() => setCurrentView('landing')} />;
+        return <PublicView onBack={() => setCurrentView('landing')} showToast={(msg) => showToast(msg)} />;
       case 'admin':
         return <AdminDashboard onBack={() => setCurrentView('landing')} />;
       case 'landing':
@@ -200,7 +231,12 @@ const App: React.FC = () => {
     }
   };
 
-  return <>{renderView()}</>;
+  return (
+    <>
+        {renderView()}
+        {toast && <Toast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
+    </>
+  );
 };
 
 export default App;

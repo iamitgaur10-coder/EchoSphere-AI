@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Loader2, Send, Mic, MicOff, Image as ImageIcon, Video, Paperclip, User } from 'lucide-react';
+import { X, Loader2, Send, Mic, MicOff, Image as ImageIcon, Video, Paperclip, User, Trash2 } from 'lucide-react';
 import { analyzeFeedbackContent } from '../services/geminiService';
 import { Location, Feedback } from '../types';
 
@@ -162,39 +162,57 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
           {/* Multimodal Inputs */}
           <div>
             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                Add Evidence
+                Evidence
             </label>
-            <div className="flex gap-3">
-                <button 
-                    type="button"
-                    onClick={() => toggleAttachment('image')}
-                    className={`flex-1 flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed transition-all ${
-                        attachments.includes('image') 
-                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700' 
-                        : 'border-slate-200 hover:border-slate-300 text-slate-400 hover:text-slate-600'
-                    }`}
-                >
-                    <ImageIcon size={24} className="mb-1" />
-                    <span className="text-xs font-medium">Add Photo</span>
-                </button>
-                <button 
-                    type="button"
-                    onClick={() => toggleAttachment('video')}
-                    className={`flex-1 flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed transition-all ${
-                        attachments.includes('video') 
-                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700' 
-                        : 'border-slate-200 hover:border-slate-300 text-slate-400 hover:text-slate-600'
-                    }`}
-                >
-                    <Video size={24} className="mb-1" />
-                    <span className="text-xs font-medium">Add Video</span>
-                </button>
+            
+            {/* Simulation of Files */}
+            <div className="space-y-3">
+                {attachments.length > 0 && (
+                    <div className="grid grid-cols-2 gap-2">
+                        {attachments.includes('image') && (
+                            <div className="relative group bg-slate-100 rounded-lg overflow-hidden border border-slate-200 h-24 flex items-center justify-center">
+                                {/* Simulated Thumbnail */}
+                                <div className="absolute inset-0 bg-gradient-to-tr from-indigo-100 to-purple-100"></div>
+                                <ImageIcon className="text-indigo-300 relative z-10" size={32} />
+                                <button type="button" onClick={() => toggleAttachment('image')} className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-20"><X size={12} /></button>
+                                <span className="absolute bottom-1 left-2 text-[10px] font-mono text-slate-500 z-10">photo_01.jpg</span>
+                            </div>
+                        )}
+                        {attachments.includes('video') && (
+                            <div className="relative group bg-slate-100 rounded-lg overflow-hidden border border-slate-200 h-24 flex items-center justify-center">
+                                {/* Simulated Thumbnail */}
+                                <div className="absolute inset-0 bg-gradient-to-tr from-cyan-100 to-blue-100"></div>
+                                <Video className="text-cyan-300 relative z-10" size={32} />
+                                <button type="button" onClick={() => toggleAttachment('video')} className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-20"><X size={12} /></button>
+                                <span className="absolute bottom-1 left-2 text-[10px] font-mono text-slate-500 z-10">video_clip.mp4</span>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                <div className="flex gap-3">
+                    {!attachments.includes('image') && (
+                        <button 
+                            type="button"
+                            onClick={() => toggleAttachment('image')}
+                            className="flex-1 flex items-center justify-center p-3 rounded-xl border border-dashed border-slate-300 hover:border-indigo-400 hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 transition-all"
+                        >
+                            <ImageIcon size={18} className="mr-2" />
+                            <span className="text-xs font-medium">Upload Photo</span>
+                        </button>
+                    )}
+                    {!attachments.includes('video') && (
+                        <button 
+                            type="button"
+                            onClick={() => toggleAttachment('video')}
+                            className="flex-1 flex items-center justify-center p-3 rounded-xl border border-dashed border-slate-300 hover:border-indigo-400 hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 transition-all"
+                        >
+                            <Video size={18} className="mr-2" />
+                            <span className="text-xs font-medium">Upload Video</span>
+                        </button>
+                    )}
+                </div>
             </div>
-            {attachments.length > 0 && (
-                 <p className="mt-2 text-xs text-green-600 flex items-center">
-                    <Paperclip size={12} className="mr-1" /> {attachments.length} attachment(s) ready to upload
-                 </p>
-            )}
           </div>
 
           <div className="pt-2">

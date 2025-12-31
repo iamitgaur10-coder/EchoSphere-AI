@@ -7,9 +7,10 @@ import { dataService } from '../services/dataService';
 
 interface PublicViewProps {
   onBack: () => void;
+  showToast?: (msg: string) => void;
 }
 
-const PublicView: React.FC<PublicViewProps> = ({ onBack }) => {
+const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast }) => {
   const [feedbackList, setFeedbackList] = useState<Feedback[]>([]);
   const [account, setAccount] = useState<AccountSetup | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
@@ -32,6 +33,7 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack }) => {
     const updatedList = dataService.saveFeedback(newFeedback);
     setFeedbackList(updatedList);
     setSelectedLocation(null);
+    if (showToast) showToast("Feedback submitted successfully! AI analysis complete.");
   };
 
   return (
