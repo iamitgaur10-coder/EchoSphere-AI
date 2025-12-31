@@ -7,7 +7,10 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 // FALLBACK KEYS (As provided by user for specific deployment)
 // In production, these should ideally be environment variables.
 const FALLBACK_ENV = {
+    // This is the URL you provided:
     VITE_SUPABASE_URL: "https://hnaihxmfrnzsoblcudhe.supabase.co",
+    
+    // Ensure these keys are also correct from your Supabase Dashboard > Settings > API
     VITE_SUPABASE_ANON_KEY: "sb_publishable_wOamHu58UreJnCTz5tHfUw_bmG7_M03",
     VITE_API_KEY: "AIzaSyArN7otlgUTAp-Bf_QPM9dDCnAHp2lOtsc"
 };
