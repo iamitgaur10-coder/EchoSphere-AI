@@ -4,6 +4,14 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 // CONFIGURATION
 // ------------------------------------------------------------------
 
+// FALLBACK KEYS (As provided by user for specific deployment)
+// In production, these should ideally be environment variables.
+const FALLBACK_ENV = {
+    VITE_SUPABASE_URL: "https://hnaihxmfrnzsoblcudhe.supabase.co",
+    VITE_SUPABASE_ANON_KEY: "sb_publishable_wOamHu58UreJnCTz5tHfUw_bmG7_M03",
+    VITE_API_KEY: "AIzaSyArN7otlgUTAp-Bf_QPM9dDCnAHp2lOtsc"
+};
+
 // Helper to clean values (remove accidental quotes from build tools)
 const clean = (val: string | undefined) => {
     if (!val) return '';
@@ -11,13 +19,12 @@ const clean = (val: string | undefined) => {
 };
 
 /**
- * reliableGet: Tries to fetch config from Vite Environment or LocalStorage.
- * Note: In Vite, import.meta.env.VITE_* is replaced statically at build time.
+ * reliableGet: Tries to fetch config from Vite Environment, Process Env, LocalStorage, or Fallback.
  */
 const reliableGet = (key: string) => {
     let value = '';
 
-    // 1. Direct Vite Env Access
+    // 1. Direct Vite Env Access (Static Replacement)
     try {
         if (key === 'VITE_SUPABASE_URL') {
             // @ts-ignore
@@ -31,7 +38,7 @@ const reliableGet = (key: string) => {
         }
     } catch (e) {}
 
-    // 2. Fallback to process.env (Standard Node/System)
+    // 2. Fallback to process.env
     if (!value) {
         try {
             // @ts-ignore
@@ -42,9 +49,14 @@ const reliableGet = (key: string) => {
         } catch (e) {}
     }
 
-    // 3. Fallback to LocalStorage (Setup Wizard)
+    // 3. Fallback to LocalStorage
     if (!value && typeof window !== 'undefined') {
         value = localStorage.getItem(key) || '';
+    }
+
+    // 4. Fallback to Hardcoded (Last Resort)
+    if (!value && FALLBACK_ENV[key as keyof typeof FALLBACK_ENV]) {
+        value = FALLBACK_ENV[key as keyof typeof FALLBACK_ENV];
     }
 
     return clean(value);
@@ -65,6 +77,8 @@ if (supabaseUrl && supabaseKey && supabaseUrl !== 'undefined') {
 }
 
 export const isSupabaseConfigured = () => !!supabase;
+
+export const getGeminiApiKey = () => reliableGet('VITE_API_KEY');
 
 export const getEnvDebugInfo = () => {
     const url = reliableGet('VITE_SUPABASE_URL');

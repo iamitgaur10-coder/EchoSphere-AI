@@ -1,49 +1,10 @@
 import { GoogleGenAI, Type, HarmCategory, HarmBlockThreshold } from "@google/genai";
 import { AnalysisResponse, Feedback, GenAIPart } from '../types';
 import { APP_CONFIG } from '../config/constants';
+import { getGeminiApiKey } from '../lib/supabase';
 
-// Clean helper
-const clean = (val: string | undefined) => {
-    if (!val) return '';
-    return val.replace(/^['"]|['"]$/g, '').trim();
-};
-
-// Priority: 
-// 1. process.env.API_KEY (Official Guideline)
-// 2. VITE_API_KEY (Vercel/Vite Standard)
-// 3. LocalStorage (Setup Wizard)
-const getApiKey = () => {
-    let key = '';
-
-    // 1. Check process.env (Standard Node/System)
-    try {
-        // @ts-ignore
-        if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
-            // @ts-ignore
-            key = process.env.API_KEY;
-        }
-    } catch (e) {}
-
-    // 2. Check Vite Env (Static Replacement)
-    if (!key) {
-        try {
-            // @ts-ignore
-            if (import.meta.env.VITE_API_KEY) {
-                // @ts-ignore
-                key = import.meta.env.VITE_API_KEY;
-            }
-        } catch (e) {}
-    }
-    
-    // 3. Check Local Storage
-    if (!key) {
-        key = localStorage.getItem('VITE_API_KEY') || '';
-    }
-
-    return clean(key);
-};
-
-const apiKey = getApiKey();
+// Use the robust retrieval from lib/supabase which includes the fallbacks
+const apiKey = getGeminiApiKey();
 const ai = apiKey ? new GoogleGenAI({ apiKey: apiKey }) : null;
 
 const SAFETY_SETTINGS = [
