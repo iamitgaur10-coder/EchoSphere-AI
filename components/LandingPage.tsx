@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Globe2, ArrowRight, MapPin, BarChart3, Radio, Scan, Zap, Activity, Hexagon, Fingerprint, MousePointer2, Database, Network, Cpu, Share2, Shield, Truck, Trees, Siren, Layers, Play } from 'lucide-react';
+import { Globe2, ArrowRight, MapPin, BarChart3, Radio, Scan, Zap, Activity, Hexagon, Fingerprint, MousePointer2, Database, Network, Cpu, Share2, Shield, Truck, Trees, Siren, Layers, Play, Mic, PenTool, LayoutDashboard } from 'lucide-react';
 import { AccountSetup } from '../types';
 
 interface LandingPageProps {
@@ -10,9 +10,7 @@ interface LandingPageProps {
 }
 
 const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, onEnterWizard, account }) => {
-  const [activeTab, setActiveTab] = useState<'scan' | 'analyze'>('scan');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const [tutorialMode, setTutorialMode] = useState<'citizen' | 'admin'>('citizen');
 
   // Fake "Data Stream" for the marquee
   const baseData = Array(10).fill(0).map((_, i) => ({
@@ -213,7 +211,135 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
         </div>
       </section>
 
-      {/* --- Section 2: Neural Architecture --- */}
+      {/* --- Section 2: Operational Guide (Tutorial) --- */}
+      <section className="py-24 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-900">
+        <div className="max-w-6xl mx-auto px-6">
+            
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+                <div>
+                    <div className="inline-flex items-center space-x-2 text-orange-500 mb-2">
+                        <Scan size={16} />
+                        <span className="text-xs font-mono font-bold uppercase tracking-widest">System Protocols</span>
+                    </div>
+                    <h2 className="font-display text-3xl font-medium text-zinc-900 dark:text-white">Operational Guide</h2>
+                    <p className="text-zinc-500 mt-2">Select your clearance level to view interaction protocols.</p>
+                </div>
+
+                {/* Role Switcher */}
+                <div className="bg-zinc-100 dark:bg-zinc-900 p-1.5 rounded-lg inline-flex border border-zinc-200 dark:border-zinc-800">
+                    <button 
+                        onClick={() => setTutorialMode('citizen')}
+                        className={`px-4 py-2 rounded-md text-xs font-bold font-mono uppercase transition-all ${
+                            tutorialMode === 'citizen' 
+                            ? 'bg-white dark:bg-zinc-800 text-black dark:text-white shadow-sm' 
+                            : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'
+                        }`}
+                    >
+                        Citizen Interface
+                    </button>
+                    <button 
+                        onClick={() => setTutorialMode('admin')}
+                        className={`px-4 py-2 rounded-md text-xs font-bold font-mono uppercase transition-all ${
+                            tutorialMode === 'admin' 
+                            ? 'bg-white dark:bg-zinc-800 text-black dark:text-white shadow-sm' 
+                            : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'
+                        }`}
+                    >
+                        Command Center
+                    </button>
+                </div>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+                {tutorialMode === 'citizen' ? (
+                    <>
+                        <div className="group p-8 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 hover:border-orange-500/50 transition-all">
+                            <div className="w-12 h-12 bg-white dark:bg-zinc-800 rounded-xl flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform duration-500">
+                                <MapPin size={24} className="text-zinc-900 dark:text-white" />
+                            </div>
+                            <div className="text-xs font-mono text-orange-500 mb-2">STEP_01</div>
+                            <h3 className="font-display text-xl text-zinc-900 dark:text-white mb-3">Locate & Tag</h3>
+                            <p className="text-sm text-zinc-500 leading-relaxed">
+                                Enter the <span className="text-zinc-900 dark:text-zinc-300 font-bold">Public Map</span>. Click any location to drop a pin on the precise coordinates of an issue or idea.
+                            </p>
+                        </div>
+
+                        <div className="group p-8 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 hover:border-orange-500/50 transition-all">
+                            <div className="w-12 h-12 bg-white dark:bg-zinc-800 rounded-xl flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform duration-500">
+                                <Mic size={24} className="text-zinc-900 dark:text-white" />
+                            </div>
+                            <div className="text-xs font-mono text-orange-500 mb-2">STEP_02</div>
+                            <h3 className="font-display text-xl text-zinc-900 dark:text-white mb-3">Input Context</h3>
+                            <p className="text-sm text-zinc-500 leading-relaxed">
+                                Use <span className="text-zinc-900 dark:text-zinc-300 font-bold">Voice Dictation</span>, text, or upload photos. Our multimodal engine accepts raw unstructured data.
+                            </p>
+                        </div>
+
+                        <div className="group p-8 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 hover:border-orange-500/50 transition-all">
+                            <div className="w-12 h-12 bg-white dark:bg-zinc-800 rounded-xl flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform duration-500">
+                                <Cpu size={24} className="text-zinc-900 dark:text-white" />
+                            </div>
+                            <div className="text-xs font-mono text-orange-500 mb-2">STEP_03</div>
+                            <h3 className="font-display text-xl text-zinc-900 dark:text-white mb-3">AI Analysis</h3>
+                            <p className="text-sm text-zinc-500 leading-relaxed">
+                                Gemini instantly analyzes sentiment, assigns a <span className="text-zinc-900 dark:text-zinc-300 font-bold">Risk Score</span>, and routes it to the correct city department.
+                            </p>
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <div className="group p-8 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 hover:border-blue-500/50 transition-all">
+                            <div className="w-12 h-12 bg-white dark:bg-zinc-800 rounded-xl flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform duration-500">
+                                <PenTool size={24} className="text-zinc-900 dark:text-white" />
+                            </div>
+                            <div className="text-xs font-mono text-blue-500 mb-2">PHASE_01</div>
+                            <h3 className="font-display text-xl text-zinc-900 dark:text-white mb-3">Provision Workspace</h3>
+                            <p className="text-sm text-zinc-500 leading-relaxed">
+                                Use the <span className="text-zinc-900 dark:text-zinc-300 font-bold">Creation Wizard</span> to define your organization's name, region code, and geographic center point.
+                            </p>
+                        </div>
+
+                        <div className="group p-8 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 hover:border-blue-500/50 transition-all">
+                            <div className="w-12 h-12 bg-white dark:bg-zinc-800 rounded-xl flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform duration-500">
+                                <LayoutDashboard size={24} className="text-zinc-900 dark:text-white" />
+                            </div>
+                            <div className="text-xs font-mono text-blue-500 mb-2">PHASE_02</div>
+                            <h3 className="font-display text-xl text-zinc-900 dark:text-white mb-3">Deploy & Monitor</h3>
+                            <p className="text-sm text-zinc-500 leading-relaxed">
+                                Launch your tenant instance. Access the <span className="text-zinc-900 dark:text-zinc-300 font-bold">Admin Dashboard</span> to view real-time heatmaps and incoming data streams.
+                            </p>
+                        </div>
+
+                        <div className="group p-8 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 hover:border-blue-500/50 transition-all">
+                            <div className="w-12 h-12 bg-white dark:bg-zinc-800 rounded-xl flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform duration-500">
+                                <BarChart3 size={24} className="text-zinc-900 dark:text-white" />
+                            </div>
+                            <div className="text-xs font-mono text-blue-500 mb-2">PHASE_03</div>
+                            <h3 className="font-display text-xl text-zinc-900 dark:text-white mb-3">Strategic Intelligence</h3>
+                            <p className="text-sm text-zinc-500 leading-relaxed">
+                                Generate <span className="text-zinc-900 dark:text-zinc-300 font-bold">Executive Reports</span> and export CSVs. AI identifies trends, risks, and eco-impact opportunities automatically.
+                            </p>
+                        </div>
+                    </>
+                )}
+            </div>
+            
+            <div className="mt-12 text-center">
+                 {tutorialMode === 'citizen' ? (
+                     <button onClick={onEnterPublic} className="text-sm font-bold border-b border-orange-500 text-zinc-900 dark:text-white pb-0.5 hover:text-orange-500 transition-colors">
+                        Launch Public Interface &rarr;
+                     </button>
+                 ) : (
+                     <button onClick={onEnterWizard} className="text-sm font-bold border-b border-blue-500 text-zinc-900 dark:text-white pb-0.5 hover:text-blue-500 transition-colors">
+                        Start Provisioning Sequence &rarr;
+                     </button>
+                 )}
+            </div>
+
+        </div>
+      </section>
+
+      {/* --- Section 3: Neural Architecture --- */}
       <section className="py-24 bg-zinc-100 dark:bg-black border-b border-zinc-200 dark:border-zinc-900 relative">
         <div className="max-w-6xl mx-auto px-6">
             <div className="mb-16">
