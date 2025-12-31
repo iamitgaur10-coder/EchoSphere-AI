@@ -142,6 +142,7 @@ export const dataService = {
         return data.map((item: any) => ({
           ...item,
           organizationId: item.organization_id,
+          userId: item.user_id, // Map DB user_id to type userId
           imageUrl: item.image_url,
           ecoImpactScore: item.eco_impact_score,
           riskScore: item.risk_score,
@@ -180,6 +181,7 @@ export const dataService = {
         console.log("EchoSphere: Saving feedback to Supabase...");
         const { error } = await supabase!.from('feedback').insert({
             organization_id: orgId,
+            user_id: newFeedback.userId, // Save User ID
             location: newFeedback.location,
             content: newFeedback.content,
             sentiment: newFeedback.sentiment,

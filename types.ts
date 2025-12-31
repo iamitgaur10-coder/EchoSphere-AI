@@ -19,6 +19,7 @@ export type FeedbackStatus = 'received' | 'triaged' | 'in_progress' | 'resolved'
 export interface Feedback {
   id: string;
   organizationId?: string; // Link to specific tenant
+  userId?: string; // NEW: Link to authenticated user
   location: Location;
   content: string;
   timestamp: Date;
@@ -60,6 +61,13 @@ export interface AccountSetup {
   focusArea: string; // e.g. "Urban Planning"
   center: Location;
   questions: string[];
+}
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  role: 'admin' | 'citizen';
+  karma: number;
 }
 
 // --- TYPE SAFETY: Leaflet & GenAI Interfaces ---
