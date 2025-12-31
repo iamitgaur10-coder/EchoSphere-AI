@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Loader2, Send, Mic, MicOff, Image as ImageIcon, Video, Paperclip } from 'lucide-react';
+import { X, Loader2, Send, Mic, MicOff, Image as ImageIcon, Video, Paperclip, User } from 'lucide-react';
 import { analyzeFeedbackContent } from '../services/geminiService';
 import { Location, Feedback } from '../types';
 
@@ -11,6 +11,7 @@ interface FeedbackModalProps {
 
 const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubmit }) => {
   const [content, setContent] = useState('');
+  const [authorName, setAuthorName] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [attachments, setAttachments] = useState<string[]>([]);
   const [isListening, setIsListening] = useState(false);
@@ -78,7 +79,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
       category: analysis.category,
       summary: analysis.summary,
       votes: 0,
-      authorName: 'Anonymous Citizen',
+      authorName: authorName.trim() || 'Anonymous Citizen',
       attachments: attachments as any,
       ecoImpactScore: analysis.ecoImpactScore,
       ecoImpactReasoning: analysis.ecoImpactReasoning
@@ -107,6 +108,25 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
               LNG: {location.x.toFixed(2)}%
             </span>
             <span>Pin Location</span>
+          </div>
+
+          {/* Identity Field */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+                Your Name <span className="text-slate-400 font-normal">(Optional)</span>
+            </label>
+            <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                    <User size={16} />
+                </div>
+                <input 
+                    type="text"
+                    value={authorName}
+                    onChange={(e) => setAuthorName(e.target.value)}
+                    className="w-full pl-10 p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-slate-700"
+                    placeholder="Anonymous Citizen"
+                />
+            </div>
           </div>
 
           <div>
