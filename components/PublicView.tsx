@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Plus, Activity, User, LogIn, Trophy, Clock, History, X } from 'lucide-react';
+import { ArrowLeft, Plus, Activity, User, LogIn, Trophy, Clock, History, X, Share2, Check } from 'lucide-react';
 import MapArea from './MapArea';
 import FeedbackModal from './FeedbackModal';
 import { Feedback, Location, Organization } from '../types';
@@ -145,11 +145,13 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
   };
 
   const handleLogin = async () => {
-      // For MVP, we redirect to the main login which is currently Admin-focused
-      // In a real app, we'd pop a "Citizen Login" modal here.
-      // For now, let's just trigger the main auth flow in App.tsx via onBack for demonstration,
-      // OR we can implement a quick simple login here.
       alert("Please return to the landing page and click 'Admin Login' to simulate account entry. (Citizen Auth is shared in this demo)");
+  };
+
+  const handleShare = () => {
+      const url = window.location.href;
+      navigator.clipboard.writeText(url);
+      if (showToast) showToast("Link copied! Share this map with your community.");
   };
 
   return (
@@ -157,13 +159,23 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
       {/* Header Overlay */}
       <header className="absolute top-0 left-0 right-0 z-20 p-4 pointer-events-none">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <button 
-            onClick={onBack}
-            className="pointer-events-auto flex items-center space-x-2 px-4 py-2 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md shadow-2xl rounded-full border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:border-zinc-400 dark:hover:border-zinc-600 transition-all group"
-          >
-            <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-            <span className="hidden sm:inline font-medium text-xs">Back to Home</span>
-          </button>
+          <div className="flex items-center space-x-2">
+              <button 
+                onClick={onBack}
+                className="pointer-events-auto flex items-center space-x-2 px-4 py-2 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md shadow-2xl rounded-full border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:border-zinc-400 dark:hover:border-zinc-600 transition-all group"
+              >
+                <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+                <span className="hidden sm:inline font-medium text-xs">Back</span>
+              </button>
+              
+              <button
+                onClick={handleShare}
+                className="pointer-events-auto flex items-center space-x-2 px-3 py-2 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md shadow-lg rounded-full border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-orange-500 transition-colors"
+                title="Share Map"
+              >
+                  <Share2 size={16} />
+              </button>
+          </div>
 
           <div className="pointer-events-auto flex items-center space-x-3">
              {currentUser ? (

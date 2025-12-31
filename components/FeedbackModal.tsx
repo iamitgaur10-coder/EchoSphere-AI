@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Loader2, Send, Mic, MicOff, Image as ImageIcon, Video, Paperclip, User, Trash2, ThumbsUp, AlertTriangle, Clock, Mail, CheckCircle2, Tag } from 'lucide-react';
+import { X, Loader2, Send, Mic, MicOff, Image as ImageIcon, Video, Paperclip, User, Trash2, ThumbsUp, AlertTriangle, Clock, Mail, CheckCircle2, Tag, Shield, Eye, EyeOff } from 'lucide-react';
 import { analyzeFeedbackContent, checkDuplicates } from '../services/geminiService';
 import { storageService } from '../services/storageService';
 import { rateLimitService } from '../services/rateLimitService';
@@ -15,12 +16,15 @@ interface FeedbackModalProps {
 
 const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubmit, existingFeedback = [] }) => {
   const [content, setContent] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState(''); // New Category State
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [authorName, setAuthorName] = useState('');
   const [contactEmail, setContactEmail] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [attachments, setAttachments] = useState<string[]>([]);
   const [imageBase64, setImageBase64] = useState<string | null>(null);
+  const [originalImageBase64, setOriginalImageBase64] = useState<string | null>(null); // Store original for toggling
+  const [isPrivacyBlurEnabled, setIsPrivacyBlurEnabled] = useState(false);
+  
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -61,7 +65,6 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
       debounceRef.current = setTimeout(async () => {
           setIsCheckingDupes(true);
           
-          // 1. Filter local items by distance (Optimization: only check items within 100m)
           const nearbyCandidates = existingFeedback.filter(f => {
               const dx = f.location.x - location.x;
               const dy = f.location.y - location.y;
@@ -75,7 +78,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
               }
           }
           setIsCheckingDupes(false);
-      }, 1500); // Wait 1.5s after typing stops
+      }, 1500);
 
       return () => {
           if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -113,12 +116,61 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
       setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImageBase64(reader.result as string);
+        const result = reader.result as string;
+        setImageBase64(result);
+        setOriginalImageBase64(result);
+        setIsPrivacyBlurEnabled(false); // Reset blur on new upload
         if (!attachments.includes('image')) {
             setAttachments(prev => [...prev, 'image']);
         }
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  // CLIENT-SIDE BLUR LOGIC
+  const togglePrivacyBlur = async () => {
+    if (!imageBase64 || !originalImageBase64) return;
+
+    if (isPrivacyBlurEnabled) {
+        // Restore original
+        setImageBase64(originalImageBase64);
+        setIsPrivacyBlurEnabled(false);
+    } else {
+        // Apply Blur
+        try {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            img.src = originalImageBase64;
+            
+            await new Promise((resolve) => { img.onload = resolve; });
+
+            canvas.width = img.width;
+            canvas.height = img.height;
+            
+            if (ctx) {
+                // Draw image
+                ctx.drawImage(img, 0, 0);
+                
+                // Apply strong blur
+                ctx.filter = 'blur(20px)'; // Heavy blur for privacy
+                ctx.drawImage(canvas, 0, 0); // Redraw over itself with filter
+                
+                // Overlay "PRIVACY PROTECTED" text
+                ctx.filter = 'none';
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.font = `bold ${img.width / 15}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.fillText("PRIVACY PROTECTED", img.width / 2, img.height / 2);
+
+                setImageBase64(canvas.toDataURL('image/jpeg', 0.8));
+                setIsPrivacyBlurEnabled(true);
+            }
+        } catch (e) {
+            console.error("Blur failed", e);
+            alert("Could not process image privacy.");
+        }
     }
   };
 
@@ -128,6 +180,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
 
   const removeImage = () => {
     setImageBase64(null);
+    setOriginalImageBase64(null);
     setImageFile(null);
     setAttachments(prev => prev.filter(t => t !== 'image'));
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -147,7 +200,6 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
         return;
     }
 
-    // Rate Limit Guard
     if (!rateLimitService.check()) {
         const wait = rateLimitService.getTimeUntilReset();
         setRateLimitWait(wait);
@@ -159,22 +211,25 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
     setErrorMsg(null);
     
     try {
-        // 1. Analyze Content (Text + Local Image Base64) + User Category Hint
         const textToAnalyze = content || "Analyze this image for urban planning issues.";
-        
-        // This will now throw if Safety filters trigger
         const analysis = await analyzeFeedbackContent(textToAnalyze, imageBase64 || undefined, selectedCategory);
 
-        // --- NEW: AI Gatekeeper ---
         if (analysis.isCivicIssue === false) {
             setIsAnalyzing(false);
             setErrorMsg(analysis.refusalReason || "This platform is for city services and maintenance issues only.");
             return;
         }
 
-        // 2. Upload Image to Cloud (if present)
+        // 2. Upload Image (If blurred, we upload the base64 data uri directly)
         let publicImageUrl = undefined;
-        if (imageFile) {
+        if (isPrivacyBlurEnabled && imageBase64) {
+             // Convert Data URI to Blob for upload
+             const res = await fetch(imageBase64);
+             const blob = await res.blob();
+             const file = new File([blob], "privacy-protected.jpg", { type: "image/jpeg" });
+             const url = await storageService.uploadImage(file);
+             if (url) publicImageUrl = url;
+        } else if (imageFile) {
             const url = await storageService.uploadImage(imageFile);
             if (url) publicImageUrl = url;
         } else if (imageBase64) {
@@ -189,7 +244,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
             content,
             timestamp: new Date(),
             sentiment: analysis.sentiment,
-            category: analysis.category, // AI decides final category, likely same as user's if valid
+            category: analysis.category,
             summary: analysis.summary,
             votes: 0,
             status: 'received',
@@ -202,15 +257,12 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
             riskScore: analysis.riskScore
         };
 
-        // Record successful submission for rate limiting
         rateLimitService.record();
-
         onSubmit(newFeedback);
     } catch (err: any) {
         console.error(err);
         const msg = err.message || JSON.stringify(err);
         
-        // Handle specific Leaked Key error from Google
         if (msg.includes("leaked") || msg.includes("API key")) {
             setErrorMsg("Critical: Your API Key was revoked by Google because it was exposed. Please create a new one.");
         } 
@@ -356,7 +408,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
             </div>
           </div>
           
-          {/* Category Selector - NEW */}
+          {/* Category Selector */}
           <div>
             <label className="block text-xs font-bold text-zinc-500 uppercase mb-1 tracking-widest">
               Category <span className="text-orange-500">*</span>
@@ -431,10 +483,39 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
 
             <div className="space-y-3">
                 {imageBase64 ? (
-                    <div className="relative group bg-zinc-100 dark:bg-zinc-900 rounded border border-zinc-300 dark:border-zinc-800 h-32 flex items-center justify-center overflow-hidden">
-                        <img src={imageBase64} alt="Preview" className="h-full w-full object-cover opacity-90" />
-                        <button type="button" onClick={removeImage} className="absolute top-2 right-2 bg-black/80 text-white p-1 rounded-full hover:bg-red-600 transition-colors"><X size={14} /></button>
-                        <span className="absolute bottom-1 left-2 text-[10px] font-bold text-white bg-black/50 px-2 py-0.5 rounded">Photo Attached</span>
+                    <div className="space-y-2">
+                        <div className="relative group bg-zinc-100 dark:bg-zinc-900 rounded border border-zinc-300 dark:border-zinc-800 h-40 flex items-center justify-center overflow-hidden">
+                            <img src={imageBase64} alt="Preview" className="h-full w-full object-cover opacity-90" />
+                            <button type="button" onClick={removeImage} className="absolute top-2 right-2 bg-black/80 text-white p-1 rounded-full hover:bg-red-600 transition-colors z-20"><X size={14} /></button>
+                            
+                            {/* Privacy Badge Overlay */}
+                            {isPrivacyBlurEnabled && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[2px] z-10 pointer-events-none">
+                                    <div className="bg-black/70 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-2">
+                                        <EyeOff size={12} /> Privacy Blur Active
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        
+                        {/* Privacy Toggle Control */}
+                        <div className="flex items-center justify-between bg-zinc-50 dark:bg-zinc-900 p-2 rounded border border-zinc-200 dark:border-zinc-800">
+                            <div className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
+                                <Shield size={14} className={isPrivacyBlurEnabled ? 'text-green-500' : 'text-zinc-400'} />
+                                <span className="font-medium">Privacy Protection</span>
+                            </div>
+                            <button 
+                                type="button"
+                                onClick={togglePrivacyBlur}
+                                className={`text-[10px] font-bold uppercase px-3 py-1.5 rounded transition-colors ${
+                                    isPrivacyBlurEnabled 
+                                    ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-300 dark:hover:bg-zinc-700' 
+                                    : 'bg-green-600 text-white hover:bg-green-500'
+                                }`}
+                            >
+                                {isPrivacyBlurEnabled ? 'Undo Blur' : 'Blur Image'}
+                            </button>
+                        </div>
                     </div>
                 ) : (
                     <div className="flex gap-2">

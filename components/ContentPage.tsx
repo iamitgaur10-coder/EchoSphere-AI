@@ -1,5 +1,7 @@
-import React from 'react';
-import { ArrowLeft, Shield, FileText, Check, AlertCircle, Book, Code, Users, CreditCard, Lock, Server, Globe } from 'lucide-react';
+
+import React, { useState } from 'react';
+import { ArrowLeft, Shield, FileText, Check, AlertCircle, Book, Code, Users, CreditCard, Lock, Server, Globe, Loader2 } from 'lucide-react';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 interface ContentPageProps {
   pageId: string;
@@ -7,6 +9,30 @@ interface ContentPageProps {
 }
 
 const ContentPage: React.FC<ContentPageProps> = ({ pageId, onBack }) => {
+  const [isProcessing, setIsProcessing] = useState<string | null>(null);
+
+  const handleSubscribe = async (plan: string) => {
+      setIsProcessing(plan);
+      
+      // Simulate API latency
+      await new Promise(r => setTimeout(r, 1500));
+      
+      if (isSupabaseConfigured()) {
+          // PROD: This would be the code
+          /*
+          const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+             body: { plan: plan }
+          });
+          if (data?.url) window.location.href = data.url;
+          */
+          alert(`[Stripe Hook] Production: Would redirect to Stripe Checkout for ${plan} plan.`);
+      } else {
+          // DEMO
+          alert(`Success! You have subscribed to the ${plan} plan (Demo Mode).`);
+      }
+      setIsProcessing(null);
+  };
+
   const renderContent = () => {
     switch (pageId) {
       case 'pricing':
@@ -33,8 +59,12 @@ const ContentPage: React.FC<ContentPageProps> = ({ pageId, onBack }) => {
                         </li>
                     ))}
                 </ul>
-                <button className="w-full py-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white font-bold rounded-lg text-sm hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
-                    Get Started
+                <button 
+                    onClick={() => handleSubscribe('free')}
+                    disabled={!!isProcessing}
+                    className="w-full py-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white font-bold rounded-lg text-sm hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                >
+                    {isProcessing === 'free' ? <Loader2 size={16} className="mx-auto animate-spin"/> : 'Get Started'}
                 </button>
               </div>
 
@@ -56,8 +86,12 @@ const ContentPage: React.FC<ContentPageProps> = ({ pageId, onBack }) => {
                         </li>
                     ))}
                 </ul>
-                <button className="w-full py-2 bg-orange-600 text-white font-bold rounded-lg text-sm hover:bg-orange-500 transition-colors">
-                    Start Free Trial
+                <button 
+                    onClick={() => handleSubscribe('pro')}
+                    disabled={!!isProcessing}
+                    className="w-full py-2 bg-orange-600 text-white font-bold rounded-lg text-sm hover:bg-orange-500 transition-colors"
+                >
+                     {isProcessing === 'pro' ? <Loader2 size={16} className="mx-auto animate-spin"/> : 'Start Free Trial'}
                 </button>
               </div>
 
@@ -76,8 +110,12 @@ const ContentPage: React.FC<ContentPageProps> = ({ pageId, onBack }) => {
                         </li>
                     ))}
                 </ul>
-                <button className="w-full py-2 bg-zinc-900 dark:bg-white text-white dark:text-black font-bold rounded-lg text-sm hover:bg-zinc-700 dark:hover:bg-zinc-200 transition-colors">
-                    Contact Sales
+                <button 
+                    onClick={() => handleSubscribe('enterprise')}
+                    disabled={!!isProcessing}
+                    className="w-full py-2 bg-zinc-900 dark:bg-white text-white dark:text-black font-bold rounded-lg text-sm hover:bg-zinc-700 dark:hover:bg-zinc-200 transition-colors"
+                >
+                     {isProcessing === 'enterprise' ? <Loader2 size={16} className="mx-auto animate-spin"/> : 'Contact Sales'}
                 </button>
               </div>
             </div>
