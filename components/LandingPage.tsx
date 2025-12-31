@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Globe2, ArrowRight, MapPin, BarChart3, Radio, Scan, Zap, Activity, Hexagon, Fingerprint, MousePointer2, Database, Network, Cpu, Share2, Shield, Truck, Trees, Siren, Layers, Play, Mic, PenTool, LayoutDashboard } from 'lucide-react';
-import { AccountSetup } from '../types';
+import { Globe2, ArrowRight, MapPin, BarChart3, Radio, Scan, Zap, Activity, Hexagon, Fingerprint, MousePointer2, Database, Network, Cpu, Share2, Shield, Truck, Trees, Siren, Layers, Play, Mic, PenTool, LayoutDashboard, Building2 } from 'lucide-react';
+import { AccountSetup, Organization } from '../types';
 import { APP_CONFIG } from '../config/constants';
+import { dataService } from '../services/dataService';
 
 interface LandingPageProps {
   onEnterPublic: () => void;
@@ -12,15 +13,28 @@ interface LandingPageProps {
 
 const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, onEnterWizard, account }) => {
   const [tutorialMode, setTutorialMode] = useState<'citizen' | 'admin'>('citizen');
+  const [availableOrgs, setAvailableOrgs] = useState<Organization[]>([]);
+  const [showOrgList, setShowOrgList] = useState(false);
+
+  useEffect(() => {
+      const loadOrgs = async () => {
+          const orgs = await dataService.listOrganizations();
+          setAvailableOrgs(orgs);
+      };
+      loadOrgs();
+  }, []);
+
+  const handleSwitchOrg = (slug: string) => {
+      // Reloading with query param forces app to re-initialize with new context
+      window.location.href = `/?org=${slug}`;
+  };
 
   // Fake "Data Stream" for the marquee
-  // Uses configured default center for realistic coordinate simulation
   const baseLat = APP_CONFIG.MAP.DEFAULT_CENTER.y;
   const baseLng = APP_CONFIG.MAP.DEFAULT_CENTER.x;
 
   const baseData = Array(10).fill(0).map((_, i) => ({
     id: `FB-${Math.floor(Math.random() * 9000) + 1000}`,
-    // Simulate coordinates around default center
     lat: (baseLat + (Math.random() * 0.1) - 0.05).toFixed(4),
     lng: (baseLng + (Math.random() * 0.1) - 0.05).toFixed(4),
     status: Math.random() > 0.5 ? 'Processing' : 'Saved'
@@ -34,14 +48,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
       {/* --- Floating Nav --- */}
       <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[90%] md:w-auto">
         <div className="bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md border border-zinc-200 dark:border-zinc-800 rounded-full px-4 py-3 md:px-6 md:py-3 flex items-center justify-between md:space-x-6 shadow-2xl transition-all hover:bg-white dark:hover:bg-zinc-900">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 cursor-pointer" onClick={() => setShowOrgList(!showOrgList)}>
                 <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
                 <span className="font-display font-bold text-zinc-900 dark:text-white tracking-tight text-sm md:text-base">EchoSphere</span>
             </div>
             <div className="hidden md:block h-4 w-[1px] bg-zinc-300 dark:bg-zinc-700"></div>
             <div className="flex items-center space-x-4 text-xs font-medium">
                 {account ? (
-                    <button onClick={onEnterPublic} className="text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white transition-colors truncate max-w-[100px] md:max-w-none">
+                    <button onClick={onEnterPublic} className="text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white transition-colors truncate max-w-[100px] md:max-w-none font-bold">
                         {account.organizationName}
                     </button>
                 ) : (
@@ -52,6 +66,47 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
                 <button onClick={onEnterAdmin} className="text-zinc-500 hover:text-black dark:hover:text-white transition-colors">
                     Dashboard
                 </button>
+                
+                {availableOrgs.length > 0 && (
+                     <div className="relative group">
+                        <button onClick={() => setShowOrgList(!showOrgList)} className="flex items-center space-x-1 text-orange-600 hover:text-orange-500 transition-colors">
+                            <Globe2 size={14} />
+                            <span className="hidden sm:inline">Explore</span>
+                        </button>
+                        
+                        {/* Dropdown for Communities */}
+                        {showOrgList && (
+                             <div className="absolute top-full right-0 mt-4 w-64 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-2xl overflow-hidden py-2 animate-fade-in-up">
+                                 <div className="px-4 py-2 text-[10px] font-bold uppercase text-zinc-500 tracking-wider border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950">
+                                     Active Communities
+                                 </div>
+                                 <div className="max-h-60 overflow-y-auto">
+                                     {availableOrgs.map(org => (
+                                         <button 
+                                            key={org.id}
+                                            onClick={() => handleSwitchOrg(org.slug)}
+                                            className="w-full text-left px-4 py-3 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors flex items-center justify-between group"
+                                         >
+                                             <div>
+                                                 <div className="text-sm font-bold text-zinc-800 dark:text-zinc-200 group-hover:text-orange-600">{org.name}</div>
+                                                 <div className="text-[10px] text-zinc-500">{org.focusArea || 'General'}</div>
+                                             </div>
+                                             <ArrowRight size={12} className="opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all text-orange-500" />
+                                         </button>
+                                     ))}
+                                 </div>
+                                 <div className="border-t border-zinc-200 dark:border-zinc-800 p-2">
+                                     <button 
+                                        onClick={onEnterWizard}
+                                        className="w-full py-2 text-xs font-bold text-center bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded text-zinc-600 dark:text-zinc-400"
+                                     >
+                                         + Create New
+                                     </button>
+                                 </div>
+                             </div>
+                        )}
+                     </div>
+                )}
             </div>
         </div>
       </nav>
@@ -105,6 +160,33 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
                         Create Organization
                     </button>
                 </div>
+                
+                {/* Org Quick Links */}
+                {availableOrgs.length > 0 && (
+                    <div className="pt-4">
+                        <p className="text-xs font-bold uppercase text-zinc-500 mb-3 tracking-wider">Active Communities</p>
+                        <div className="flex flex-wrap gap-2">
+                            {availableOrgs.slice(0, 3).map(org => (
+                                <button 
+                                    key={org.id} 
+                                    onClick={() => handleSwitchOrg(org.slug)}
+                                    className="flex items-center space-x-2 px-3 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full text-xs hover:border-orange-500 hover:text-orange-600 transition-all shadow-sm"
+                                >
+                                    <Building2 size={12} />
+                                    <span>{org.name}</span>
+                                </button>
+                            ))}
+                            {availableOrgs.length > 3 && (
+                                <button 
+                                    onClick={() => setShowOrgList(true)}
+                                    className="px-3 py-1.5 text-xs text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
+                                >
+                                    +{availableOrgs.length - 3} more
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Right: 3D Interface Simulation */}
@@ -168,7 +250,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
                 <Globe2 className="text-zinc-400 dark:text-zinc-600" size={20} />
                 <div>
                     <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Communities</div>
-                    <div className="text-lg font-display font-bold text-zinc-900 dark:text-white">124</div>
+                    <div className="text-lg font-display font-bold text-zinc-900 dark:text-white">
+                        {availableOrgs.length > 124 ? availableOrgs.length : '124+'}
+                    </div>
                 </div>
              </div>
              <div className="flex-1 p-4 flex items-center justify-center space-x-3">

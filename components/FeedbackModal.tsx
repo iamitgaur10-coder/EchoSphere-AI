@@ -200,16 +200,16 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-zinc-950 rounded-lg shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in-up border border-zinc-800">
-        <div className="flex items-center justify-between p-4 border-b border-zinc-800 bg-zinc-900/50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/80 backdrop-blur-sm">
+      <div className="bg-white dark:bg-zinc-950 rounded-lg shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in-up border border-zinc-200 dark:border-zinc-800 transition-colors">
+        <div className="flex items-center justify-between p-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50">
           <div className="flex items-center space-x-2">
             <div className={`w-2 h-2 rounded-full ${rateLimitWait > 0 ? 'bg-red-500' : 'bg-orange-500 animate-pulse'}`}></div>
-            <h3 className="text-sm font-bold font-display uppercase tracking-wider text-zinc-200">
+            <h3 className="text-sm font-bold font-display uppercase tracking-wider text-zinc-900 dark:text-zinc-200">
                 {t.submitBtn}
             </h3>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-zinc-800 rounded transition-colors text-zinc-500 hover:text-white">
+          <button onClick={onClose} className="p-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded transition-colors text-zinc-500 hover:text-black dark:hover:text-white">
             <X size={16} />
           </button>
         </div>
@@ -218,17 +218,17 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
           
           {/* Rate Limit Banner */}
           {rateLimitWait > 0 && (
-              <div className="bg-orange-900/30 border border-orange-500/50 rounded p-3 flex items-center space-x-3 text-orange-200 mb-4">
+              <div className="bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-500/50 rounded p-3 flex items-center space-x-3 text-orange-800 dark:text-orange-200 mb-4">
                   <Clock className="flex-shrink-0 text-orange-500" size={18} />
                   <div className="text-xs font-medium">
-                      You are posting too fast. Please wait <span className="font-bold text-white">{rateLimitWait}s</span> before submitting again.
+                      You are posting too fast. Please wait <span className="font-bold">{rateLimitWait}s</span> before submitting again.
                   </div>
               </div>
           )}
 
           {/* Safety Error Banner */}
           {errorMsg && !rateLimitWait && (
-              <div className="bg-red-900/30 border border-red-500/50 rounded p-3 flex items-start space-x-3 text-red-200 mb-4 animate-pulse">
+              <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-500/50 rounded p-3 flex items-start space-x-3 text-red-800 dark:text-red-200 mb-4 animate-pulse">
                   <AlertTriangle className="flex-shrink-0 text-red-500" size={18} />
                   <div className="text-xs font-medium">{errorMsg}</div>
               </div>
@@ -236,25 +236,25 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
 
           {/* Duplicate Detection Banner */}
           {duplicateId && (
-               <div className="absolute inset-0 z-10 bg-zinc-950/95 flex flex-col items-center justify-center p-8 text-center animate-fade-in-up">
-                    <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mb-4 border border-blue-500/50">
-                        <ThumbsUp size={32} className="text-blue-500" />
+               <div className="absolute inset-0 z-10 bg-white/95 dark:bg-zinc-950/95 flex flex-col items-center justify-center p-8 text-center animate-fade-in-up">
+                    <div className="w-16 h-16 bg-blue-100 dark:bg-blue-500/20 rounded-full flex items-center justify-center mb-4 border border-blue-200 dark:border-blue-500/50">
+                        <ThumbsUp size={32} className="text-blue-600 dark:text-blue-500" />
                     </div>
-                    <h3 className="text-xl font-display font-bold text-white mb-2">{t.duplicateFound}</h3>
-                    <p className="text-zinc-400 text-sm mb-6 max-w-xs">
+                    <h3 className="text-xl font-display font-bold text-zinc-900 dark:text-white mb-2">{t.duplicateFound}</h3>
+                    <p className="text-zinc-500 dark:text-zinc-400 text-sm mb-6 max-w-xs">
                         {t.duplicateFound} (ID: {duplicateId}). We found a report very similar to yours nearby.
                     </p>
                     <button 
                         type="button"
                         onClick={handleUpvoteDuplicate}
-                        className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-full transition-all shadow-lg shadow-blue-900/50 mb-4"
+                        className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-full transition-all shadow-lg shadow-blue-500/20 mb-4"
                     >
                         {t.upvoteInstead}
                     </button>
                     <button 
                         type="button" 
                         onClick={() => setDuplicateId(null)} 
-                        className="text-xs text-zinc-500 hover:text-zinc-300 underline"
+                        className="text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 underline"
                     >
                         No, this is different
                     </button>
@@ -262,25 +262,25 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
           )}
 
           {/* Location Badge */}
-          <div className="flex items-center space-x-2 text-xs text-zinc-500 bg-black/50 p-2 rounded border border-zinc-800 font-mono">
-            <span className="text-orange-500 font-bold">Location:</span>
+          <div className="flex items-center space-x-2 text-xs text-zinc-600 dark:text-zinc-500 bg-zinc-100 dark:bg-black/50 p-2 rounded border border-zinc-200 dark:border-zinc-800 font-mono">
+            <span className="text-orange-600 dark:text-orange-500 font-bold">Location:</span>
             <span>{location.y.toFixed(4)}, {location.x.toFixed(4)}</span>
           </div>
 
           {/* Identity Field */}
           <div>
-            <label className="block text-xs font-bold text-zinc-500 mb-1 uppercase tracking-widest">
+            <label className="block text-xs font-bold text-zinc-500 uppercase mb-1 tracking-widest">
                 Name (Optional)
             </label>
             <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-600 group-focus-within:text-orange-500 transition-colors">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400 dark:text-zinc-600 group-focus-within:text-orange-500 transition-colors">
                     <User size={14} />
                 </div>
                 <input 
                     type="text"
                     value={authorName}
                     onChange={(e) => setAuthorName(e.target.value)}
-                    className="w-full pl-9 p-2.5 bg-black border border-zinc-800 rounded focus:border-orange-500 outline-none text-sm text-zinc-300 placeholder-zinc-700 transition-colors"
+                    className="w-full pl-9 p-2.5 bg-white dark:bg-black border border-zinc-300 dark:border-zinc-800 rounded focus:border-orange-500 outline-none text-sm text-zinc-900 dark:text-zinc-300 placeholder-zinc-400 dark:placeholder-zinc-700 transition-colors"
                     placeholder="Anonymous"
                 />
             </div>
@@ -288,19 +288,19 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
 
           {/* Content Field */}
           <div>
-            <label className="block text-xs font-bold text-zinc-500 mb-1 uppercase tracking-widest">
+            <label className="block text-xs font-bold text-zinc-500 uppercase mb-1 tracking-widest">
               Description
             </label>
             <div className="relative group">
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                className="w-full h-32 p-3 bg-black border border-zinc-800 rounded focus:border-orange-500 outline-none resize-none text-sm text-zinc-300 placeholder-zinc-700 transition-colors leading-relaxed"
+                className="w-full h-32 p-3 bg-white dark:bg-black border border-zinc-300 dark:border-zinc-800 rounded focus:border-orange-500 outline-none resize-none text-sm text-zinc-900 dark:text-zinc-300 placeholder-zinc-400 dark:placeholder-zinc-700 transition-colors leading-relaxed"
                 placeholder={t.describePlaceholder}
               />
               <div className="absolute bottom-2 right-2 flex space-x-2">
                  {isCheckingDupes && (
-                     <div className="flex items-center bg-black/50 px-2 py-1 rounded text-[10px] text-zinc-500">
+                     <div className="flex items-center bg-white/90 dark:bg-black/50 px-2 py-1 rounded text-[10px] text-zinc-500">
                          <Loader2 size={10} className="animate-spin mr-1" /> Checking...
                      </div>
                  )}
@@ -310,7 +310,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
                     className={`p-1.5 rounded transition-all ${
                         isListening 
                         ? 'bg-red-500/20 text-red-500 border border-red-500 animate-pulse' 
-                        : 'bg-zinc-900 border border-zinc-700 text-zinc-500 hover:text-white'
+                        : 'bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-zinc-500 hover:text-black dark:hover:text-white'
                     }`}
                     title={t.voiceInput}
                 >
@@ -322,7 +322,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
           
           {/* Multimodal Inputs */}
           <div>
-            <label className="block text-xs font-bold text-zinc-500 mb-2 uppercase tracking-widest">
+            <label className="block text-xs font-bold text-zinc-500 uppercase mb-2 tracking-widest">
                 {t.addPhoto}
             </label>
             
@@ -336,8 +336,8 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
 
             <div className="space-y-3">
                 {imageBase64 ? (
-                    <div className="relative group bg-zinc-900 rounded border border-zinc-800 h-32 flex items-center justify-center overflow-hidden">
-                        <img src={imageBase64} alt="Preview" className="h-full w-full object-cover opacity-80" />
+                    <div className="relative group bg-zinc-100 dark:bg-zinc-900 rounded border border-zinc-300 dark:border-zinc-800 h-32 flex items-center justify-center overflow-hidden">
+                        <img src={imageBase64} alt="Preview" className="h-full w-full object-cover opacity-90" />
                         <button type="button" onClick={removeImage} className="absolute top-2 right-2 bg-black/80 text-white p-1 rounded-full hover:bg-red-600 transition-colors"><X size={14} /></button>
                         <span className="absolute bottom-1 left-2 text-[10px] font-bold text-white bg-black/50 px-2 py-0.5 rounded">Photo Attached</span>
                     </div>
@@ -346,7 +346,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
                         <button 
                             type="button"
                             onClick={triggerFileUpload}
-                            className="flex-1 flex items-center justify-center p-4 rounded border border-dashed border-zinc-800 hover:border-orange-500 hover:bg-zinc-900 text-zinc-500 hover:text-orange-500 transition-all text-xs font-bold group"
+                            className="flex-1 flex items-center justify-center p-4 rounded border border-dashed border-zinc-300 dark:border-zinc-800 hover:border-orange-500 hover:bg-zinc-50 dark:hover:bg-zinc-900 text-zinc-500 hover:text-orange-500 transition-all text-xs font-bold group bg-white dark:bg-transparent"
                         >
                             <ImageIcon size={18} className="mr-2 group-hover:scale-110 transition-transform" />
                             {t.addPhoto}
@@ -360,7 +360,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
             <button
               type="submit"
               disabled={isAnalyzing || (!content.trim() && !imageBase64) || rateLimitWait > 0}
-              className="w-full py-3.5 px-4 bg-orange-600 hover:bg-orange-500 disabled:bg-zinc-800 disabled:text-zinc-600 text-black font-display font-bold uppercase tracking-widest text-sm rounded transition-all flex items-center justify-center space-x-2"
+              className="w-full py-3.5 px-4 bg-orange-600 hover:bg-orange-500 disabled:bg-zinc-200 dark:disabled:bg-zinc-800 disabled:text-zinc-400 dark:disabled:text-zinc-600 text-white dark:text-black font-display font-bold uppercase tracking-widest text-sm rounded transition-all flex items-center justify-center space-x-2 shadow-lg"
             >
               {isAnalyzing ? (
                 <>
@@ -376,7 +376,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
             </button>
           </div>
           
-          <p className="text-[10px] text-center text-zinc-600 font-medium">
+          <p className="text-[10px] text-center text-zinc-400 dark:text-zinc-600 font-medium">
             Powered by Google Gemini AI
           </p>
         </form>

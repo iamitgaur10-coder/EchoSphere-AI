@@ -186,16 +186,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex flex-col text-zinc-200">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex flex-col text-zinc-900 dark:text-zinc-200 transition-colors duration-300">
       {/* Admin Header */}
-      <div className="bg-zinc-950 border-b border-zinc-800 z-10 sticky top-0">
+      <div className="bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 z-10 sticky top-0 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-4">
-             <button onClick={onBack} className="p-2 hover:bg-zinc-900 rounded text-zinc-500 hover:text-white transition-colors">
+             <button onClick={onBack} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded text-zinc-500 hover:text-black dark:hover:text-white transition-colors">
                 <ArrowLeft size={18} />
              </button>
              <div>
-                <h1 className="text-lg font-display font-bold tracking-tight text-white">Dashboard</h1>
+                <h1 className="text-lg font-display font-bold tracking-tight text-zinc-900 dark:text-white">Dashboard</h1>
                 <div className="flex items-center space-x-2 text-xs text-zinc-500">
                     <span>Administrator Access</span>
                     {currentOrg && (
@@ -209,9 +209,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
           </div>
           <div className="flex items-center space-x-3 text-sm">
              {isSupabaseConfigured() && (
-                 <div className="flex items-center space-x-2 px-3 py-1 bg-green-900/20 border border-green-900/50 rounded-full">
+                 <div className="flex items-center space-x-2 px-3 py-1 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900/50 rounded-full">
                     <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                    <span className="text-[10px] text-green-500 font-bold uppercase tracking-wider hidden sm:inline">Live Feed</span>
+                    <span className="text-[10px] text-green-600 dark:text-green-500 font-bold uppercase tracking-wider hidden sm:inline">Live Feed</span>
                  </div>
              )}
              
@@ -219,7 +219,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
              {currentOrg && (
                 <button 
                     onClick={handleCopyLink}
-                    className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-500 px-3 py-1.5 rounded transition-colors text-black text-xs font-bold uppercase tracking-wide"
+                    className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-500 px-3 py-1.5 rounded transition-colors text-white text-xs font-bold uppercase tracking-wide shadow-sm"
                     title="Copy Public Link"
                 >
                     {isCopied ? <Check size={14} /> : <Share2 size={14} />}
@@ -227,12 +227,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
                 </button>
              )}
 
-             <button onClick={() => refreshData()} className="p-2 hover:bg-zinc-900 rounded text-zinc-500 hover:text-white transition-colors" title="Refresh Data">
+             <button onClick={() => refreshData()} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded text-zinc-500 hover:text-black dark:hover:text-white transition-colors" title="Refresh Data">
                 <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
              </button>
              <button 
                 onClick={handleDownloadCSV}
-                className="flex items-center space-x-2 bg-zinc-900 hover:bg-zinc-800 px-3 py-1.5 rounded border border-zinc-700 transition-colors text-zinc-300 text-xs font-medium hidden sm:flex"
+                className="flex items-center space-x-2 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 px-3 py-1.5 rounded border border-zinc-200 dark:border-zinc-700 transition-colors text-zinc-700 dark:text-zinc-300 text-xs font-medium hidden sm:flex"
              >
                 <Download size={14} />
                 <span>Export</span>
@@ -246,48 +246,48 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
           
           {/* Top Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-zinc-900/50 p-6 rounded-lg border border-zinc-800 hover:border-zinc-600 transition-colors">
+            <div className="bg-white dark:bg-zinc-900/50 p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs uppercase text-zinc-500 mb-1 font-bold">Total Feedback</p>
-                  <p className="text-3xl font-display font-bold text-white">{data.length}</p>
+                  <p className="text-3xl font-display font-bold text-zinc-900 dark:text-white">{data.length}</p>
                 </div>
-                <div className="p-3 bg-indigo-500/10 rounded-full text-indigo-400 border border-indigo-500/20">
+                <div className="p-3 bg-indigo-50 dark:bg-indigo-500/10 rounded-full text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-500/20">
                   <MessageSquare size={20} />
                 </div>
               </div>
             </div>
-             <div className="bg-zinc-900/50 p-6 rounded-lg border border-zinc-800 hover:border-zinc-600 transition-colors">
+             <div className="bg-white dark:bg-zinc-900/50 p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs uppercase text-zinc-500 mb-1 font-bold">Eco-Impact Score</p>
-                  <p className="text-3xl font-display font-bold text-white">{avgEcoScore}<span className="text-sm text-zinc-600 font-normal">/100</span></p>
+                  <p className="text-3xl font-display font-bold text-zinc-900 dark:text-white">{avgEcoScore}<span className="text-sm text-zinc-400 dark:text-zinc-600 font-normal">/100</span></p>
                 </div>
-                <div className="p-3 bg-green-500/10 rounded-full text-green-400 border border-green-500/20">
+                <div className="p-3 bg-green-50 dark:bg-green-500/10 rounded-full text-green-600 dark:text-green-400 border border-green-100 dark:border-green-500/20">
                   <Leaf size={20} />
                 </div>
               </div>
             </div>
-             <div className="bg-zinc-900/50 p-6 rounded-lg border border-zinc-800 hover:border-zinc-600 transition-colors">
+             <div className="bg-white dark:bg-zinc-900/50 p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs uppercase text-zinc-500 mb-1 font-bold">Positive Sentiment</p>
-                  <p className="text-3xl font-display font-bold text-white">
+                  <p className="text-3xl font-display font-bold text-zinc-900 dark:text-white">
                     {data.length > 0 ? Math.round((sentimentData[0].value / data.length) * 100) : 0}%
                   </p>
                 </div>
-                <div className="p-3 bg-green-500/10 rounded-full text-green-400 border border-green-500/20">
+                <div className="p-3 bg-green-50 dark:bg-green-500/10 rounded-full text-green-600 dark:text-green-400 border border-green-100 dark:border-green-500/20">
                   <TrendingUp size={20} />
                 </div>
               </div>
             </div>
-             <div className="bg-zinc-900/50 p-6 rounded-lg border border-zinc-800 hover:border-zinc-600 transition-colors">
+             <div className="bg-white dark:bg-zinc-900/50 p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors shadow-sm">
                <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs uppercase text-zinc-500 mb-1 font-bold">High Priority</p>
-                  <p className="text-3xl font-display font-bold text-white">{data.filter(d => d.riskScore && d.riskScore > 80).length}</p>
+                  <p className="text-3xl font-display font-bold text-zinc-900 dark:text-white">{data.filter(d => d.riskScore && d.riskScore > 80).length}</p>
                 </div>
-                <div className="p-3 bg-red-500/10 rounded-full text-red-400 border border-red-500/20">
+                <div className="p-3 bg-red-50 dark:bg-red-500/10 rounded-full text-red-600 dark:text-red-400 border border-red-100 dark:border-red-500/20">
                   <AlertTriangle size={20} />
                 </div>
               </div>
@@ -295,18 +295,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
           </div>
 
           {/* AI Executive Summary Block */}
-          <div className="bg-gradient-to-r from-zinc-900 to-black rounded-xl border border-zinc-800 p-6 relative overflow-hidden">
+          <div className="bg-gradient-to-r from-zinc-100 to-white dark:from-zinc-900 dark:to-black rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 relative overflow-hidden shadow-sm">
              <div className="relative z-10">
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-bold flex items-center space-x-2 text-white">
-                        <FileText className="text-orange-500" size={18} />
+                    <h2 className="text-lg font-bold flex items-center space-x-2 text-zinc-900 dark:text-white">
+                        <FileText className="text-orange-600 dark:text-orange-500" size={18} />
                         <span className="font-display">AI Summary</span>
                     </h2>
                     {!reportText && (
                         <button 
                             onClick={handleGenerateReport}
                             disabled={isGeneratingReport}
-                            className="text-xs font-medium bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 px-3 py-1.5 rounded-full transition-colors flex items-center space-x-2 text-zinc-300"
+                            className="text-xs font-medium bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 px-3 py-1.5 rounded-full transition-colors flex items-center space-x-2 text-zinc-600 dark:text-zinc-300 shadow-sm"
                         >
                             {isGeneratingReport ? <Loader2 size={12} className="animate-spin" /> : <TrendingUp size={12} />}
                             <span>Generate Report (Based on recent items)</span>
@@ -314,7 +314,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
                     )}
                 </div>
                 {reportText ? (
-                    <div className="prose prose-invert max-w-none text-zinc-400 text-sm leading-relaxed border-l-4 border-orange-500 pl-4">
+                    <div className="prose prose-sm max-w-none text-zinc-600 dark:text-zinc-400 leading-relaxed border-l-4 border-orange-500 pl-4">
                         {reportText.split('\n').map((para, i) => <p key={i} className="mb-2">{para}</p>)}
                     </div>
                 ) : (
@@ -328,8 +328,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
           {/* Charts Row */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Sentiment Chart */}
-            <div className="bg-zinc-900/50 p-6 rounded-lg border border-zinc-800 flex flex-col">
-              <h2 className="text-sm font-bold text-zinc-300 mb-4 uppercase">Sentiment Distribution</h2>
+            <div className="bg-white dark:bg-zinc-900/50 p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 flex flex-col shadow-sm">
+              <h2 className="text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-4 uppercase">Sentiment Distribution</h2>
               <div className="h-64 w-full flex-1 min-w-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -347,7 +347,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip contentStyle={{ backgroundColor: '#18181b', borderRadius: '4px', border: '1px solid #27272a', color: '#fff' }} itemStyle={{ color: '#fff' }} />
+                    <Tooltip contentStyle={{ backgroundColor: 'var(--tooltip-bg)', borderRadius: '4px', border: '1px solid var(--tooltip-border)', color: 'var(--tooltip-text)' }} itemStyle={{ color: 'var(--tooltip-text)' }} />
                     <Legend verticalAlign="bottom" height={36} />
                   </PieChart>
                 </ResponsiveContainer>
@@ -355,15 +355,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
             </div>
 
             {/* Category Chart */}
-            <div className="bg-zinc-900/50 p-6 rounded-lg border border-zinc-800 flex flex-col">
-              <h2 className="text-sm font-bold text-zinc-300 mb-4 uppercase">Category Breakdown</h2>
+            <div className="bg-white dark:bg-zinc-900/50 p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 flex flex-col shadow-sm">
+              <h2 className="text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-4 uppercase">Category Breakdown</h2>
               <div className="h-64 w-full flex-1 min-w-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={categoryData}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#27272a" />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--grid-stroke)" />
                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#71717a', fontSize: 10}} dy={10} />
                     <YAxis axisLine={false} tickLine={false} tick={{fill: '#71717a', fontSize: 10}} />
-                    <Tooltip cursor={{fill: '#27272a'}} contentStyle={{ backgroundColor: '#18181b', borderRadius: '4px', border: '1px solid #27272a', color: '#fff' }} itemStyle={{ color: '#fff' }} />
+                    <Tooltip cursor={{fill: 'var(--tooltip-cursor)'}} contentStyle={{ backgroundColor: 'var(--tooltip-bg)', borderRadius: '4px', border: '1px solid var(--tooltip-border)', color: 'var(--tooltip-text)' }} itemStyle={{ color: 'var(--tooltip-text)' }} />
                     <Bar dataKey="value" fill="#f97316" radius={[4, 4, 0, 0]} barSize={30} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -372,9 +372,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
           </div>
 
           {/* Recent List */}
-          <div className="bg-zinc-900/50 rounded-lg border border-zinc-800 overflow-hidden">
-            <div className="p-4 border-b border-zinc-800 flex justify-between items-center bg-zinc-900">
-              <h2 className="text-sm font-bold text-zinc-300 uppercase">Feedback Log</h2>
+          <div className="bg-white dark:bg-zinc-900/50 rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm">
+            <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center bg-zinc-50 dark:bg-zinc-900">
+              <h2 className="text-sm font-bold text-zinc-700 dark:text-zinc-300 uppercase">Feedback Log</h2>
               <span className="text-zinc-500 text-xs">Showing {data.length} items</span>
             </div>
             {isLoading ? (
@@ -382,10 +382,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
                     <Loader2 className="animate-spin" />
                 </div>
             ) : (
-                <div className="divide-y divide-zinc-800">
+                <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
                     {data.map((item) => (
-                        <div key={item.id} className="p-4 hover:bg-zinc-900 transition-colors flex items-start space-x-4 animate-fade-in-up">
-                        <div className={`mt-1 p-2 rounded-full flex-shrink-0 bg-black border border-zinc-800`}>
+                        <div key={item.id} className="p-4 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors flex items-start space-x-4 animate-fade-in-up">
+                        <div className={`mt-1 p-2 rounded-full flex-shrink-0 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800`}>
                             {item.sentiment === 'positive' ? <ThumbsUp size={14} className="text-green-500" /> :
                             item.sentiment === 'negative' ? <ThumbsDown size={14} className="text-red-500" /> :
                             <Minus size={14} className="text-yellow-500" />}
@@ -393,23 +393,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between mb-1">
                                 <div className="flex space-x-2">
-                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 uppercase tracking-wide border border-zinc-700">{item.category}</span>
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 uppercase tracking-wide border border-zinc-200 dark:border-zinc-700">{item.category}</span>
                                     {item.imageUrl && (
-                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-900/30 text-blue-400 border border-blue-900 flex items-center" title="Has Image">
+                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900 flex items-center" title="Has Image">
                                             <ImageIcon size={10} className="mr-1" /> Image
                                         </span>
                                     )}
                                     {item.ecoImpactScore && item.ecoImpactScore > 70 && (
-                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-900/30 text-green-500 border border-green-900 flex items-center">
+                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-500 border border-green-200 dark:border-green-900 flex items-center">
                                             <Leaf size={10} className="mr-1" /> Eco+
                                         </span>
                                     )}
                                 </div>
                                 <span className="text-[10px] text-zinc-500">{item.timestamp.toLocaleDateString()}</span>
                             </div>
-                            <p className="text-zinc-300 text-sm mb-1">{item.content}</p>
+                            <p className="text-zinc-800 dark:text-zinc-300 text-sm mb-1">{item.content}</p>
                             <div className="flex items-center space-x-2 text-[10px] text-zinc-500">
-                                <span className="text-orange-500 font-bold">AI Summary:</span>
+                                <span className="text-orange-600 dark:text-orange-500 font-bold">AI Summary:</span>
                                 <span>{item.summary}</span>
                             </div>
                         </div>
@@ -421,7 +421,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
                             <button 
                                 onClick={handleLoadMore} 
                                 disabled={isLoadingMore}
-                                className="flex items-center space-x-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-orange-500 transition-colors disabled:opacity-50"
+                                className="flex items-center space-x-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-orange-600 dark:hover:text-orange-500 transition-colors disabled:opacity-50"
                             >
                                 {isLoadingMore ? <Loader2 size={14} className="animate-spin" /> : <ChevronDown size={14} />}
                                 <span>Load More</span>
@@ -434,6 +434,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
 
         </div>
       </div>
+      
+      <style>{`
+        :root {
+            --tooltip-bg: #ffffff;
+            --tooltip-border: #e4e4e7;
+            --tooltip-text: #18181b;
+            --grid-stroke: #e4e4e7;
+            --tooltip-cursor: #f4f4f5;
+        }
+        .dark {
+            --tooltip-bg: #18181b;
+            --tooltip-border: #27272a;
+            --tooltip-text: #fff;
+            --grid-stroke: #27272a;
+            --tooltip-cursor: #27272a;
+        }
+      `}</style>
     </div>
   );
 };

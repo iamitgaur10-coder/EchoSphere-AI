@@ -82,7 +82,7 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel }) => {
           type="text"
           value={formData.organizationName}
           onChange={e => setFormData({ ...formData, organizationName: e.target.value })}
-          className="w-full p-3 bg-black border border-zinc-800 rounded focus:border-orange-500 outline-none text-zinc-200"
+          className="w-full p-3 bg-white dark:bg-black border border-zinc-300 dark:border-zinc-800 rounded focus:border-orange-500 outline-none text-zinc-900 dark:text-zinc-200 transition-colors"
           placeholder="e.g. Metro City or Community Group"
         />
       </div>
@@ -92,18 +92,18 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel }) => {
           type="text"
           value={formData.regionCode}
           onChange={e => setFormData({ ...formData, regionCode: e.target.value.toUpperCase().slice(0, 4) })}
-          className="w-full p-3 bg-black border border-zinc-800 rounded focus:border-orange-500 outline-none text-zinc-200 font-mono"
+          className="w-full p-3 bg-white dark:bg-black border border-zinc-300 dark:border-zinc-800 rounded focus:border-orange-500 outline-none text-zinc-900 dark:text-zinc-200 font-mono transition-colors"
           placeholder="MCTY"
           maxLength={4}
         />
-        <p className="text-[10px] text-zinc-600">Used for internal identifiers (Max 4 chars)</p>
+        <p className="text-[10px] text-zinc-500 dark:text-zinc-600">Used for internal identifiers (Max 4 chars)</p>
       </div>
       <div className="space-y-2">
         <label className="block text-xs font-bold text-zinc-500 uppercase">Focus Area</label>
         <select
           value={formData.focusArea}
           onChange={e => setFormData({ ...formData, focusArea: e.target.value })}
-          className="w-full p-3 bg-black border border-zinc-800 rounded focus:border-orange-500 outline-none text-zinc-200"
+          className="w-full p-3 bg-white dark:bg-black border border-zinc-300 dark:border-zinc-800 rounded focus:border-orange-500 outline-none text-zinc-900 dark:text-zinc-200 transition-colors"
         >
           <option>Urban Development</option>
           <option>Parks & Recreation</option>
@@ -118,12 +118,12 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel }) => {
   const renderStep2 = () => (
     <div className="space-y-4 animate-fade-in-up h-[400px] flex flex-col">
       <div className="flex justify-between items-center">
-        <p className="text-xs text-zinc-400">Select default map location</p>
-        <div className="text-[10px] font-mono text-orange-500">
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">Select default map location</p>
+        <div className="text-[10px] font-mono text-orange-600 dark:text-orange-500">
             {formData.center.y.toFixed(4)}, {formData.center.x.toFixed(4)}
         </div>
       </div>
-      <div className="flex-1 relative rounded border border-zinc-800 overflow-hidden">
+      <div className="flex-1 relative rounded border border-zinc-300 dark:border-zinc-800 overflow-hidden">
         <MapArea
           feedbackList={[]}
           onMapClick={(loc) => setFormData({ ...formData, center: loc })}
@@ -137,32 +137,32 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel }) => {
   const renderStep3 = () => (
     <div className="space-y-6 animate-fade-in-up">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold text-white font-display">Survey Questions</h3>
-        <span className="text-[10px] px-2 py-1 bg-purple-900/30 text-purple-400 rounded-full border border-purple-500/30 flex items-center">
+        <h3 className="text-sm font-bold text-zinc-900 dark:text-white font-display">Survey Questions</h3>
+        <span className="text-[10px] px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-full border border-purple-200 dark:border-purple-500/30 flex items-center">
             <Wand2 size={10} className="mr-1" /> AI Generated
         </span>
       </div>
       
       {isLoading ? (
         <div className="py-12 flex flex-col items-center text-zinc-500 space-y-4">
-             <div className="w-10 h-10 border-2 border-zinc-800 border-t-orange-500 rounded-full animate-spin"></div>
+             <div className="w-10 h-10 border-2 border-zinc-200 dark:border-zinc-800 border-t-orange-500 rounded-full animate-spin"></div>
              <p className="text-xs font-medium animate-pulse">Generating questions based on your focus area...</p>
         </div>
       ) : (
         <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
             {formData.questions.map((q, i) => (
-                <div key={i} className="p-4 bg-zinc-900 border border-zinc-800 rounded flex items-start space-x-3">
-                    <div className="mt-0.5 min-w-[20px] h-5 flex items-center justify-center bg-orange-500/10 text-orange-500 text-[10px] font-bold rounded-full border border-orange-500/20">
+                <div key={i} className="p-4 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded flex items-start space-x-3 transition-colors">
+                    <div className="mt-0.5 min-w-[20px] h-5 flex items-center justify-center bg-orange-100 dark:bg-orange-500/10 text-orange-600 dark:text-orange-500 text-[10px] font-bold rounded-full border border-orange-200 dark:border-orange-500/20">
                         {i + 1}
                     </div>
-                    <p className="text-zinc-300 text-sm">{q}</p>
+                    <p className="text-zinc-700 dark:text-zinc-300 text-sm">{q}</p>
                 </div>
             ))}
         </div>
       )}
       
       {error && (
-        <div className="p-4 bg-red-900/20 border border-red-500/30 rounded flex items-start space-x-3 text-red-400">
+        <div className="p-4 bg-red-100 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 rounded flex items-start space-x-3 text-red-600 dark:text-red-400">
             <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
             <p className="text-xs">{error}</p>
         </div>
@@ -172,25 +172,25 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel }) => {
 
   const renderStep4 = () => (
       <div className="flex flex-col items-center justify-center h-full animate-fade-in-up space-y-8 text-center">
-          <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center border border-green-500/50 shadow-[0_0_30px_rgba(34,197,94,0.3)]">
-              <Check size={40} className="text-green-500" />
+          <div className="w-20 h-20 bg-green-100 dark:bg-green-500/20 rounded-full flex items-center justify-center border border-green-200 dark:border-green-500/50 shadow-[0_0_30px_rgba(34,197,94,0.3)]">
+              <Check size={40} className="text-green-600 dark:text-green-500" />
           </div>
           
           <div className="space-y-2">
-              <h2 className="text-2xl font-display font-bold text-white">Organization Ready!</h2>
-              <p className="text-zinc-400 text-sm max-w-sm mx-auto">
+              <h2 className="text-2xl font-display font-bold text-zinc-900 dark:text-white">Organization Ready!</h2>
+              <p className="text-zinc-600 dark:text-zinc-400 text-sm max-w-sm mx-auto">
                   Your tenant has been provisioned successfully. Share this link with your users to start collecting feedback.
               </p>
           </div>
 
-          <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-lg p-2 flex items-center space-x-2">
-              <div className="flex-1 bg-black rounded px-3 py-2 text-xs font-mono text-zinc-300 truncate text-left border border-zinc-800">
+          <div className="w-full max-w-md bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2 flex items-center space-x-2 transition-colors">
+              <div className="flex-1 bg-white dark:bg-black rounded px-3 py-2 text-xs font-mono text-zinc-600 dark:text-zinc-300 truncate text-left border border-zinc-200 dark:border-zinc-800">
                   {generatedLink}
               </div>
-              <button onClick={copyLink} className="p-2 hover:bg-zinc-800 rounded text-zinc-500 hover:text-white transition-colors" title="Copy">
+              <button onClick={copyLink} className="p-2 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded text-zinc-500 hover:text-black dark:hover:text-white transition-colors" title="Copy">
                   <Copy size={16} />
               </button>
-              <a href={generatedLink || '#'} target="_blank" rel="noreferrer" className="p-2 hover:bg-zinc-800 rounded text-zinc-500 hover:text-white transition-colors" title="Open">
+              <a href={generatedLink || '#'} target="_blank" rel="noreferrer" className="p-2 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded text-zinc-500 hover:text-black dark:hover:text-white transition-colors" title="Open">
                   <ExternalLink size={16} />
               </a>
           </div>
@@ -198,7 +198,7 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel }) => {
           <div className="pt-4">
                <button 
                   onClick={handleFinalize}
-                  className="px-8 py-3 bg-white text-black font-bold text-sm uppercase tracking-widest rounded hover:bg-zinc-200 transition-all shadow-lg"
+                  className="px-8 py-3 bg-zinc-900 dark:bg-white text-white dark:text-black font-bold text-sm uppercase tracking-widest rounded hover:bg-zinc-700 dark:hover:bg-zinc-200 transition-all shadow-lg"
               >
                   Go to Dashboard
               </button>
@@ -207,23 +207,23 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel }) => {
   );
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
-      <div className="bg-zinc-950 w-full max-w-2xl rounded-lg shadow-2xl border border-zinc-800 overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center p-4 transition-colors duration-300">
+      <div className="bg-white dark:bg-zinc-950 w-full max-w-2xl rounded-lg shadow-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="bg-zinc-900 p-6 border-b border-zinc-800 flex justify-between items-center">
+        <div className="bg-white dark:bg-zinc-900 p-6 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center transition-colors">
           <div>
-            <h2 className="text-xl font-display font-bold text-white">Create Workspace</h2>
+            <h2 className="text-xl font-display font-bold text-zinc-900 dark:text-white">Create Workspace</h2>
             <p className="text-zinc-500 text-xs">Set up your organization details</p>
           </div>
           <div className="flex items-center space-x-2 text-sm">
             {[1, 2, 3].map(i => (
                 <React.Fragment key={i}>
                     <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                        step >= i ? 'bg-orange-600 text-black' : 'bg-zinc-800 text-zinc-600'
+                        step >= i ? 'bg-orange-600 text-white dark:text-black' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-600'
                     }`}>
                         {i}
                     </span>
-                    {i < 3 && <div className="w-6 h-[1px] bg-zinc-800"></div>}
+                    {i < 3 && <div className="w-6 h-[1px] bg-zinc-200 dark:bg-zinc-800"></div>}
                 </React.Fragment>
             ))}
           </div>
@@ -239,14 +239,14 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel }) => {
 
         {/* Footer (Hidden on Success Step) */}
         {step < 4 && (
-            <div className="p-6 bg-zinc-900 border-t border-zinc-800 flex justify-between">
+            <div className="p-6 bg-zinc-50 dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 flex justify-between transition-colors">
                 {step > 1 ? (
-                    <button onClick={handleBack} disabled={isSaving} className="flex items-center space-x-2 px-4 py-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded transition-colors text-xs uppercase font-bold">
+                    <button onClick={handleBack} disabled={isSaving} className="flex items-center space-x-2 px-4 py-2 text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded transition-colors text-xs uppercase font-bold">
                         <ArrowLeft size={14} />
                         <span>Back</span>
                     </button>
                 ) : (
-                    <button onClick={onCancel} disabled={isSaving} className="px-4 py-2 text-zinc-500 hover:text-red-400 transition-colors text-xs uppercase font-bold">
+                    <button onClick={onCancel} disabled={isSaving} className="px-4 py-2 text-zinc-500 hover:text-red-500 transition-colors text-xs uppercase font-bold">
                         Cancel
                     </button>
                 )}
@@ -255,7 +255,7 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel }) => {
                     <button 
                         onClick={handleNext} 
                         disabled={step === 1 && (!formData.organizationName || !formData.regionCode)}
-                        className="flex items-center space-x-2 px-6 py-2 bg-orange-600 text-black font-bold text-xs uppercase tracking-widest rounded hover:bg-orange-500 disabled:bg-zinc-800 disabled:text-zinc-600 disabled:cursor-not-allowed transition-all"
+                        className="flex items-center space-x-2 px-6 py-2 bg-orange-600 text-white font-bold text-xs uppercase tracking-widest rounded hover:bg-orange-500 disabled:bg-zinc-300 dark:disabled:bg-zinc-800 disabled:text-zinc-500 dark:disabled:text-zinc-600 disabled:cursor-not-allowed transition-all"
                     >
                         <span>Next</span>
                         <ArrowRight size={14} />
@@ -264,7 +264,7 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel }) => {
                     <button 
                         onClick={handleLaunch}
                         disabled={isSaving} 
-                        className="flex items-center space-x-2 px-6 py-2 bg-green-600 text-black font-bold text-xs uppercase tracking-widest rounded hover:bg-green-500 transition-all shadow-lg disabled:opacity-50"
+                        className="flex items-center space-x-2 px-6 py-2 bg-green-600 text-white font-bold text-xs uppercase tracking-widest rounded hover:bg-green-500 transition-all shadow-lg disabled:opacity-50"
                     >
                         {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
                         <span>{isSaving ? 'Launch' : 'Launch'}</span>
@@ -279,11 +279,14 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel }) => {
           width: 4px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
-          background: #18181b;
+          background: transparent;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #3f3f46;
+          background: #d4d4d8;
           border-radius: 2px;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #3f3f46;
         }
       `}</style>
     </div>

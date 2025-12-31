@@ -104,6 +104,23 @@ export const dataService = {
     return stored ? JSON.parse(stored) : null;
   },
 
+  // NEW: List all organizations for discovery
+  listOrganizations: async (): Promise<Organization[]> => {
+      if (isSupabaseConfigured()) {
+          const { data, error } = await supabase!
+            .from('organizations')
+            .select('*')
+            .order('name');
+            
+          if (error) return [];
+          return data as Organization[];
+      }
+      
+      // Local fallback
+      const stored = localStorage.getItem(STORAGE_KEY_ACCOUNT);
+      return stored ? [JSON.parse(stored)] : [];
+  },
+
   // --- FEEDBACK MANAGEMENT ---
 
   // Updated to support pagination

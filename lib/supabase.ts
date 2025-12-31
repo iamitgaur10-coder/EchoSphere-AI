@@ -92,6 +92,12 @@ export const getEnvDebugInfo = () => {
     };
 };
 
+export const getFallbackConfig = () => ({
+    url: FALLBACK_ENV.VITE_SUPABASE_URL,
+    key: FALLBACK_ENV.VITE_SUPABASE_ANON_KEY,
+    aiKey: FALLBACK_ENV.VITE_API_KEY
+});
+
 /**
  * Saves configuration to browser storage and reloads the app to apply changes.
  */

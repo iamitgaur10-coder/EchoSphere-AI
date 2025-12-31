@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle, AlertCircle, Terminal, Sun, Moon, Database, Key, CloudLightning, ShieldCheck, XCircle, HardDrive } from 'lucide-react';
+import { X, CheckCircle, AlertCircle, Terminal, Sun, Moon, Database, Key, CloudLightning, ShieldCheck, XCircle, HardDrive, HelpCircle } from 'lucide-react';
 import PublicView from './components/PublicView';
 import AdminDashboard from './components/AdminDashboard';
 import Wizard from './components/Wizard';
@@ -7,7 +7,7 @@ import LandingPage from './components/LandingPage';
 import { ViewState, AccountSetup } from './types';
 import { dataService } from './services/dataService';
 import { authService } from './services/authService';
-import { isSupabaseConfigured, saveAppConfiguration, getEnvDebugInfo } from './lib/supabase';
+import { supabase, isSupabaseConfigured, saveAppConfiguration, getEnvDebugInfo, getFallbackConfig } from './lib/supabase';
 
 // -- Toast Component --
 interface ToastProps {
@@ -41,14 +41,37 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
     );
 };
 
+// -- Explicit ON/OFF Theme Toggle --
+const ThemeToggle = ({ isDark, toggle }: { isDark: boolean, toggle: () => void }) => (
+    <button 
+        onClick={toggle}
+        className={`fixed top-4 right-4 z-[9999] flex items-center gap-3 px-4 py-2 rounded-full border shadow-xl transition-all duration-300 group ${isDark ? 'bg-zinc-900 border-zinc-700' : 'bg-white border-zinc-200'}`}
+    >
+        <span className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
+            Dark Mode
+        </span>
+        
+        <div className={`relative w-12 h-6 rounded-full transition-colors duration-300 flex items-center p-1 ${isDark ? 'bg-orange-600' : 'bg-zinc-200'}`}>
+            <div className={`w-4 h-4 rounded-full bg-white shadow-md transform transition-transform duration-300 ${isDark ? 'translate-x-6' : 'translate-x-0'}`}></div>
+        </div>
+
+        <span className={`text-[10px] font-mono font-bold w-6 ${isDark ? 'text-white' : 'text-zinc-400'}`}>
+            {isDark ? 'ON' : 'OFF'}
+        </span>
+    </button>
+);
+
 interface SetupScreenProps {
     onBypass: () => void;
+    isDarkMode: boolean;
+    toggleTheme: () => void;
 }
 
-const SetupScreen: React.FC<SetupScreenProps> = ({ onBypass }) => {
-    const [url, setUrl] = useState('');
-    const [key, setKey] = useState('');
-    const [aiKey, setAiKey] = useState('');
+const SetupScreen: React.FC<SetupScreenProps> = ({ onBypass, isDarkMode, toggleTheme }) => {
+    const defaults = getFallbackConfig();
+    const [url, setUrl] = useState(defaults.url || '');
+    const [key, setKey] = useState(defaults.key || '');
+    const [aiKey, setAiKey] = useState(defaults.aiKey || '');
     const [debugInfo, setDebugInfo] = useState(getEnvDebugInfo());
 
     const handleSave = (e: React.FormEvent) => {
@@ -57,46 +80,44 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onBypass }) => {
     };
 
     return (
-        <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-4 text-zinc-200 selection:bg-orange-500 selection:text-white">
-            <div className="max-w-md w-full bg-zinc-900 border border-zinc-800 rounded-lg p-8 shadow-2xl animate-fade-in-up">
+        <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex flex-col items-center justify-center p-4 text-zinc-900 dark:text-zinc-200 selection:bg-orange-500 selection:text-white transition-colors duration-300">
+            <ThemeToggle isDark={isDarkMode} toggle={toggleTheme} />
+            
+            <div className="max-w-md w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-8 shadow-2xl animate-fade-in-up transition-colors duration-300">
                 <div className="flex flex-col items-center mb-8">
                     <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-amber-600 rounded-full flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(249,115,22,0.4)]">
                         <CloudLightning className="text-white" size={32} />
                     </div>
-                    <h1 className="text-2xl font-display font-bold text-white mb-2">Connect to Cloud</h1>
-                    <p className="text-sm text-zinc-400 text-center leading-relaxed">
+                    <h1 className="text-2xl font-display font-bold text-zinc-900 dark:text-white mb-2">Connect to Cloud</h1>
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center leading-relaxed">
                         To run EchoSphere in production mode, please connect your infrastructure.
                     </p>
                 </div>
 
                 {/* Diagnostics Panel */}
-                <div className="bg-black/50 border border-zinc-800 rounded p-4 mb-6 text-xs space-y-2">
+                <div className="bg-zinc-100 dark:bg-black/50 border border-zinc-200 dark:border-zinc-800 rounded p-4 mb-6 text-xs space-y-2">
                     <h3 className="text-zinc-500 font-bold uppercase tracking-wider mb-2">Environment Diagnostics</h3>
                     <div className="flex justify-between items-center">
-                        <span className="text-zinc-400">Supabase URL</span>
-                        <span className={`flex items-center ${debugInfo.urlStatus === 'Configured' ? 'text-green-500' : 'text-red-500'}`}>
+                        <span className="text-zinc-500 dark:text-zinc-400">Supabase URL</span>
+                        <span className={`flex items-center ${debugInfo.urlStatus === 'Configured' ? 'text-green-600 dark:text-green-500' : 'text-red-500'}`}>
                             {debugInfo.urlStatus === 'Configured' ? <ShieldCheck size={14} className="mr-1" /> : <XCircle size={14} className="mr-1" />}
                             {debugInfo.urlStatus}
                         </span>
                     </div>
                     <div className="flex justify-between items-center">
-                        <span className="text-zinc-400">Supabase Key</span>
-                        <span className={`flex items-center ${debugInfo.keyStatus === 'Configured' ? 'text-green-500' : 'text-red-500'}`}>
+                        <span className="text-zinc-500 dark:text-zinc-400">Supabase Key</span>
+                        <span className={`flex items-center ${debugInfo.keyStatus === 'Configured' ? 'text-green-600 dark:text-green-500' : 'text-red-500'}`}>
                             {debugInfo.keyStatus === 'Configured' ? <ShieldCheck size={14} className="mr-1" /> : <XCircle size={14} className="mr-1" />}
                             {debugInfo.keyStatus}
                         </span>
                     </div>
                     <div className="flex justify-between items-center">
-                        <span className="text-zinc-400">Gemini API Key</span>
-                        <span className={`flex items-center ${debugInfo.aiStatus === 'Configured' ? 'text-green-500' : 'text-red-500'}`}>
+                        <span className="text-zinc-500 dark:text-zinc-400">Gemini API Key</span>
+                        <span className={`flex items-center ${debugInfo.aiStatus === 'Configured' ? 'text-green-600 dark:text-green-500' : 'text-red-500'}`}>
                             {debugInfo.aiStatus === 'Configured' ? <ShieldCheck size={14} className="mr-1" /> : <XCircle size={14} className="mr-1" />}
                             {debugInfo.aiStatus}
                         </span>
                     </div>
-                </div>
-
-                <div className="bg-orange-900/30 border border-orange-500/30 rounded p-4 mb-6 text-xs text-orange-200 leading-relaxed">
-                    <strong>Deployment Tip:</strong> If the Diagnostics above say "Missing" but you added keys to Vercel, you must <u>Redeploy</u> (Rebuild) your project.
                 </div>
 
                 <form onSubmit={handleSave} className="space-y-6">
@@ -112,8 +133,12 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onBypass }) => {
                                 value={url}
                                 onChange={e => setUrl(e.target.value)}
                                 placeholder="https://your-project.supabase.co"
-                                className="w-full p-3 bg-black border border-zinc-800 rounded focus:border-orange-500 outline-none text-sm text-white transition-colors"
+                                className="w-full p-3 bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded focus:border-orange-500 outline-none text-sm text-zinc-900 dark:text-white transition-colors"
                             />
+                            <p className="text-[10px] text-zinc-500 dark:text-zinc-600 mt-1 flex items-center">
+                                <HelpCircle size={10} className="mr-1" />
+                                Find this in Supabase Dashboard: Settings &gt; API.
+                            </p>
                         </div>
                         <div>
                             <label className="flex items-center space-x-2 text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">
@@ -126,7 +151,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onBypass }) => {
                                 value={key}
                                 onChange={e => setKey(e.target.value)}
                                 placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6Ik..."
-                                className="w-full p-3 bg-black border border-zinc-800 rounded focus:border-orange-500 outline-none text-sm text-white transition-colors"
+                                className="w-full p-3 bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded focus:border-orange-500 outline-none text-sm text-zinc-900 dark:text-white transition-colors"
                             />
                         </div>
                          <div>
@@ -140,7 +165,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onBypass }) => {
                                 value={aiKey}
                                 onChange={e => setAiKey(e.target.value)}
                                 placeholder="AIzaSy..."
-                                className="w-full p-3 bg-black border border-zinc-800 rounded focus:border-orange-500 outline-none text-sm text-white transition-colors"
+                                className="w-full p-3 bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded focus:border-orange-500 outline-none text-sm text-zinc-900 dark:text-white transition-colors"
                             />
                         </div>
                     </div>
@@ -154,22 +179,19 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onBypass }) => {
                     </button>
                     
                     <div className="relative flex py-2 items-center">
-                        <div className="flex-grow border-t border-zinc-800"></div>
-                        <span className="flex-shrink-0 mx-4 text-zinc-600 text-xs font-bold uppercase">Or</span>
-                        <div className="flex-grow border-t border-zinc-800"></div>
+                        <div className="flex-grow border-t border-zinc-200 dark:border-zinc-800"></div>
+                        <span className="flex-shrink-0 mx-4 text-zinc-400 dark:text-zinc-600 text-xs font-bold uppercase">Or</span>
+                        <div className="flex-grow border-t border-zinc-200 dark:border-zinc-800"></div>
                     </div>
 
                     <button 
                         type="button" 
                         onClick={onBypass}
-                        className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold uppercase tracking-widest text-sm rounded border border-zinc-700 transition-all flex items-center justify-center space-x-2 group"
+                        className="w-full py-3 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 font-bold uppercase tracking-widest text-sm rounded border border-zinc-200 dark:border-zinc-700 transition-all flex items-center justify-center space-x-2 group"
                     >
-                        <HardDrive size={14} className="group-hover:text-white" />
+                        <HardDrive size={14} className="group-hover:text-black dark:group-hover:text-white" />
                         <span>Use Local / Demo Mode</span>
                     </button>
-                    <p className="text-[10px] text-center text-zinc-600">
-                        Local mode stores data in your browser. No server required.
-                    </p>
                 </form>
             </div>
         </div>
@@ -179,7 +201,10 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onBypass }) => {
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('landing');
   const [account, setAccount] = useState<AccountSetup | null>(null);
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  
+  // 1. Default to LIGHT mode (false)
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  
   const [showLogin, setShowLogin] = useState(false);
   const [isSignUpMode, setIsSignUpMode] = useState(false);
   const [pendingView, setPendingView] = useState<ViewState>('landing');
@@ -202,11 +227,38 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    // 2. Initialize Theme
-    document.documentElement.classList.add('dark');
+    // 2. Manage Theme via DOM Class
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
 
-    // 3. Initialize Data
+    // 3. Initialize Data & Listen for Auth Redirects
     const initApp = async () => {
+        // Handle URL Hash Errors (Supabase redirects with #error=...)
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const errorDescription = hashParams.get('error_description');
+        if (errorDescription) {
+            showToast(decodeURIComponent(errorDescription), 'error');
+            // Clear hash to clean up URL
+            window.history.replaceState(null, '', window.location.pathname);
+        }
+
+        // Listen for Auth Session (Login via Email Link)
+        if (isSupabaseConfigured()) {
+            const { data: { subscription } } = supabase!.auth.onAuthStateChange((event, session) => {
+                if (event === 'SIGNED_IN' && session) {
+                    setIsAuthenticated(true);
+                    setShowLogin(false);
+                    showToast("Verified & Logged In Successfully!");
+                }
+            });
+            
+            // Cleanup on unmount (though App.tsx rarely unmounts)
+            // return () => subscription.unsubscribe(); 
+        }
+
         const currentOrg = await dataService.getCurrentOrganization();
         
         if (currentOrg) {
@@ -226,16 +278,10 @@ const App: React.FC = () => {
         }
     };
     initApp();
-  }, []);
+  }, [isDarkMode]);
 
   const toggleTheme = () => {
-    if (isDarkMode) {
-      document.documentElement.classList.remove('dark');
-      setIsDarkMode(false);
-    } else {
-      document.documentElement.classList.add('dark');
-      setIsDarkMode(true);
-    }
+    setIsDarkMode(!isDarkMode);
   };
 
   const handleProtectedAction = (targetView: ViewState) => {
@@ -294,7 +340,7 @@ const App: React.FC = () => {
   };
 
   if (needsSetup) {
-      return <SetupScreen onBypass={handleBypassSetup} />;
+      return <SetupScreen onBypass={handleBypassSetup} isDarkMode={isDarkMode} toggleTheme={toggleTheme} />;
   }
 
   const renderView = () => {
@@ -326,12 +372,8 @@ const App: React.FC = () => {
 
   return (
     <div className="font-sans antialiased min-h-screen transition-colors duration-300">
-        <button 
-            onClick={toggleTheme}
-            className="fixed top-4 right-4 z-[9999] p-2 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-lg text-zinc-600 dark:text-zinc-400 hover:text-orange-500 dark:hover:text-orange-500 transition-all"
-        >
-            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-        </button>
+        
+        <ThemeToggle isDark={isDarkMode} toggle={toggleTheme} />
 
         {renderView()}
         
