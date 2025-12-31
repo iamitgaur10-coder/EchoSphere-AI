@@ -184,6 +184,7 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
           location={selectedLocation}
           onClose={() => setSelectedLocation(null)}
           onSubmit={handleFeedbackSubmit}
+          existingFeedback={feedbackList} // PASS CONTEXT FOR RAG/DUPE CHECK
         />
       )}
       

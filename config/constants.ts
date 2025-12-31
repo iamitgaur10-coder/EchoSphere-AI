@@ -18,17 +18,75 @@ export const APP_CONFIG = {
     { name: 'General', color: '#94a3b8', icon: 'HelpCircle' }
   ],
   AI: {
-    SYSTEM_INSTRUCTION: `Analyze the following public feedback for a city planning tool. 
+    // Dynamic System Instruction to support i18n
+    GET_SYSTEM_INSTRUCTION: (lang: string) => `Analyze the following public feedback for a city planning tool. 
+      Output language: ${lang}.
       Tasks:
       1. Identify sentiment (positive/negative/neutral).
       2. Categorize the topic (Infrastructure, Safety, Recreation, Traffic, Sanitation, Sustainability, Culture).
-      3. Provide a 5-10 word summary.
+      3. Provide a 5-10 word summary in ${lang}.
       4. Assign a Risk Score (0-100, 100=urgent).
-      5. Assign an Eco-Impact Score (0-100) assessing if this suggestion helps the environment (e.g. planting trees = high, more parking = low).
-      6. Provide 1 sentence reasoning for the Eco-Impact.`,
+      5. Assign an Eco-Impact Score (0-100) assessing if this suggestion helps the environment.
+      6. Provide 1 sentence reasoning for the Eco-Impact in ${lang}.`,
+      
     SURVEY_PROMPT: `Generate 5 engaging, short, and relevant feedback questions for a public engagement platform.`,
     REPORT_PROMPT: `You are an expert urban planning analyst. 
       Generate a concise executive summary (max 150 words) based on the following citizen feedback data.
       Highlight key trends, urgent risks, and opportunities for sustainability.`
+  },
+  I18N: {
+    'en-US': {
+      submitBtn: 'Submit Feedback',
+      analyzing: 'Analyzing...',
+      duplicateFound: 'Similar Report Found',
+      upvoteInstead: 'Upvote Instead',
+      describePlaceholder: 'Describe what you see...',
+      addPhoto: 'Add Photo',
+      voiceInput: 'Voice Input'
+    },
+    'es-ES': {
+      submitBtn: 'Enviar Comentarios',
+      analyzing: 'Analizando...',
+      duplicateFound: 'Reporte Similar Encontrado',
+      upvoteInstead: 'Votar a favor',
+      describePlaceholder: 'Describe lo que ves...',
+      addPhoto: 'Añadir Foto',
+      voiceInput: 'Entrada de Voz'
+    },
+    'fr-FR': {
+      submitBtn: 'Envoyer',
+      analyzing: 'Analyse en cours...',
+      duplicateFound: 'Rapport Similaire Trouvé',
+      upvoteInstead: 'Voter pour',
+      describePlaceholder: 'Décrivez ce que vous voyez...',
+      addPhoto: 'Ajouter une photo',
+      voiceInput: 'Entrée Vocale'
+    },
+    'de-DE': {
+        submitBtn: 'Feedback Senden',
+        analyzing: 'Analysieren...',
+        duplicateFound: 'Ähnlicher Bericht gefunden',
+        upvoteInstead: 'Stattdessen hochvoten',
+        describePlaceholder: 'Beschreiben Sie, was Sie sehen...',
+        addPhoto: 'Foto hinzufügen',
+        voiceInput: 'Spracheingabe'
+    }
   }
+};
+
+export const getTranslation = (lang: string) => {
+  // Simple fallback logic
+  const shortLang = lang.split('-')[0]; // e.g., 'es' from 'es-MX'
+  
+  // Try exact match
+  // @ts-ignore
+  if (APP_CONFIG.I18N[lang]) return APP_CONFIG.I18N[lang];
+  
+  // Try partial match
+  const partial = Object.keys(APP_CONFIG.I18N).find(k => k.startsWith(shortLang));
+  // @ts-ignore
+  if (partial) return APP_CONFIG.I18N[partial];
+
+  // Default to English
+  return APP_CONFIG.I18N['en-US'];
 };

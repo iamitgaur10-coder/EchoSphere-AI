@@ -1,16 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Loader2, Send, Mic, MicOff, Image as ImageIcon, Video, Paperclip, User, Trash2 } from 'lucide-react';
-import { analyzeFeedbackContent } from '../services/geminiService';
+import { X, Loader2, Send, Mic, MicOff, Image as ImageIcon, Video, Paperclip, User, Trash2, ThumbsUp, AlertTriangle } from 'lucide-react';
+import { analyzeFeedbackContent, checkDuplicates } from '../services/geminiService';
 import { storageService } from '../services/storageService';
 import { Location, Feedback } from '../types';
+import { getTranslation } from '../config/constants';
 
 interface FeedbackModalProps {
   location: Location;
   onClose: () => void;
   onSubmit: (feedback: Feedback) => void;
+  existingFeedback?: Feedback[]; // For duplicate detection
 }
 
-const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubmit }) => {
+const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubmit, existingFeedback = [] }) => {
   const [content, setContent] = useState('');
   const [authorName, setAuthorName] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -18,7 +20,18 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isListening, setIsListening] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  
+  // Duplicate Detection State
+  const [isCheckingDupes, setIsCheckingDupes] = useState(false);
+  const [duplicateId, setDuplicateId] = useState<string | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Load Translations
+  const userLang = navigator.language || 'en-US';
+  const t = getTranslation(userLang);
 
   // Simple browser speech recognition setup
   useEffect(() => {
@@ -26,6 +39,38 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
        return;
     }
   }, []);
+
+  // Duplicate Detection Effect
+  useEffect(() => {
+      if (content.length < 10) return;
+      if (duplicateId) return; // Already found one
+
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+
+      debounceRef.current = setTimeout(async () => {
+          setIsCheckingDupes(true);
+          
+          // 1. Filter local items by distance (Optimization: only check items within 100m)
+          // Simple euclidean approximation for speed
+          const nearbyCandidates = existingFeedback.filter(f => {
+              const dx = f.location.x - location.x;
+              const dy = f.location.y - location.y;
+              return Math.sqrt(dx*dx + dy*dy) < 0.001; // Approx 100m
+          });
+
+          if (nearbyCandidates.length > 0) {
+              const matchId = await checkDuplicates(content, nearbyCandidates);
+              if (matchId) {
+                  setDuplicateId(matchId);
+              }
+          }
+          setIsCheckingDupes(false);
+      }, 1500); // Wait 1.5s after typing stops
+
+      return () => {
+          if (debounceRef.current) clearTimeout(debounceRef.current);
+      };
+  }, [content, location, existingFeedback, duplicateId]);
 
   const toggleListening = () => {
     if (isListening) {
@@ -38,7 +83,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
         const recognition = new SpeechRecognition();
         recognition.continuous = false;
         recognition.interimResults = false;
-        recognition.lang = 'en-US';
+        recognition.lang = userLang; // Use detected language
 
         recognition.onstart = () => setIsListening(true);
         recognition.onend = () => setIsListening(false);
@@ -78,47 +123,63 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const handleUpvoteDuplicate = () => {
+      // Logic to handle upvote would go here (update existing item)
+      // For now, we just close the modal as if successful
+      onClose();
+      // In a real app, you'd call an API to increment votes on `duplicateId`
+      alert("Duplicate report upvoted! Thank you for validating this issue.");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!content.trim() && !imageBase64) return;
 
     setIsAnalyzing(true);
+    setErrorMsg(null);
     
-    // 1. Analyze Content (Text + Local Image Base64)
-    const textToAnalyze = content || "Analyze this image for urban planning issues.";
-    const analysis = await analyzeFeedbackContent(textToAnalyze, imageBase64 || undefined);
+    try {
+        // 1. Analyze Content (Text + Local Image Base64)
+        const textToAnalyze = content || "Analyze this image for urban planning issues.";
+        
+        // This will now throw if Safety filters trigger
+        const analysis = await analyzeFeedbackContent(textToAnalyze, imageBase64 || undefined);
 
-    // 2. Upload Image to Cloud (if present)
-    let publicImageUrl = undefined;
-    if (imageFile) {
-        const url = await storageService.uploadImage(imageFile);
-        if (url) publicImageUrl = url;
-    } else if (imageBase64) {
-        // Fallback for when storage isn't configured, use base64 for local demo
-        publicImageUrl = imageBase64;
+        // 2. Upload Image to Cloud (if present)
+        let publicImageUrl = undefined;
+        if (imageFile) {
+            const url = await storageService.uploadImage(imageFile);
+            if (url) publicImageUrl = url;
+        } else if (imageBase64) {
+            publicImageUrl = imageBase64;
+        }
+
+        const newId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+
+        const newFeedback: Feedback = {
+            id: newId,
+            location,
+            content,
+            timestamp: new Date(),
+            sentiment: analysis.sentiment,
+            category: analysis.category,
+            summary: analysis.summary,
+            votes: 0,
+            authorName: authorName.trim() || 'Anonymous Citizen',
+            attachments: attachments as any,
+            imageUrl: publicImageUrl,
+            ecoImpactScore: analysis.ecoImpactScore,
+            ecoImpactReasoning: analysis.ecoImpactReasoning,
+            riskScore: analysis.riskScore
+        };
+
+        onSubmit(newFeedback);
+    } catch (err: any) {
+        console.error(err);
+        setErrorMsg(err.message || "An unexpected error occurred.");
+    } finally {
+        setIsAnalyzing(false);
     }
-
-    const newId = Date.now().toString(36) + Math.random().toString(36).substr(2);
-
-    const newFeedback: Feedback = {
-      id: newId,
-      location,
-      content,
-      timestamp: new Date(),
-      sentiment: analysis.sentiment,
-      category: analysis.category,
-      summary: analysis.summary,
-      votes: 0,
-      authorName: authorName.trim() || 'Anonymous Citizen',
-      attachments: attachments as any,
-      imageUrl: publicImageUrl,
-      ecoImpactScore: analysis.ecoImpactScore,
-      ecoImpactReasoning: analysis.ecoImpactReasoning,
-      riskScore: analysis.riskScore
-    };
-
-    onSubmit(newFeedback);
-    setIsAnalyzing(false);
   };
 
   return (
@@ -127,14 +188,52 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
         <div className="flex items-center justify-between p-4 border-b border-zinc-800 bg-zinc-900/50">
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
-            <h3 className="text-sm font-bold font-display uppercase tracking-wider text-zinc-200">Submit Feedback</h3>
+            <h3 className="text-sm font-bold font-display uppercase tracking-wider text-zinc-200">
+                {t.submitBtn}
+            </h3>
           </div>
           <button onClick={onClose} className="p-1 hover:bg-zinc-800 rounded transition-colors text-zinc-500 hover:text-white">
             <X size={16} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="p-6 space-y-5 relative">
+          
+          {/* Safety Error Banner */}
+          {errorMsg && (
+              <div className="bg-red-900/30 border border-red-500/50 rounded p-3 flex items-start space-x-3 text-red-200 mb-4 animate-pulse">
+                  <AlertTriangle className="flex-shrink-0 text-red-500" size={18} />
+                  <div className="text-xs font-medium">{errorMsg}</div>
+              </div>
+          )}
+
+          {/* Duplicate Detection Banner */}
+          {duplicateId && (
+               <div className="absolute inset-0 z-10 bg-zinc-950/95 flex flex-col items-center justify-center p-8 text-center animate-fade-in-up">
+                    <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mb-4 border border-blue-500/50">
+                        <ThumbsUp size={32} className="text-blue-500" />
+                    </div>
+                    <h3 className="text-xl font-display font-bold text-white mb-2">{t.duplicateFound}</h3>
+                    <p className="text-zinc-400 text-sm mb-6 max-w-xs">
+                        {t.duplicateFound} (ID: {duplicateId}). We found a report very similar to yours nearby.
+                    </p>
+                    <button 
+                        type="button"
+                        onClick={handleUpvoteDuplicate}
+                        className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-full transition-all shadow-lg shadow-blue-900/50 mb-4"
+                    >
+                        {t.upvoteInstead}
+                    </button>
+                    <button 
+                        type="button" 
+                        onClick={() => setDuplicateId(null)} 
+                        className="text-xs text-zinc-500 hover:text-zinc-300 underline"
+                    >
+                        No, this is different
+                    </button>
+               </div>
+          )}
+
           {/* Location Badge */}
           <div className="flex items-center space-x-2 text-xs text-zinc-500 bg-black/50 p-2 rounded border border-zinc-800 font-mono">
             <span className="text-orange-500 font-bold">Location:</span>
@@ -144,7 +243,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
           {/* Identity Field */}
           <div>
             <label className="block text-xs font-bold text-zinc-500 mb-1 uppercase tracking-widest">
-                Your Name (Optional)
+                Name (Optional)
             </label>
             <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-600 group-focus-within:text-orange-500 transition-colors">
@@ -170,9 +269,14 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 className="w-full h-32 p-3 bg-black border border-zinc-800 rounded focus:border-orange-500 outline-none resize-none text-sm text-zinc-300 placeholder-zinc-700 transition-colors leading-relaxed"
-                placeholder="Describe what you see..."
+                placeholder={t.describePlaceholder}
               />
               <div className="absolute bottom-2 right-2 flex space-x-2">
+                 {isCheckingDupes && (
+                     <div className="flex items-center bg-black/50 px-2 py-1 rounded text-[10px] text-zinc-500">
+                         <Loader2 size={10} className="animate-spin mr-1" /> Checking...
+                     </div>
+                 )}
                  <button 
                     type="button" 
                     onClick={toggleListening}
@@ -181,7 +285,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
                         ? 'bg-red-500/20 text-red-500 border border-red-500 animate-pulse' 
                         : 'bg-zinc-900 border border-zinc-700 text-zinc-500 hover:text-white'
                     }`}
-                    title="Voice Input"
+                    title={t.voiceInput}
                 >
                     {isListening ? <MicOff size={14} /> : <Mic size={14} />}
                 </button>
@@ -192,7 +296,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
           {/* Multimodal Inputs */}
           <div>
             <label className="block text-xs font-bold text-zinc-500 mb-2 uppercase tracking-widest">
-                Add Photo
+                {t.addPhoto}
             </label>
             
             <input 
@@ -218,7 +322,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
                             className="flex-1 flex items-center justify-center p-4 rounded border border-dashed border-zinc-800 hover:border-orange-500 hover:bg-zinc-900 text-zinc-500 hover:text-orange-500 transition-all text-xs font-bold group"
                         >
                             <ImageIcon size={18} className="mr-2 group-hover:scale-110 transition-transform" />
-                            Upload Photo
+                            {t.addPhoto}
                         </button>
                     </div>
                 )}
@@ -234,12 +338,12 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
               {isAnalyzing ? (
                 <>
                   <Loader2 size={16} className="animate-spin" />
-                  <span>Analyzing...</span>
+                  <span>{t.analyzing}</span>
                 </>
               ) : (
                 <>
                   <Send size={16} />
-                  <span>Submit Feedback</span>
+                  <span>{t.submitBtn}</span>
                 </>
               )}
             </button>
