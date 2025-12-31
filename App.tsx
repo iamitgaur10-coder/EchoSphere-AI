@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle, AlertCircle, Terminal, Sun, Moon, Database, Key, CloudLightning } from 'lucide-react';
+import { X, CheckCircle, AlertCircle, Terminal, Sun, Moon, Database, Key, CloudLightning, ShieldCheck, XCircle, HardDrive } from 'lucide-react';
 import PublicView from './components/PublicView';
 import AdminDashboard from './components/AdminDashboard';
 import Wizard from './components/Wizard';
@@ -7,7 +7,7 @@ import LandingPage from './components/LandingPage';
 import { ViewState, AccountSetup } from './types';
 import { dataService } from './services/dataService';
 import { authService } from './services/authService';
-import { isSupabaseConfigured, saveAppConfiguration } from './lib/supabase';
+import { isSupabaseConfigured, saveAppConfiguration, getEnvDebugInfo } from './lib/supabase';
 
 // -- Toast Component --
 interface ToastProps {
@@ -41,10 +41,15 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
     );
 };
 
-const SetupScreen: React.FC = () => {
+interface SetupScreenProps {
+    onBypass: () => void;
+}
+
+const SetupScreen: React.FC<SetupScreenProps> = ({ onBypass }) => {
     const [url, setUrl] = useState('');
     const [key, setKey] = useState('');
     const [aiKey, setAiKey] = useState('');
+    const [debugInfo, setDebugInfo] = useState(getEnvDebugInfo());
 
     const handleSave = (e: React.FormEvent) => {
         e.preventDefault();
@@ -64,9 +69,34 @@ const SetupScreen: React.FC = () => {
                     </p>
                 </div>
 
+                {/* Diagnostics Panel */}
+                <div className="bg-black/50 border border-zinc-800 rounded p-4 mb-6 text-xs space-y-2">
+                    <h3 className="text-zinc-500 font-bold uppercase tracking-wider mb-2">Environment Diagnostics</h3>
+                    <div className="flex justify-between items-center">
+                        <span className="text-zinc-400">Supabase URL</span>
+                        <span className={`flex items-center ${debugInfo.urlStatus === 'Configured' ? 'text-green-500' : 'text-red-500'}`}>
+                            {debugInfo.urlStatus === 'Configured' ? <ShieldCheck size={14} className="mr-1" /> : <XCircle size={14} className="mr-1" />}
+                            {debugInfo.urlStatus}
+                        </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-zinc-400">Supabase Key</span>
+                        <span className={`flex items-center ${debugInfo.keyStatus === 'Configured' ? 'text-green-500' : 'text-red-500'}`}>
+                            {debugInfo.keyStatus === 'Configured' ? <ShieldCheck size={14} className="mr-1" /> : <XCircle size={14} className="mr-1" />}
+                            {debugInfo.keyStatus}
+                        </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-zinc-400">Gemini API Key</span>
+                        <span className={`flex items-center ${debugInfo.aiStatus === 'Configured' ? 'text-green-500' : 'text-red-500'}`}>
+                            {debugInfo.aiStatus === 'Configured' ? <ShieldCheck size={14} className="mr-1" /> : <XCircle size={14} className="mr-1" />}
+                            {debugInfo.aiStatus}
+                        </span>
+                    </div>
+                </div>
+
                 <div className="bg-orange-900/30 border border-orange-500/30 rounded p-4 mb-6 text-xs text-orange-200 leading-relaxed">
-                    <strong>Have you added environment variables?</strong><br/>
-                    If you just added keys to Vercel/Netlify, you must <u>Redeploy</u> your project for the changes to take effect.
+                    <strong>Deployment Tip:</strong> If the Diagnostics above say "Missing" but you added keys to Vercel, you must <u>Redeploy</u> (Rebuild) your project.
                 </div>
 
                 <form onSubmit={handleSave} className="space-y-6">
@@ -115,10 +145,6 @@ const SetupScreen: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="bg-zinc-800/50 p-4 rounded border border-zinc-800 text-xs text-zinc-400">
-                        Alternatively, you can manually enter keys here for this browser session only.
-                    </div>
-
                     <button 
                         type="submit" 
                         disabled={!url || !key || !aiKey}
@@ -126,6 +152,24 @@ const SetupScreen: React.FC = () => {
                     >
                         Initialize System
                     </button>
+                    
+                    <div className="relative flex py-2 items-center">
+                        <div className="flex-grow border-t border-zinc-800"></div>
+                        <span className="flex-shrink-0 mx-4 text-zinc-600 text-xs font-bold uppercase">Or</span>
+                        <div className="flex-grow border-t border-zinc-800"></div>
+                    </div>
+
+                    <button 
+                        type="button" 
+                        onClick={onBypass}
+                        className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold uppercase tracking-widest text-sm rounded border border-zinc-700 transition-all flex items-center justify-center space-x-2 group"
+                    >
+                        <HardDrive size={14} className="group-hover:text-white" />
+                        <span>Use Local / Demo Mode</span>
+                    </button>
+                    <p className="text-[10px] text-center text-zinc-600">
+                        Local mode stores data in your browser. No server required.
+                    </p>
                 </form>
             </div>
         </div>
@@ -146,7 +190,12 @@ const App: React.FC = () => {
   const [toast, setToast] = useState<{msg: string, type: 'success' | 'error' | 'warning'} | null>(null);
   
   // Initialize lazily to prevent flash
-  const [needsSetup, setNeedsSetup] = useState(!isSupabaseConfigured());
+  // We check Supabase Config AND Local Skip Flag
+  const [needsSetup, setNeedsSetup] = useState(() => {
+     if (isSupabaseConfigured()) return false;
+     if (typeof window !== 'undefined' && localStorage.getItem('echosphere_skip_setup') === 'true') return false;
+     return true;
+  });
 
   const showToast = (msg: string, type: 'success' | 'error' | 'warning' = 'success') => {
       setToast({ msg, type });
@@ -220,7 +269,15 @@ const App: React.FC = () => {
         setCurrentView(pendingView);
         showToast(isSignUpMode ? `Account created for ${result.user.email}` : `Welcome back, ${result.user.email}`);
     } else {
-        showToast(result.error?.message || "Authentication Failed", 'error');
+        // If in Local/Demo mode, allow admin access with mock auth
+        if (!isSupabaseConfigured()) {
+            setIsAuthenticated(true);
+            setShowLogin(false);
+            setCurrentView(pendingView);
+            showToast("Demo Mode: Admin Access Granted", 'warning');
+        } else {
+            showToast(result.error?.message || "Authentication Failed", 'error');
+        }
     }
   };
 
@@ -231,8 +288,13 @@ const App: React.FC = () => {
     showToast(`Organization '${config.organizationName}' configured successfully`);
   };
 
+  const handleBypassSetup = () => {
+      localStorage.setItem('echosphere_skip_setup', 'true');
+      setNeedsSetup(false);
+  };
+
   if (needsSetup) {
-      return <SetupScreen />;
+      return <SetupScreen onBypass={handleBypassSetup} />;
   }
 
   const renderView = () => {
@@ -283,6 +345,9 @@ const App: React.FC = () => {
                              <Terminal size={24} />
                         </div>
                         <h3 className="text-xl font-display font-bold dark:text-white tracking-tight">{isSignUpMode ? 'Create Admin Account' : 'Admin Login'}</h3>
+                        {!isSupabaseConfigured() && (
+                            <p className="text-xs text-orange-500 mt-2 font-bold uppercase tracking-wide">Demo Mode Enabled</p>
+                        )}
                     </div>
 
                     <form onSubmit={handleAuth} className="space-y-4">

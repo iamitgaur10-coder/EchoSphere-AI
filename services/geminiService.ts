@@ -2,32 +2,45 @@ import { GoogleGenAI, Type, HarmCategory, HarmBlockThreshold } from "@google/gen
 import { AnalysisResponse, Feedback, GenAIPart } from '../types';
 import { APP_CONFIG } from '../config/constants';
 
+// Clean helper
+const clean = (val: string | undefined) => {
+    if (!val) return '';
+    return val.replace(/^['"]|['"]$/g, '').trim();
+};
+
 // Priority: 
 // 1. process.env.API_KEY (Official Guideline)
 // 2. VITE_API_KEY (Vercel/Vite Standard)
 // 3. LocalStorage (Setup Wizard)
 const getApiKey = () => {
+    let key = '';
+
     // 1. Check process.env (Standard Node/System)
     try {
         // @ts-ignore
         if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
             // @ts-ignore
-            return process.env.API_KEY;
+            key = process.env.API_KEY;
         }
     } catch (e) {}
 
     // 2. Check Vite Env (Static Replacement)
-    // Wrapped in try/catch to avoid "ReferenceError" if import.meta is not defined
-    try {
-        // @ts-ignore
-        if (import.meta.env.VITE_API_KEY) {
+    if (!key) {
+        try {
             // @ts-ignore
-            return import.meta.env.VITE_API_KEY;
-        }
-    } catch (e) {}
+            if (import.meta.env.VITE_API_KEY) {
+                // @ts-ignore
+                key = import.meta.env.VITE_API_KEY;
+            }
+        } catch (e) {}
+    }
     
     // 3. Check Local Storage
-    return localStorage.getItem('VITE_API_KEY') || '';
+    if (!key) {
+        key = localStorage.getItem('VITE_API_KEY') || '';
+    }
+
+    return clean(key);
 };
 
 const apiKey = getApiKey();
