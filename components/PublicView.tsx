@@ -34,7 +34,7 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
     const interval = setInterval(() => {
         const action = actions[Math.floor(Math.random() * actions.length)];
         const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        setLiveFeed(prev => [`${time} • ${action.toUpperCase()}`, ...prev].slice(0, 3));
+        setLiveFeed(prev => [`${time} • ${action}`, ...prev].slice(0, 3));
     }, 8000);
 
     return () => clearInterval(interval);
@@ -48,7 +48,7 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
     const updatedList = await dataService.saveFeedback(newFeedback);
     setFeedbackList(updatedList);
     setSelectedLocation(null);
-    if (showToast) showToast("DATA_LOGGED: ANALYSIS_COMPLETE");
+    if (showToast) showToast("Feedback Submitted Successfully");
   };
 
   return (
@@ -58,18 +58,18 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <button 
             onClick={onBack}
-            className="pointer-events-auto flex items-center space-x-2 px-4 py-2 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md shadow-2xl rounded border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:border-zinc-400 dark:hover:border-zinc-600 transition-all group"
+            className="pointer-events-auto flex items-center space-x-2 px-4 py-2 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md shadow-2xl rounded-full border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:border-zinc-400 dark:hover:border-zinc-600 transition-all group"
           >
             <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-            <span className="hidden sm:inline font-mono text-xs uppercase tracking-wide">Return_Base</span>
+            <span className="hidden sm:inline font-medium text-xs">Back to Home</span>
           </button>
 
-          <div className="hidden md:flex pointer-events-auto px-5 py-2 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md shadow-2xl rounded border border-orange-500/20 dark:border-orange-900/50 text-orange-600 dark:text-orange-500 items-center space-x-3">
+          <div className="hidden md:flex pointer-events-auto px-5 py-2 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md shadow-2xl rounded-full border border-orange-500/20 dark:border-orange-900/50 text-orange-600 dark:text-orange-500 items-center space-x-3">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
             </span>
-            <span className="text-xs font-mono font-bold tracking-widest uppercase">Live_Feed_Active</span>
+            <span className="text-xs font-bold uppercase tracking-wider">Live Updates</span>
           </div>
         </div>
       </header>
@@ -85,11 +85,11 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
         
         {/* Floating Action Badge */}
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
-            <div className="bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md text-zinc-600 dark:text-zinc-300 px-6 py-3 rounded-full shadow-[0_0_30px_rgba(0,0,0,0.2)] dark:shadow-[0_0_30px_rgba(0,0,0,0.5)] flex items-center space-x-3 border border-zinc-200 dark:border-zinc-700 animate-bounce-slow">
+            <div className="bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md text-zinc-600 dark:text-zinc-300 px-6 py-3 rounded-full shadow-lg flex items-center space-x-3 border border-zinc-200 dark:border-zinc-700 animate-bounce-slow">
                 <div className="bg-orange-600 p-1.5 rounded-full shadow-lg text-white dark:text-black">
                     <Plus size={16} />
                 </div>
-                <span className="text-xs font-mono uppercase tracking-wider">Tap Map to Initialize Report</span>
+                <span className="text-xs font-bold uppercase tracking-wider">Tap map to add feedback</span>
             </div>
         </div>
 
@@ -97,8 +97,8 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
         <div className="absolute bottom-6 left-6 z-10 hidden md:block w-72 pointer-events-none">
             <div className="space-y-2">
                 {liveFeed.map((msg, i) => (
-                    <div key={i} className={`bg-white/80 dark:bg-black/80 backdrop-blur-sm p-2 rounded border-l-2 border-orange-500 text-[10px] font-mono text-zinc-600 dark:text-zinc-400 flex items-center space-x-2 animate-fade-in-left shadow-lg`} style={{ opacity: 1 - (i * 0.3) }}>
-                        <Activity size={10} className="text-orange-500" />
+                    <div key={i} className={`bg-white/80 dark:bg-black/80 backdrop-blur-sm p-3 rounded-lg border-l-4 border-orange-500 text-xs text-zinc-600 dark:text-zinc-300 flex items-center space-x-2 animate-fade-in-left shadow-lg`} style={{ opacity: 1 - (i * 0.3) }}>
+                        <Activity size={12} className="text-orange-500 flex-shrink-0" />
                         <span className="truncate">{msg}</span>
                     </div>
                 ))}

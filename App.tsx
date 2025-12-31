@@ -21,9 +21,9 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
     }, [onClose]);
 
     return (
-        <div className={`fixed bottom-6 right-6 z-[9999] flex items-center space-x-3 px-4 py-3 rounded border backdrop-blur-md animate-fade-in-up transition-all font-mono text-xs shadow-2xl ${type === 'success' ? 'bg-zinc-900/90 text-zinc-200 border-green-500/30' : 'bg-zinc-900/90 text-red-200 border-red-500/30'}`}>
+        <div className={`fixed bottom-6 right-6 z-[9999] flex items-center space-x-3 px-4 py-3 rounded border backdrop-blur-md animate-fade-in-up transition-all font-medium text-xs shadow-2xl ${type === 'success' ? 'bg-zinc-900/90 text-zinc-200 border-green-500/30' : 'bg-zinc-900/90 text-red-200 border-red-500/30'}`}>
             {type === 'success' ? <CheckCircle size={14} className="text-green-500" /> : <AlertCircle size={14} className="text-red-500" />}
-            <p className="uppercase tracking-wide">{message}</p>
+            <p className="tracking-wide">{message}</p>
             <button onClick={onClose} className="ml-4 opacity-70 hover:opacity-100 hover:text-white"><X size={12} /></button>
         </div>
     );
@@ -103,9 +103,9 @@ const App: React.FC = () => {
         setIsAuthenticated(true);
         setShowLogin(false);
         setCurrentView(pendingView);
-        showToast(isSignUpMode ? `ACCOUNT_CREATED: ${result.user.email?.toUpperCase()}` : `IDENTITY_VERIFIED: ${result.user.email?.toUpperCase()}`);
+        showToast(isSignUpMode ? `Account created for ${result.user.email}` : `Welcome back, ${result.user.email}`);
     } else {
-        showToast(result.error?.message || "AUTHENTICATION_FAILED", 'error');
+        showToast(result.error?.message || "Authentication Failed", 'error');
     }
   };
 
@@ -113,7 +113,7 @@ const App: React.FC = () => {
     dataService.saveAccount(config);
     setAccount(config);
     setCurrentView('admin');
-    showToast(`TENANT_PROVISIONED: ${config.organizationName.toUpperCase()}`);
+    showToast(`Organization '${config.organizationName}' configured successfully`);
   };
 
   const renderView = () => {
@@ -178,15 +178,8 @@ const App: React.FC = () => {
                         <div className="mx-auto w-12 h-12 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg flex items-center justify-center mb-4 text-orange-500">
                              <Terminal size={24} />
                         </div>
-                        <h3 className="text-xl font-display font-bold dark:text-white tracking-tight">{isSignUpMode ? 'Register Operator' : 'System Access'}</h3>
-                        <div className="flex items-center justify-center space-x-2 mt-2">
-                             <span className="text-[10px] font-mono text-zinc-500">CONNECTION:</span>
-                             {systemMode === 'CLOUD' ? (
-                                <span className="text-[10px] font-mono text-green-500 flex items-center"><Cloud size={10} className="mr-1"/> SECURE_LINK</span>
-                             ) : (
-                                <span className="text-[10px] font-mono text-yellow-500 flex items-center"><Database size={10} className="mr-1"/> LOCAL_CACHE</span>
-                             )}
-                        </div>
+                        <h3 className="text-xl font-display font-bold dark:text-white tracking-tight">{isSignUpMode ? 'Create Admin Account' : 'Admin Login'}</h3>
+                        <p className="text-xs text-zinc-500 mt-2">Access your organization's dashboard</p>
                     </div>
 
                     <form onSubmit={handleAuth} className="space-y-4">
@@ -195,8 +188,8 @@ const App: React.FC = () => {
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                placeholder="OPERATOR_EMAIL"
-                                className="w-full p-3 bg-zinc-50 dark:bg-black border border-zinc-300 dark:border-zinc-800 rounded focus:border-orange-500 outline-none text-sm font-mono text-center placeholder-zinc-500 dark:placeholder-zinc-700 transition-colors text-black dark:text-white"
+                                placeholder="Email Address"
+                                className="w-full p-3 bg-zinc-50 dark:bg-black border border-zinc-300 dark:border-zinc-800 rounded focus:border-orange-500 outline-none text-sm font-medium text-center placeholder-zinc-500 dark:placeholder-zinc-700 transition-colors text-black dark:text-white"
                                 autoFocus
                             />
                         </div>
@@ -205,8 +198,8 @@ const App: React.FC = () => {
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                placeholder="ACCESS_KEY (Password)"
-                                className="w-full p-3 bg-zinc-50 dark:bg-black border border-zinc-300 dark:border-zinc-800 rounded focus:border-orange-500 outline-none text-sm font-mono text-center placeholder-zinc-500 dark:placeholder-zinc-700 transition-colors text-black dark:text-white"
+                                placeholder="Password"
+                                className="w-full p-3 bg-zinc-50 dark:bg-black border border-zinc-300 dark:border-zinc-800 rounded focus:border-orange-500 outline-none text-sm font-medium text-center placeholder-zinc-500 dark:placeholder-zinc-700 transition-colors text-black dark:text-white"
                             />
                         </div>
                         <button 
@@ -214,19 +207,19 @@ const App: React.FC = () => {
                             disabled={isAuthLoading}
                             className={`w-full py-3 text-black font-display font-bold text-sm tracking-wide rounded uppercase transition-all flex justify-center ${isSignUpMode ? 'bg-orange-500 hover:bg-orange-400' : 'bg-zinc-200 dark:bg-zinc-100 hover:bg-zinc-300 dark:hover:bg-white'}`}
                         >
-                            {isAuthLoading ? "Processing..." : (isSignUpMode ? "Initialize Account" : "Authenticate")}
+                            {isAuthLoading ? "Processing..." : (isSignUpMode ? "Sign Up" : "Login")}
                         </button>
 
                         <div className="pt-2 flex justify-center">
                             <button
                                 type="button"
                                 onClick={() => setIsSignUpMode(!isSignUpMode)}
-                                className="text-[10px] font-mono text-zinc-500 hover:text-zinc-900 dark:hover:text-white flex items-center space-x-1"
+                                className="text-xs font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-white flex items-center space-x-1"
                             >
                                 {isSignUpMode ? (
-                                    <><span>ALREADY_REGISTERED?</span> <LogIn size={10} /></>
+                                    <><span>Have an account?</span> <LogIn size={10} /></>
                                 ) : (
-                                    <><span>NEW_OPERATOR?</span> <UserPlus size={10} /></>
+                                    <><span>Need an account?</span> <UserPlus size={10} /></>
                                 )}
                             </button>
                         </div>
@@ -234,9 +227,9 @@ const App: React.FC = () => {
                         <button 
                             type="button"
                             onClick={() => setShowLogin(false)}
-                            className="w-full py-2 text-zinc-600 hover:text-zinc-400 text-xs font-mono uppercase tracking-wider"
+                            className="w-full py-2 text-zinc-600 hover:text-zinc-400 text-xs font-bold uppercase tracking-wider"
                         >
-                            [Cancel_Request]
+                            Cancel
                         </button>
                     </form>
                 </div>

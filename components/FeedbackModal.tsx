@@ -127,7 +127,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
         <div className="flex items-center justify-between p-4 border-b border-zinc-800 bg-zinc-900/50">
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
-            <h3 className="text-sm font-bold font-display uppercase tracking-wider text-zinc-200">New_Entry</h3>
+            <h3 className="text-sm font-bold font-display uppercase tracking-wider text-zinc-200">Submit Feedback</h3>
           </div>
           <button onClick={onClose} className="p-1 hover:bg-zinc-800 rounded transition-colors text-zinc-500 hover:text-white">
             <X size={16} />
@@ -137,14 +137,14 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
           {/* Location Badge */}
           <div className="flex items-center space-x-2 text-xs text-zinc-500 bg-black/50 p-2 rounded border border-zinc-800 font-mono">
-            <span className="text-orange-500">LOC::</span>
+            <span className="text-orange-500 font-bold">Location:</span>
             <span>{location.y.toFixed(4)}, {location.x.toFixed(4)}</span>
           </div>
 
           {/* Identity Field */}
           <div>
-            <label className="block text-[10px] font-mono text-zinc-500 mb-1 uppercase tracking-widest">
-                Identifier (Optional)
+            <label className="block text-xs font-bold text-zinc-500 mb-1 uppercase tracking-widest">
+                Your Name (Optional)
             </label>
             <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-600 group-focus-within:text-orange-500 transition-colors">
@@ -154,23 +154,23 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
                     type="text"
                     value={authorName}
                     onChange={(e) => setAuthorName(e.target.value)}
-                    className="w-full pl-9 p-2.5 bg-black border border-zinc-800 rounded focus:border-orange-500 outline-none text-sm text-zinc-300 placeholder-zinc-700 transition-colors font-mono"
-                    placeholder="ANONYMOUS_USER"
+                    className="w-full pl-9 p-2.5 bg-black border border-zinc-800 rounded focus:border-orange-500 outline-none text-sm text-zinc-300 placeholder-zinc-700 transition-colors"
+                    placeholder="Anonymous"
                 />
             </div>
           </div>
 
           {/* Content Field */}
           <div>
-            <label className="block text-[10px] font-mono text-zinc-500 mb-1 uppercase tracking-widest">
-              Observation Data
+            <label className="block text-xs font-bold text-zinc-500 mb-1 uppercase tracking-widest">
+              Description
             </label>
             <div className="relative group">
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 className="w-full h-32 p-3 bg-black border border-zinc-800 rounded focus:border-orange-500 outline-none resize-none text-sm text-zinc-300 placeholder-zinc-700 transition-colors leading-relaxed"
-                placeholder="Enter field report details or upload an image..."
+                placeholder="Describe what you see..."
               />
               <div className="absolute bottom-2 right-2 flex space-x-2">
                  <button 
@@ -181,7 +181,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
                         ? 'bg-red-500/20 text-red-500 border border-red-500 animate-pulse' 
                         : 'bg-zinc-900 border border-zinc-700 text-zinc-500 hover:text-white'
                     }`}
-                    title="Dictate"
+                    title="Voice Input"
                 >
                     {isListening ? <MicOff size={14} /> : <Mic size={14} />}
                 </button>
@@ -191,8 +191,8 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
           
           {/* Multimodal Inputs */}
           <div>
-            <label className="block text-[10px] font-mono text-zinc-500 mb-2 uppercase tracking-widest">
-                Media Attachments
+            <label className="block text-xs font-bold text-zinc-500 mb-2 uppercase tracking-widest">
+                Add Photo
             </label>
             
             <input 
@@ -208,17 +208,17 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
                     <div className="relative group bg-zinc-900 rounded border border-zinc-800 h-32 flex items-center justify-center overflow-hidden">
                         <img src={imageBase64} alt="Preview" className="h-full w-full object-cover opacity-80" />
                         <button type="button" onClick={removeImage} className="absolute top-2 right-2 bg-black/80 text-white p-1 rounded-full hover:bg-red-600 transition-colors"><X size={14} /></button>
-                        <span className="absolute bottom-1 left-2 text-[8px] font-mono text-white bg-black/50 px-1 rounded">IMAGE_LOADED</span>
+                        <span className="absolute bottom-1 left-2 text-[10px] font-bold text-white bg-black/50 px-2 py-0.5 rounded">Photo Attached</span>
                     </div>
                 ) : (
                     <div className="flex gap-2">
                         <button 
                             type="button"
                             onClick={triggerFileUpload}
-                            className="flex-1 flex items-center justify-center p-4 rounded border border-dashed border-zinc-800 hover:border-orange-500 hover:bg-zinc-900 text-zinc-500 hover:text-orange-500 transition-all text-xs font-mono group"
+                            className="flex-1 flex items-center justify-center p-4 rounded border border-dashed border-zinc-800 hover:border-orange-500 hover:bg-zinc-900 text-zinc-500 hover:text-orange-500 transition-all text-xs font-bold group"
                         >
                             <ImageIcon size={18} className="mr-2 group-hover:scale-110 transition-transform" />
-                            UPLOAD_VISUAL_DATA
+                            Upload Photo
                         </button>
                     </div>
                 )}
@@ -234,19 +234,19 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
               {isAnalyzing ? (
                 <>
                   <Loader2 size={16} className="animate-spin" />
-                  <span>Processing_Neural_Net...</span>
+                  <span>Analyzing...</span>
                 </>
               ) : (
                 <>
                   <Send size={16} />
-                  <span>Transmit_Data</span>
+                  <span>Submit Feedback</span>
                 </>
               )}
             </button>
           </div>
           
-          <p className="text-[10px] text-center text-zinc-600 font-mono">
-            SECURE_CONNECTION // GEMINI_AI_ACTIVE
+          <p className="text-[10px] text-center text-zinc-600 font-medium">
+            Powered by Google Gemini AI
           </p>
         </form>
       </div>
