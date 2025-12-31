@@ -1,13 +1,16 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { AnalysisResponse, Feedback } from '../types';
 
-// Using the provided API Key from environment variable
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Use the API key provided by the user. 
+// In a standard browser environment without a bundler, 'process' is not defined.
+const API_KEY = 'AIzaSyArN7otlgUTAp-Bf_QPM9dDCnAHp2lOtsc';
+
+const ai = new GoogleGenAI({ apiKey: API_KEY });
 
 export const analyzeFeedbackContent = async (text: string): Promise<AnalysisResponse> => {
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview', // Switching to 3-flash-preview per guidelines
+      model: 'gemini-3-flash-preview',
       contents: `Analyze the following public feedback for a city planning tool. 
       
       Tasks:
