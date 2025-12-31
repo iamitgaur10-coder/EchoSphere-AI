@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { ArrowRight, ArrowLeft, Check, Wand2, MapPin, Building2, Layers } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Check, Wand2, MapPin, Building2, Layers, Loader2, AlertCircle } from 'lucide-react';
 import { generateSurveyQuestions } from '../services/geminiService';
 import { AccountSetup, Location } from '../types';
+import { dataService } from '../services/dataService';
 import MapArea from './MapArea';
 
 interface WizardProps {
@@ -12,15 +13,18 @@ interface WizardProps {
 const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel }) => {
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState<AccountSetup>({
     organizationName: '',
     regionCode: '',
     focusArea: 'Urban Development',
-    center: { x: -74.0060, y: 40.7128 }, // Default to NYC (Real Geo Coords)
+    center: { x: -74.0060, y: 40.7128 }, 
     questions: []
   });
 
   const handleNext = async () => {
+    setError(null);
     if (step === 2) {
       setIsLoading(true);
       const questions = await generateSurveyQuestions(formData.organizationName, formData.focusArea);
@@ -31,6 +35,28 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel }) => {
   };
 
   const handleBack = () => setStep(prev => prev - 1);
+
+  const handleLaunch = async () => {
+    setIsSaving(true);
+    setError(null);
+    
+    // Create actual DB entry for tenant
+    const result = await dataService.createOrganization(formData);
+    
+    setIsSaving(false);
+    
+    if (result) {
+        onComplete(formData);
+    } else {
+        // If result is null, it means cloud provisioning failed (check console)
+        if (dataService.isProduction()) {
+            setError("Failed to create organization in database. Check your connection or API keys.");
+        } else {
+            // Local mode always succeeds
+            onComplete(formData);
+        }
+    }
+  };
 
   const renderStep1 = () => (
     <div className="space-y-6 animate-fade-in-up">
@@ -118,6 +144,13 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel }) => {
             ))}
         </div>
       )}
+      
+      {error && (
+        <div className="p-4 bg-red-900/20 border border-red-500/30 rounded flex items-start space-x-3 text-red-400">
+            <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
+            <p className="text-xs">{error}</p>
+        </div>
+      )}
     </div>
   );
 
@@ -149,12 +182,12 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel }) => {
         {/* Footer */}
         <div className="p-6 bg-zinc-900 border-t border-zinc-800 flex justify-between">
             {step > 1 ? (
-                <button onClick={handleBack} className="flex items-center space-x-2 px-4 py-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded transition-colors text-xs uppercase font-bold">
+                <button onClick={handleBack} disabled={isSaving} className="flex items-center space-x-2 px-4 py-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded transition-colors text-xs uppercase font-bold">
                     <ArrowLeft size={14} />
                     <span>Back</span>
                 </button>
             ) : (
-                <button onClick={onCancel} className="px-4 py-2 text-zinc-500 hover:text-red-400 transition-colors text-xs uppercase font-bold">
+                <button onClick={onCancel} disabled={isSaving} className="px-4 py-2 text-zinc-500 hover:text-red-400 transition-colors text-xs uppercase font-bold">
                     Cancel
                 </button>
             )}
@@ -170,11 +203,12 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel }) => {
                 </button>
             ) : (
                 <button 
-                    onClick={() => onComplete(formData)} 
-                    className="flex items-center space-x-2 px-6 py-2 bg-green-600 text-black font-bold text-xs uppercase tracking-widest rounded hover:bg-green-500 transition-all shadow-lg"
+                    onClick={handleLaunch}
+                    disabled={isSaving} 
+                    className="flex items-center space-x-2 px-6 py-2 bg-green-600 text-black font-bold text-xs uppercase tracking-widest rounded hover:bg-green-500 transition-all shadow-lg disabled:opacity-50"
                 >
-                    <span>Launch</span>
-                    <Check size={14} />
+                    {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                    <span>{isSaving ? 'Launching...' : 'Launch'}</span>
                 </button>
             )}
         </div>

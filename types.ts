@@ -5,8 +5,17 @@ export interface Location {
   y: number; // Latitude (e.g. 40.7128)
 }
 
+export interface Organization {
+  id: string;
+  name: string;
+  slug: string; // Unique ID (e.g. 'nyc')
+  center: Location;
+  focusArea: string;
+}
+
 export interface Feedback {
   id: string;
+  organizationId?: string; // Link to specific tenant
   location: Location;
   content: string;
   timestamp: Date;
@@ -16,8 +25,8 @@ export interface Feedback {
   authorName?: string;
   votes: number;
   attachments?: ('image' | 'video' | 'audio')[];
-  imageUrl?: string; // Base64 string for local preview/analysis
-  ecoImpactScore?: number; // 0-100, where 100 is high positive impact
+  imageUrl?: string; 
+  ecoImpactScore?: number; 
   ecoImpactReasoning?: string;
   riskScore?: number;
 }

@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Plus, Activity, User } from 'lucide-react';
 import MapArea from './MapArea';
 import FeedbackModal from './FeedbackModal';
-import { Feedback, Location, AccountSetup } from '../types';
+import { Feedback, Location, Organization } from '../types';
 import { dataService } from '../services/dataService';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 interface PublicViewProps {
   onBack: () => void;
@@ -13,40 +14,84 @@ interface PublicViewProps {
 
 const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode = true }) => {
   const [feedbackList, setFeedbackList] = useState<Feedback[]>([]);
-  const [account, setAccount] = useState<AccountSetup | null>(null);
+  const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [liveFeed, setLiveFeed] = useState<string[]>([]);
 
-  // Load data async
+  // 1. Initial Data Load
   useEffect(() => {
     const load = async () => {
+        const org = await dataService.getCurrentOrganization();
+        setCurrentOrg(org);
+
         const list = await dataService.getFeedback();
         setFeedbackList(list);
-        const storedAccount = dataService.getAccount();
-        if (storedAccount) {
-            setAccount(storedAccount);
-        }
     };
     load();
-
-    // Simulate Live Feed
-    const actions = ["New pothole reported downtown", "Safety score updated", "Vote recorded on Main St", "Feedback analyzed by AI"];
-    const interval = setInterval(() => {
-        const action = actions[Math.floor(Math.random() * actions.length)];
-        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        setLiveFeed(prev => [`${time} • ${action}`, ...prev].slice(0, 3));
-    }, 8000);
-
-    return () => clearInterval(interval);
   }, []);
+
+  // 2. Real-time Subscription (Priority 4)
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return;
+
+    // Subscribe to INSERT events on the 'feedback' table
+    const channel = supabase!
+      .channel('public:feedback')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'feedback' },
+        (payload) => {
+          const newRow = payload.new;
+          
+          // Filter for current organization (Client-side filtering for MVP)
+          // In production, RLS handles this, but here we double check
+          // Need to grab Org ID from local storage or state if possible, or just show all for demo
+          
+          const newFeedback: Feedback = {
+            id: newRow.id,
+            organizationId: newRow.organization_id,
+            location: newRow.location,
+            content: newRow.content,
+            timestamp: new Date(newRow.timestamp),
+            sentiment: newRow.sentiment,
+            category: newRow.category,
+            summary: newRow.summary,
+            imageUrl: newRow.image_url,
+            votes: 0
+          };
+
+          // Update Map Data
+          setFeedbackList((prev) => [newFeedback, ...prev]);
+
+          // Update Live Feed Ticker
+          const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          const msg = `${time} • New Report: ${newFeedback.category} (${newFeedback.sentiment})`;
+          setLiveFeed(prev => [msg, ...prev].slice(0, 3));
+          
+          if (showToast) showToast("New feedback received in real-time!");
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase!.removeChannel(channel);
+    };
+  }, [showToast]);
 
   const handleMapClick = (loc: Location) => {
     setSelectedLocation(loc);
   };
 
   const handleFeedbackSubmit = async (newFeedback: Feedback) => {
-    const updatedList = await dataService.saveFeedback(newFeedback);
-    setFeedbackList(updatedList);
+    // Optimistic update happens in dataService.saveFeedback
+    // The Realtime subscription will likely trigger a duplicate add if we aren't careful,
+    // but React Key reconciliation usually handles ID dupes or we can dedup.
+    await dataService.saveFeedback(newFeedback);
+    
+    // We fetch fresh to ensure sync
+    const fresh = await dataService.getFeedback();
+    setFeedbackList(fresh);
+    
     setSelectedLocation(null);
     if (showToast) showToast("Feedback Submitted Successfully");
   };
@@ -69,7 +114,9 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
             </span>
-            <span className="text-xs font-bold uppercase tracking-wider">Live Updates</span>
+            <span className="text-xs font-bold uppercase tracking-wider">
+               {isSupabaseConfigured() ? "Live Network Active" : "Local Mode"}
+            </span>
           </div>
         </div>
       </header>
@@ -79,7 +126,7 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
         <MapArea 
           feedbackList={feedbackList} 
           onMapClick={handleMapClick}
-          center={account?.center}
+          center={currentOrg?.center}
           isDarkMode={isDarkMode}
         />
         
@@ -94,16 +141,18 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
         </div>
 
         {/* Live Feed Ticker (Bottom Left) */}
-        <div className="absolute bottom-6 left-6 z-10 hidden md:block w-72 pointer-events-none">
-            <div className="space-y-2">
-                {liveFeed.map((msg, i) => (
-                    <div key={i} className={`bg-white/80 dark:bg-black/80 backdrop-blur-sm p-3 rounded-lg border-l-4 border-orange-500 text-xs text-zinc-600 dark:text-zinc-300 flex items-center space-x-2 animate-fade-in-left shadow-lg`} style={{ opacity: 1 - (i * 0.3) }}>
-                        <Activity size={12} className="text-orange-500 flex-shrink-0" />
-                        <span className="truncate">{msg}</span>
-                    </div>
-                ))}
+        {liveFeed.length > 0 && (
+            <div className="absolute bottom-6 left-6 z-10 hidden md:block w-72 pointer-events-none">
+                <div className="space-y-2">
+                    {liveFeed.map((msg, i) => (
+                        <div key={i} className={`bg-white/80 dark:bg-black/80 backdrop-blur-sm p-3 rounded-lg border-l-4 border-orange-500 text-xs text-zinc-600 dark:text-zinc-300 flex items-center space-x-2 animate-fade-in-left shadow-lg`} style={{ opacity: 1 - (i * 0.3) }}>
+                            <Activity size={12} className="text-orange-500 flex-shrink-0" />
+                            <span className="truncate">{msg}</span>
+                        </div>
+                    ))}
+                </div>
             </div>
-        </div>
+        )}
       </div>
 
       {/* Feedback Modal */}

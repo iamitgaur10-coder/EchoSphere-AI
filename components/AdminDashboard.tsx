@@ -63,12 +63,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
   };
 
   const handleDownloadCSV = () => {
-    const headers = ["ID", "Category", "Sentiment", "Content", "Eco Score", "Has Image"];
+    const headers = ["ID", "Date", "Category", "Sentiment", "Content", "Risk Score", "Eco Score", "Has Image"];
     const rows = data.map(f => [
         f.id, 
+        f.timestamp.toISOString().split('T')[0],
         f.category, 
         f.sentiment, 
-        `"${f.content.replace(/"/g, '""')}"`, 
+        `"${f.content.replace(/"/g, '""')}"`,
+        f.riskScore || 0,
         f.ecoImpactScore || 0,
         f.imageUrl ? "Yes" : "No"
     ]);

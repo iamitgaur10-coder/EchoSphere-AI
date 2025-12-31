@@ -1,28 +1,124 @@
-import { Feedback, AccountSetup } from '../types';
+import { Feedback, AccountSetup, Organization } from '../types';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 // Key for LocalStorage Fallback
 const STORAGE_KEY_FEEDBACK = 'echosphere_feedback';
 const STORAGE_KEY_ACCOUNT = 'echosphere_account';
-
-// Initial Seed Data
-const SEED_FEEDBACK: Feedback[] = [
-  { id: '1', location: { x: -74.0060, y: 40.7128 }, content: 'More trash cans needed.', sentiment: 'neutral', category: 'Sanitation', timestamp: new Date(), votes: 5, summary: "Need bins", ecoImpactScore: 60, ecoImpactReasoning: "Reduces litter.", riskScore: 30 },
-  { id: '2', location: { x: -74.0075, y: 40.7135 }, content: 'Dangerous pothole.', sentiment: 'negative', category: 'Infrastructure', timestamp: new Date(), votes: 12, summary: "Pothole fix", ecoImpactScore: 10, ecoImpactReasoning: "Safety issue.", riskScore: 85 },
-];
+const STORAGE_KEY_CURRENT_ORG_ID = 'echosphere_current_org_id';
 
 export const dataService = {
-  getFeedback: async (): Promise<Feedback[]> => {
-    // 1. Try Supabase
+  // --- ORGANIZATION MANAGEMENT ---
+  
+  createOrganization: async (setup: AccountSetup): Promise<Organization | null> => {
     if (isSupabaseConfigured()) {
+      const { data, error } = await supabase!
+        .from('organizations')
+        .insert({
+          name: setup.organizationName,
+          slug: setup.regionCode.toLowerCase(),
+          center: setup.center,
+          focus_area: setup.focusArea
+        })
+        .select()
+        .single();
+      
+      if (error) {
+        console.error("Org Creation Error:", error);
+        return null;
+      }
+      
+      // Save ID locally to persist session
+      localStorage.setItem(STORAGE_KEY_CURRENT_ORG_ID, data.id);
+      return data as Organization;
+    }
+
+    // Local Fallback
+    const newOrg: Organization = {
+      id: 'local-org-' + Date.now(),
+      name: setup.organizationName,
+      slug: setup.regionCode,
+      center: setup.center,
+      focusArea: setup.focusArea
+    };
+    localStorage.setItem(STORAGE_KEY_ACCOUNT, JSON.stringify(newOrg));
+    localStorage.setItem(STORAGE_KEY_CURRENT_ORG_ID, newOrg.id);
+    return newOrg;
+  },
+
+  getOrganizationBySlug: async (slug: string): Promise<Organization | null> => {
+     if (isSupabaseConfigured()) {
+        const { data, error } = await supabase!
+        .from('organizations')
+        .select('*')
+        .eq('slug', slug.toLowerCase())
+        .single();
+        
+        if (data) return data as Organization;
+        if (error) console.error("Error fetching org by slug:", error);
+     }
+     return null;
+  },
+
+  getCurrentOrganization: async (): Promise<Organization | null> => {
+    // 1. Priority: Check URL Query Param (e.g. ?org=nyc)
+    const params = new URLSearchParams(window.location.search);
+    const urlSlug = params.get('org');
+
+    if (urlSlug && isSupabaseConfigured()) {
+        const org = await dataService.getOrganizationBySlug(urlSlug);
+        if (org) {
+            // Update session if we found a valid org from URL
+            localStorage.setItem(STORAGE_KEY_CURRENT_ORG_ID, org.id);
+            return org;
+        }
+    }
+
+    // 2. Check LocalStorage Session
+    const orgId = localStorage.getItem(STORAGE_KEY_CURRENT_ORG_ID);
+    
+    if (isSupabaseConfigured() && orgId) {
+      const { data } = await supabase!
+        .from('organizations')
+        .select('*')
+        .eq('id', orgId)
+        .single();
+        
+      if (data) return data as Organization;
+    }
+
+    // 3. Fallback to LocalStorage (Legacy/Offline)
+    const stored = localStorage.getItem(STORAGE_KEY_ACCOUNT);
+    return stored ? JSON.parse(stored) : null;
+  },
+
+  // --- FEEDBACK MANAGEMENT ---
+
+  getFeedback: async (): Promise<Feedback[]> => {
+    // Ensure we have the correct ID (re-run logic to be safe)
+    let orgId = localStorage.getItem(STORAGE_KEY_CURRENT_ORG_ID);
+    
+    // If no ID in storage, try resolving current org again (handles URL params case)
+    if (!orgId) {
+        const org = await dataService.getCurrentOrganization();
+        if (org) orgId = org.id;
+    }
+
+    // 1. Try Supabase
+    if (isSupabaseConfigured() && orgId) {
       const { data, error } = await supabase!
         .from('feedback')
         .select('*')
+        .eq('organization_id', orgId) // Multi-tenancy filter
         .order('timestamp', { ascending: false });
       
       if (!error && data) {
         return data.map((item: any) => ({
           ...item,
+          organizationId: item.organization_id,
+          imageUrl: item.image_url,
+          ecoImpactScore: item.eco_impact_score,
+          riskScore: item.risk_score,
+          ecoImpactReasoning: item.eco_impact_reasoning,
           timestamp: new Date(item.timestamp),
           location: typeof item.location === 'string' ? JSON.parse(item.location) : item.location
         }));
@@ -32,8 +128,9 @@ export const dataService = {
     // 2. Fallback to LocalStorage
     try {
       const stored = localStorage.getItem(STORAGE_KEY_FEEDBACK);
-      if (!stored) return SEED_FEEDBACK;
+      if (!stored) return [];
       const parsed = JSON.parse(stored);
+      // Filter locally if needed
       return parsed.map((item: any) => ({
         ...item,
         timestamp: new Date(item.timestamp)
@@ -44,48 +141,57 @@ export const dataService = {
   },
 
   saveFeedback: async (newFeedback: Feedback): Promise<Feedback[]> => {
+    const orgId = localStorage.getItem(STORAGE_KEY_CURRENT_ORG_ID);
+
     // 1. Try Supabase
-    if (isSupabaseConfigured()) {
+    if (isSupabaseConfigured() && orgId) {
         const { error } = await supabase!.from('feedback').insert({
-            id: newFeedback.id,
-            location: newFeedback.location, // Supabase handles JSONB
+            organization_id: orgId, // Assign to current tenant
+            location: newFeedback.location,
             content: newFeedback.content,
             sentiment: newFeedback.sentiment,
             category: newFeedback.category,
-            "imageUrl": newFeedback.imageUrl,
-            timestamp: newFeedback.timestamp.toISOString(),
-            // Store other AI fields if you add columns for them in Supabase
+            image_url: newFeedback.imageUrl,
+            summary: newFeedback.summary,
+            risk_score: newFeedback.riskScore,
+            eco_impact_score: newFeedback.ecoImpactScore,
+            eco_impact_reasoning: newFeedback.ecoImpactReasoning,
+            timestamp: new Date().toISOString()
         });
-        if (error) console.error("Supabase Save Error:", error);
+        
+        if (error) {
+            console.error("Supabase Save Error:", error);
+            // Don't return here, fall through to optimistic update so UI feels fast
+        }
     }
 
-    // 2. Always update LocalStorage (for UI Optimistic Update + Fallback)
-    // In a real app, we would re-fetch from DB, but for speed we append locally
+    // 2. Always update LocalStorage (Optimistic Update)
     let current: Feedback[] = [];
     try {
         const stored = localStorage.getItem(STORAGE_KEY_FEEDBACK);
         if (stored) {
              const parsed = JSON.parse(stored);
              current = parsed.map((item: any) => ({ ...item, timestamp: new Date(item.timestamp) }));
-        } else {
-            current = SEED_FEEDBACK;
         }
     } catch(e) {}
     
     const updated = [newFeedback, ...current];
     localStorage.setItem(STORAGE_KEY_FEEDBACK, JSON.stringify(updated));
+    
+    // If Supabase is connected, we usually re-fetch, but returning updated local state makes UI snappy
     return updated;
   },
 
   getAccount: (): AccountSetup | null => {
+     // Legacy support helper
     const stored = localStorage.getItem(STORAGE_KEY_ACCOUNT);
     return stored ? JSON.parse(stored) : null;
   },
 
   saveAccount: (account: AccountSetup) => {
+    // Legacy support helper
     localStorage.setItem(STORAGE_KEY_ACCOUNT, JSON.stringify(account));
   },
   
-  // New helper to check if we are in production mode
   isProduction: () => isSupabaseConfigured()
 };

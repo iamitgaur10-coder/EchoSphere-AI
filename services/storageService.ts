@@ -14,13 +14,16 @@ export const storageService = {
 
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}.${fileExt}`;
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
       const filePath = `${fileName}`;
 
       // Upload to 'uploads' bucket
       const { error: uploadError } = await supabase!.storage
         .from('uploads')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+        });
 
       if (uploadError) {
         throw uploadError;
