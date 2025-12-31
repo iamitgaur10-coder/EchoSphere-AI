@@ -252,6 +252,11 @@ const App: React.FC = () => {
                     setIsAuthenticated(true);
                     setShowLogin(false);
                     showToast("Verified & Logged In Successfully!");
+                    
+                    // Clean URL if it has hash tokens (production polish)
+                    if (window.location.hash && window.location.hash.includes('access_token')) {
+                        window.history.replaceState(null, '', window.location.pathname);
+                    }
                 } else if (event === 'SIGNED_OUT') {
                     setIsAuthenticated(false);
                     setCurrentView('landing');
