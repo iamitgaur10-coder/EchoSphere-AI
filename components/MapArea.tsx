@@ -3,6 +3,7 @@ import { Box, Layers, Loader2, Locate, Navigation, Search, X, Filter, Leaf, Shie
 import { Location, Feedback } from '../types';
 import { searchLocation } from '../services/geoService';
 import { renderToString } from 'react-dom/server';
+import { APP_CONFIG } from '../config/constants';
 
 declare var L: any;
 
@@ -16,21 +17,16 @@ interface MapAreaProps {
   onError?: (msg: string) => void;
 }
 
-const DEFAULT_CENTER = [34.0522, -118.2437]; // Los Angeles
-
-// Category styling map
-const CATEGORY_STYLES: Record<string, { color: string, icon: React.ReactNode }> = {
-  'Sanitation': { color: '#ef4444', icon: <Trash2 size={14} color="black" /> }, // Red
-  'Infrastructure': { color: '#f97316', icon: <HardHat size={14} color="black" /> }, // Orange
-  'Safety': { color: '#eab308', icon: <ShieldAlert size={14} color="black" /> }, // Yellow
-  'Traffic': { color: '#3b82f6', icon: <Car size={14} color="black" /> }, // Blue
-  'Sustainability': { color: '#22c55e', icon: <Leaf size={14} color="black" /> }, // Green
-  'Culture': { color: '#d946ef', icon: <Palette size={14} color="black" /> }, // Fuchsia
-  'General': { color: '#94a3b8', icon: <HelpCircle size={14} color="black" /> } // Slate
+// Map icon string names to actual components
+const ICON_MAP: Record<string, any> = {
+  'Trash2': Trash2,
+  'HardHat': HardHat,
+  'ShieldAlert': ShieldAlert,
+  'Car': Car,
+  'Leaf': Leaf,
+  'Palette': Palette,
+  'HelpCircle': HelpCircle
 };
-
-// Hardcoded list to ensure render even if object keys fail
-const PREDEFINED_CATEGORIES = ['All', 'Sanitation', 'Infrastructure', 'Safety', 'Traffic', 'Sustainability', 'Culture', 'General'];
 
 const MapArea: React.FC<MapAreaProps> = ({ 
   feedbackList, 
@@ -58,7 +54,22 @@ const MapArea: React.FC<MapAreaProps> = ({
   const selectionMarkerRef = useRef<any | null>(null);
   const markersRef = useRef<any[]>([]);
 
-  const initialCenter = center ? [center.y, center.x] : DEFAULT_CENTER;
+  // Use config for default center
+  const initialCenter = center 
+    ? [center.y, center.x] 
+    : [APP_CONFIG.MAP.DEFAULT_CENTER.y, APP_CONFIG.MAP.DEFAULT_CENTER.x];
+
+  // Dynamic Category Styles derived from Config
+  const getCategoryStyle = (categoryName: string) => {
+    const config = APP_CONFIG.CATEGORIES.find(c => c.name === categoryName) || APP_CONFIG.CATEGORIES.find(c => c.name === 'General');
+    const IconComponent = ICON_MAP[config?.icon || 'HelpCircle'] || HelpCircle;
+    return {
+      color: config?.color || '#94a3b8',
+      icon: <IconComponent size={14} color="black" />
+    };
+  };
+
+  const filterCategories = ['All', ...APP_CONFIG.CATEGORIES.map(c => c.name)];
 
   // -- Initialize Map --
   useEffect(() => {
@@ -93,7 +104,7 @@ const MapArea: React.FC<MapAreaProps> = ({
   // -- Fly to Center Update --
   useEffect(() => {
     if (mapInstance && center) {
-        mapInstance.flyTo([center.y, center.x], 13);
+        mapInstance.flyTo([center.y, center.x], APP_CONFIG.MAP.DEFAULT_ZOOM);
     }
   }, [center, mapInstance]);
 
@@ -130,19 +141,15 @@ const MapArea: React.FC<MapAreaProps> = ({
 
       const map = L.map(mapRef.current, {
         center: initialCenter,
-        zoom: 13,
+        zoom: APP_CONFIG.MAP.DEFAULT_ZOOM,
         zoomControl: false,
         attributionControl: false
       });
 
-      // CartoDB Dark Matter (Dark Mode)
-      const darkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 20 });
-      
-      // Standard OSM (Light Mode) - High contrast, always reliable
-      const lightLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 });
-      
-      // Satellite
-      const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
+      // Use Configured Tile Layers
+      const darkLayer = L.tileLayer(APP_CONFIG.MAP.TILES.DARK, { maxZoom: 20 });
+      const lightLayer = L.tileLayer(APP_CONFIG.MAP.TILES.LIGHT, { maxZoom: 19 });
+      const satelliteLayer = L.tileLayer(APP_CONFIG.MAP.TILES.SATELLITE);
 
       // Initial Add based on current prop
       if (isDarkMode) darkLayer.addTo(map);
@@ -257,14 +264,17 @@ const MapArea: React.FC<MapAreaProps> = ({
           let lat = fb.location.y;
           let lng = fb.location.x;
 
-          // Fallback for demo percent data
+          // Fallback for demo percent data if close to default center
+          const defaultX = APP_CONFIG.MAP.DEFAULT_CENTER.x;
+          const defaultY = APP_CONFIG.MAP.DEFAULT_CENTER.y;
+          
           if (Math.abs(lat) <= 100 && Math.abs(lng) <= 100) {
-              lat = DEFAULT_CENTER[0] + (fb.location.y - 50) * 0.0001;
-              lng = DEFAULT_CENTER[1] + (fb.location.x - 50) * 0.0001;
+              lat = defaultY + (fb.location.y - 50) * 0.0001;
+              lng = defaultX + (fb.location.x - 50) * 0.0001;
           }
 
           // Get Style based on Category or Sentiment
-          const style = CATEGORY_STYLES[fb.category] || CATEGORY_STYLES['General'];
+          const style = getCategoryStyle(fb.category);
           const iconString = renderToString(style.icon);
 
           const iconHtml = `
@@ -320,7 +330,6 @@ const MapArea: React.FC<MapAreaProps> = ({
       {interactive && (
         <>
             {/* --- CENTRAL COMMAND SEARCH BAR & CATEGORIES --- */}
-            {/* Always rendered, independent of map load state for UI stability */}
             <div className="absolute top-24 md:top-6 left-1/2 -translate-x-1/2 w-[90%] md:w-[400px] z-[500] transition-all duration-300">
                 <form onSubmit={handleSearch} className="relative group/search">
                     <div className="relative flex items-center bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md shadow-2xl rounded border border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors">
@@ -346,7 +355,7 @@ const MapArea: React.FC<MapAreaProps> = ({
 
                 {/* --- FLOATING FILTER PILLS --- */}
                 <div className="mt-3 flex items-center space-x-2 overflow-x-auto no-scrollbar py-1">
-                    {PREDEFINED_CATEGORIES.map(cat => (
+                    {filterCategories.map(cat => (
                         <button
                             key={cat}
                             onClick={() => setActiveFilter(cat)}

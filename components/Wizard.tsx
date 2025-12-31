@@ -4,6 +4,7 @@ import { generateSurveyQuestions } from '../services/geminiService';
 import { AccountSetup, Location } from '../types';
 import { dataService } from '../services/dataService';
 import MapArea from './MapArea';
+import { APP_CONFIG } from '../config/constants';
 
 interface WizardProps {
   onComplete: (config: AccountSetup) => void;
@@ -20,7 +21,7 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel }) => {
     organizationName: '',
     regionCode: '',
     focusArea: 'Urban Development',
-    center: { x: -118.2437, y: 34.0522 }, // Los Angeles
+    center: { ...APP_CONFIG.MAP.DEFAULT_CENTER },
     questions: []
   });
 

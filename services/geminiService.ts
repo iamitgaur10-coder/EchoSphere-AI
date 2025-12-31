@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { AnalysisResponse, Feedback } from '../types';
+import { APP_CONFIG } from '../config/constants';
 
 // Helper to reliably get env vars
 const getEnvVar = (key: string) => {
@@ -39,15 +40,7 @@ export const analyzeFeedbackContent = async (text: string, imageBase64?: string)
 
     // Add Text Part
     parts.push({
-        text: `Analyze the following public feedback for a city planning tool. 
-      
-      Tasks:
-      1. Identify sentiment (positive/negative/neutral).
-      2. Categorize the topic (Infrastructure, Safety, Recreation, Traffic, Sanitation, Sustainability, Culture).
-      3. Provide a 5-10 word summary.
-      4. Assign a Risk Score (0-100, 100=urgent).
-      5. Assign an Eco-Impact Score (0-100) assessing if this suggestion helps the environment (e.g. planting trees = high, more parking = low).
-      6. Provide 1 sentence reasoning for the Eco-Impact.
+        text: `${APP_CONFIG.AI.SYSTEM_INSTRUCTION}
 
       Feedback Content: "${text}"`
     });
@@ -95,7 +88,7 @@ export const generateSurveyQuestions = async (orgName: string, focusArea: string
 
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: `Generate 5 engaging, short, and relevant feedback questions for a public engagement platform.
+      contents: `${APP_CONFIG.AI.SURVEY_PROMPT}
       Organization: ${orgName}
       Focus Area: ${focusArea}
       Target Audience: Local residents and visitors.`,
@@ -139,9 +132,7 @@ export const generateExecutiveReport = async (feedbackList: Feedback[]): Promise
     
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: `You are an expert urban planning analyst. 
-      Generate a concise executive summary (max 150 words) based on the following citizen feedback data.
-      Highlight key trends, urgent risks, and opportunities for sustainability.
+      contents: `${APP_CONFIG.AI.REPORT_PROMPT}
       
       Data:
       ${context}`

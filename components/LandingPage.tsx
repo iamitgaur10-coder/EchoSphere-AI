@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Globe2, ArrowRight, MapPin, BarChart3, Radio, Scan, Zap, Activity, Hexagon, Fingerprint, MousePointer2, Database, Network, Cpu, Share2, Shield, Truck, Trees, Siren, Layers, Play, Mic, PenTool, LayoutDashboard } from 'lucide-react';
 import { AccountSetup } from '../types';
+import { APP_CONFIG } from '../config/constants';
 
 interface LandingPageProps {
   onEnterPublic: () => void;
@@ -13,11 +14,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
   const [tutorialMode, setTutorialMode] = useState<'citizen' | 'admin'>('citizen');
 
   // Fake "Data Stream" for the marquee
+  // Uses configured default center for realistic coordinate simulation
+  const baseLat = APP_CONFIG.MAP.DEFAULT_CENTER.y;
+  const baseLng = APP_CONFIG.MAP.DEFAULT_CENTER.x;
+
   const baseData = Array(10).fill(0).map((_, i) => ({
     id: `FB-${Math.floor(Math.random() * 9000) + 1000}`,
-    // LA Coordinates (approx 34.05, -118.24)
-    lat: (34.05 + Math.random() * 0.1).toFixed(4),
-    lng: (-118.24 + Math.random() * 0.1).toFixed(4),
+    // Simulate coordinates around default center
+    lat: (baseLat + (Math.random() * 0.1) - 0.05).toFixed(4),
+    lng: (baseLng + (Math.random() * 0.1) - 0.05).toFixed(4),
     status: Math.random() > 0.5 ? 'Processing' : 'Saved'
   }));
   
