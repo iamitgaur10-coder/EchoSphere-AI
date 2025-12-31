@@ -66,8 +66,11 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
     // Call Gemini API to analyze the text
     const analysis = await analyzeFeedbackContent(content);
 
+    // Generate a simple ID (safer than crypto.randomUUID in some envs)
+    const newId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+
     const newFeedback: Feedback = {
-      id: crypto.randomUUID(),
+      id: newId,
       location,
       content,
       timestamp: new Date(),
