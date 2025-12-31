@@ -308,91 +308,149 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
         </div>
       </section>
 
-      {/* --- Section 3: The Interactive Logic --- */}
-      <section className="py-24 px-6 border-b border-zinc-900 bg-zinc-950 relative">
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 pointer-events-none"></div>
+      {/* --- Section 3: The Logic Engine (Updated) --- */}
+      <section className="py-24 px-6 border-b border-zinc-900 bg-zinc-950 relative overflow-hidden">
+        {/* Background Texture */}
+        <div className="absolute inset-0 z-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5 pointer-events-none"></div>
+
         <div className="max-w-5xl mx-auto relative z-10">
             <div className="mb-12 text-center md:text-left">
                 <h2 className="font-display text-3xl md:text-4xl font-medium text-white mb-4">The Logic Engine</h2>
                 <p className="text-zinc-500 max-w-xl text-lg">Don't just collect dots on a map. Understand them. <br/>Experience the Gemini 3.0 processing pipeline.</p>
             </div>
 
-            <div className="grid lg:grid-cols-5 gap-0 border border-zinc-800 rounded-2xl overflow-hidden bg-zinc-900/50 shadow-2xl">
-                {/* Left: Input Console */}
-                <div className="lg:col-span-3 p-8 border-b lg:border-b-0 lg:border-r border-zinc-800">
-                    <div className="flex space-x-4 mb-6">
-                        <button 
-                            onClick={() => setActiveTab('scan')}
-                            className={`pb-2 text-sm font-medium transition-colors ${activeTab === 'scan' ? 'text-white border-b-2 border-orange-500' : 'text-zinc-600 hover:text-zinc-400'}`}
-                        >
-                            Raw Input
-                        </button>
+            <div className="grid lg:grid-cols-5 gap-0 border border-zinc-800 rounded-xl overflow-hidden bg-zinc-900 shadow-2xl ring-1 ring-white/5">
+                
+                {/* LEFT: Input Terminal */}
+                <div className="lg:col-span-3 bg-zinc-900 flex flex-col border-b lg:border-b-0 lg:border-r border-zinc-800 relative group">
+                    {/* Terminal Header */}
+                    <div className="h-10 bg-zinc-950 border-b border-zinc-800 flex items-center px-4 justify-between">
+                        <div className="flex space-x-2">
+                            <div className="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/50"></div>
+                            <div className="w-3 h-3 rounded-full bg-yellow-500/20 border border-yellow-500/50"></div>
+                            <div className="w-3 h-3 rounded-full bg-green-500/20 border border-green-500/50"></div>
+                        </div>
+                        <div className="text-[10px] font-mono text-zinc-500">input_stream.txt</div>
+                        <div className="w-10"></div> {/* Spacer */}
                     </div>
-                    
-                    <div className="relative group">
-                        <textarea 
+
+                    {/* Editor Area */}
+                    <div className="flex-1 p-0 relative flex">
+                         {/* Line Numbers */}
+                         <div className="w-12 bg-zinc-950/50 border-r border-zinc-800 pt-4 flex flex-col items-end pr-3 space-y-1 select-none">
+                            {[1,2,3,4,5,6,7,8].map(n => (
+                                <div key={n} className="text-[10px] font-mono text-zinc-700">{n}</div>
+                            ))}
+                         </div>
+                         
+                         {/* Text Area */}
+                         <textarea 
                             value={demoText}
                             onChange={(e) => setDemoText(e.target.value)}
-                            className="w-full h-48 bg-black/50 border border-zinc-800 rounded-lg p-4 font-mono text-sm text-zinc-300 focus:ring-1 focus:ring-orange-500 outline-none resize-none transition-all focus:bg-black"
-                        />
-                        <div className="absolute bottom-4 right-4">
-                            <button 
-                                onClick={handleRunDemo}
-                                disabled={isAnalyzing}
-                                className="bg-white text-black px-5 py-2 rounded text-xs font-bold hover:bg-orange-500 hover:text-white transition-colors flex items-center space-x-2 shadow-lg"
-                            >
-                                {isAnalyzing ? <Scan className="animate-spin" size={14} /> : <Zap size={14} />}
-                                <span>RUN ANALYSIS</span>
-                            </button>
+                            className="flex-1 bg-transparent border-none outline-none p-4 font-mono text-sm text-zinc-300 resize-none h-64 focus:ring-0 leading-relaxed"
+                            spellCheck="false"
+                         />
+                    </div>
+
+                    {/* Bottom Action Bar */}
+                    <div className="p-4 bg-zinc-950 border-t border-zinc-800 flex justify-between items-center">
+                        <div className="flex items-center space-x-2 text-[10px] text-zinc-500 font-mono">
+                             <span>CHARS: {demoText.length}</span>
+                             <span>•</span>
+                             <span>UTF-8</span>
                         </div>
+                        <button 
+                            onClick={handleRunDemo}
+                            disabled={isAnalyzing}
+                            className="bg-white text-black hover:bg-orange-500 hover:text-white px-4 py-2 rounded text-xs font-bold transition-all flex items-center space-x-2"
+                        >
+                            {isAnalyzing ? <Scan className="animate-spin" size={14} /> : <Play size={14} />}
+                            <span>PROCESS_DATA</span>
+                        </button>
                     </div>
                 </div>
 
-                {/* Right: Output Visualization */}
-                <div className="lg:col-span-2 p-8 bg-zinc-950 relative min-h-[300px]">
-                    {isAnalyzing ? (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center text-orange-500 space-y-4">
-                             <div className="font-mono text-xs animate-pulse tracking-widest">PROCESSING_DATA</div>
-                             <div className="w-48 h-1 bg-zinc-800 rounded overflow-hidden">
-                                <div className="h-full bg-orange-500 animate-[scan_1s_ease-in-out_infinite] w-full origin-left"></div>
-                             </div>
-                             <div className="text-[10px] font-mono text-zinc-600">Connecting to Neural Engine...</div>
-                        </div>
-                    ) : analysisResult ? (
-                        <div className="space-y-6 animate-fade-in-up h-full flex flex-col justify-center">
-                            <div className="space-y-1 pb-4 border-b border-zinc-900">
-                                <div className="text-[10px] uppercase text-zinc-500 font-mono tracking-wider">Sentiment</div>
-                                <div className="text-2xl text-white font-display flex items-center space-x-2">
-                                    <div className="w-2 h-2 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.8)]"></div>
-                                    <span>{analysisResult.sentiment}</span>
-                                </div>
+                {/* RIGHT: Visual Output */}
+                <div className="lg:col-span-2 bg-black relative min-h-[300px] overflow-hidden flex flex-col">
+                     {/* Grid Background */}
+                     <div className="absolute inset-0 opacity-20" style={{ 
+                         backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px)', 
+                         backgroundSize: '20px 20px' 
+                     }}></div>
+
+                     {/* Content Container */}
+                     <div className="relative z-10 flex-1 flex flex-col p-6">
+                        {/* Header */}
+                         <div className="flex justify-between items-center mb-6">
+                            <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">Analysis_Output</span>
+                            <div className="flex items-center space-x-1">
+                                 <div className={`w-1.5 h-1.5 rounded-full ${isAnalyzing ? 'bg-orange-500 animate-pulse' : analysisResult ? 'bg-green-500' : 'bg-zinc-700'}`}></div>
+                                 <span className="text-[10px] font-mono text-zinc-500">{isAnalyzing ? 'BUSY' : analysisResult ? 'DONE' : 'IDLE'}</span>
                             </div>
-                             <div className="space-y-2 pb-4 border-b border-zinc-900">
-                                <div className="text-[10px] uppercase text-zinc-500 font-mono tracking-wider">Urgency Score</div>
-                                <div className="w-full bg-zinc-900 border border-zinc-800 h-3 rounded-full overflow-hidden relative">
-                                    <div className="h-full bg-gradient-to-r from-orange-600 to-orange-400 w-[85%] relative z-10"></div>
-                                    {/* Grid lines on bar */}
-                                    <div className="absolute inset-0 z-20" style={{ backgroundImage: 'linear-gradient(90deg, transparent 90%, rgba(0,0,0,0.5) 90%)', backgroundSize: '10% 100%' }}></div>
-                                </div>
-                                <div className="text-right text-xs font-mono text-orange-400">{analysisResult.urgency}</div>
+                         </div>
+
+                         {/* Main Display Area */}
+                         <div className="flex-1 flex items-center justify-center">
+                            {isAnalyzing ? (
+                                 // Loading State
+                                 <div className="flex flex-col items-center space-y-4">
+                                      <div className="w-16 h-16 border-2 border-zinc-800 border-t-orange-500 rounded-full animate-spin"></div>
+                                      <div className="font-mono text-xs text-orange-500 animate-pulse">Running Neural Models...</div>
+                                 </div>
+                            ) : analysisResult ? (
+                                 // Result State
+                                 <div className="w-full space-y-4 animate-fade-in-up">
+                                      <div className="bg-zinc-900/80 border border-zinc-800 p-4 rounded-lg">
+                                           <div className="text-[10px] text-zinc-500 uppercase mb-1">Detected Sentiment</div>
+                                           <div className="flex items-center justify-between">
+                                               <span className="text-white font-display text-lg">{analysisResult.sentiment}</span>
+                                               <div className={`w-2 h-2 rounded-full ${analysisResult.sentiment === 'Negative' ? 'bg-red-500' : 'bg-green-500'} shadow-[0_0_8px_currentColor]`}></div>
+                                           </div>
+                                      </div>
+                                      <div className="bg-zinc-900/80 border border-zinc-800 p-4 rounded-lg">
+                                           <div className="text-[10px] text-zinc-500 uppercase mb-2">Urgency</div>
+                                           <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden mb-1">
+                                                <div className="h-full bg-gradient-to-r from-orange-500 to-red-500 w-[85%]"></div>
+                                           </div>
+                                           <div className="text-right text-xs font-mono text-zinc-400">{analysisResult.urgency}</div>
+                                      </div>
+                                      <div className="bg-zinc-900/80 border border-zinc-800 p-4 rounded-lg flex justify-between items-center">
+                                           <div className="text-[10px] text-zinc-500 uppercase">Routing</div>
+                                           <div className="text-xs font-mono text-white bg-zinc-800 px-2 py-1 rounded">{analysisResult.dept}</div>
+                                      </div>
+                                 </div>
+                            ) : (
+                                 // Idle State Visualization
+                                 <div className="relative w-40 h-40 flex items-center justify-center opacity-30">
+                                      {/* Radar Circles */}
+                                      <div className="absolute inset-0 border border-zinc-700 rounded-full"></div>
+                                      <div className="absolute inset-8 border border-zinc-800 rounded-full"></div>
+                                      <div className="absolute inset-16 border border-zinc-800 rounded-full bg-zinc-900"></div>
+                                      
+                                      {/* Rotating Scanner */}
+                                      <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-transparent via-transparent to-zinc-500/20 animate-[spin_4s_linear_infinite]"></div>
+                                      
+                                      <div className="text-[10px] font-mono text-zinc-500 text-center">
+                                          AWAITING<br/>INPUT
+                                      </div>
+                                 </div>
+                            )}
+                         </div>
+
+                         {/* Footer Metrics */}
+                         {!analysisResult && !isAnalyzing && (
+                            <div className="grid grid-cols-2 gap-2 mt-4 opacity-50">
+                                 <div className="bg-zinc-900 border border-zinc-800 p-2 rounded flex flex-col">
+                                     <span className="text-[8px] text-zinc-500 font-mono">LATENCY</span>
+                                     <span className="text-xs text-zinc-300 font-mono">12ms</span>
+                                 </div>
+                                 <div className="bg-zinc-900 border border-zinc-800 p-2 rounded flex flex-col">
+                                     <span className="text-[8px] text-zinc-500 font-mono">UPTIME</span>
+                                     <span className="text-xs text-zinc-300 font-mono">99.9%</span>
+                                 </div>
                             </div>
-                            <div className="p-4 border border-zinc-800 rounded bg-zinc-900/30">
-                                <div className="flex justify-between items-center text-xs text-zinc-400 font-mono mb-2">
-                                    <span>ROUTING_TARGET</span>
-                                    <ArrowRight size={12} />
-                                </div>
-                                <div className="text-sm text-white font-medium flex items-center gap-2">
-                                    <div className="p-1 bg-zinc-800 rounded"><Database size={12}/></div>
-                                    {analysisResult.dept}
-                                </div>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-700 font-mono space-y-2">
-                             <MousePointer2 size={24} className="opacity-50 animate-bounce" />
-                             <span className="text-xs">[AWAITING_INPUT]</span>
-                        </div>
-                    )}
+                         )}
+                     </div>
                 </div>
             </div>
         </div>
