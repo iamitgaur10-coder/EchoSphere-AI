@@ -93,7 +93,8 @@ export const dataService = {
 
   // --- FEEDBACK MANAGEMENT ---
 
-  getFeedback: async (): Promise<Feedback[]> => {
+  // Updated to support pagination
+  getFeedback: async (limit: number = 50, offset: number = 0): Promise<Feedback[]> => {
     // Ensure we have the correct ID (re-run logic to be safe)
     let orgId = localStorage.getItem(STORAGE_KEY_CURRENT_ORG_ID);
     
@@ -103,13 +104,14 @@ export const dataService = {
         if (org) orgId = org.id;
     }
 
-    // 1. Try Supabase
+    // 1. Try Supabase with Pagination
     if (isSupabaseConfigured() && orgId) {
       const { data, error } = await supabase!
         .from('feedback')
         .select('*')
-        .eq('organization_id', orgId) // Multi-tenancy filter
-        .order('timestamp', { ascending: false });
+        .eq('organization_id', orgId)
+        .order('timestamp', { ascending: false })
+        .range(offset, offset + limit - 1); // Supabase range is inclusive
       
       if (!error && data) {
         return data.map((item: any) => ({
@@ -125,16 +127,20 @@ export const dataService = {
       }
     }
 
-    // 2. Fallback to LocalStorage
+    // 2. Fallback to LocalStorage (with simplified slicing)
     try {
       const stored = localStorage.getItem(STORAGE_KEY_FEEDBACK);
       if (!stored) return [];
       const parsed = JSON.parse(stored);
-      // Filter locally if needed
-      return parsed.map((item: any) => ({
+      // Sort first to mimic DB behavior
+      const sorted = parsed.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      
+      // Filter locally based on simple range
+      const sliced = sorted.slice(offset, offset + limit).map((item: any) => ({
         ...item,
         timestamp: new Date(item.timestamp)
       }));
+      return sliced;
     } catch (e) {
       return [];
     }
@@ -145,6 +151,8 @@ export const dataService = {
 
     // 1. Try Supabase
     if (isSupabaseConfigured() && orgId) {
+        // We do NOT await this in the UI thread for optimistic rendering, 
+        // but the service function itself is async.
         const { error } = await supabase!.from('feedback').insert({
             organization_id: orgId, // Assign to current tenant
             location: newFeedback.location,
@@ -161,7 +169,7 @@ export const dataService = {
         
         if (error) {
             console.error("Supabase Save Error:", error);
-            // Don't return here, fall through to optimistic update so UI feels fast
+            // In a real app, we might revert the optimistic update here or show an error toast.
         }
     }
 
@@ -178,7 +186,6 @@ export const dataService = {
     const updated = [newFeedback, ...current];
     localStorage.setItem(STORAGE_KEY_FEEDBACK, JSON.stringify(updated));
     
-    // If Supabase is connected, we usually re-fetch, but returning updated local state makes UI snappy
     return updated;
   },
 

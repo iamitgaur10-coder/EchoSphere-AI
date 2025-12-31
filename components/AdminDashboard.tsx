@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, TrendingUp, AlertTriangle, MessageSquare, ThumbsUp, ThumbsDown, Minus, Leaf, Download, FileText, Loader2, RefreshCw, Image as ImageIcon, Share2, Copy, Check } from 'lucide-react';
+import { ArrowLeft, TrendingUp, AlertTriangle, MessageSquare, ThumbsUp, ThumbsDown, Minus, Leaf, Download, FileText, Loader2, RefreshCw, Image as ImageIcon, Share2, Copy, Check, ChevronDown } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Feedback, Organization } from '../types';
 import { generateExecutiveReport } from '../services/geminiService';
@@ -16,6 +16,8 @@ interface AdminDashboardProps {
   onBack: () => void;
 }
 
+const PAGE_SIZE = 20;
+
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
   const [data, setData] = useState<Feedback[]>([]);
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
@@ -23,21 +25,59 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isCopied, setIsCopied] = useState(false);
+  
+  // Pagination State
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  // Load real data
-  const loadData = async () => {
-    setIsLoading(true);
+  // Load Initial Data
+  const loadData = async (reset = false) => {
+    if (reset) {
+        setIsLoading(true);
+        setOffset(0);
+        setData([]);
+    }
+
     const org = await dataService.getCurrentOrganization();
     setCurrentOrg(org);
     
-    const result = await dataService.getFeedback();
-    setData(result);
+    const newOffset = reset ? 0 : offset;
+    const result = await dataService.getFeedback(PAGE_SIZE, newOffset);
+    
+    if (result.length < PAGE_SIZE) {
+        setHasMore(false);
+    } else {
+        setHasMore(true);
+    }
+
+    if (reset) {
+        setData(result);
+    } else {
+        setData(prev => [...prev, ...result]);
+    }
+
+    setOffset(prev => prev + PAGE_SIZE);
     setIsLoading(false);
+    setIsLoadingMore(false);
   };
 
   useEffect(() => {
-    loadData();
+    loadData(true);
   }, []);
+
+  const handleLoadMore = async () => {
+      if (isLoadingMore || !hasMore) return;
+      setIsLoadingMore(true);
+      
+      const result = await dataService.getFeedback(PAGE_SIZE, offset);
+      if (result.length < PAGE_SIZE) {
+          setHasMore(false);
+      }
+      setData(prev => [...prev, ...result]);
+      setOffset(prev => prev + PAGE_SIZE);
+      setIsLoadingMore(false);
+  };
 
   // --- REALTIME SUBSCRIPTION (Priority 4) ---
   useEffect(() => {
@@ -57,7 +97,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
           const newFeedback: Feedback = {
             id: newRow.id,
             organizationId: newRow.organization_id,
-            location: newRow.location, // Note: Ensure JSON parsing if needed, though client lib usually handles it
+            location: newRow.location, 
             content: newRow.content,
             timestamp: new Date(newRow.timestamp),
             sentiment: newRow.sentiment,
@@ -81,7 +121,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
   }, [currentOrg]);
 
   const refreshData = () => {
-    loadData();
+    loadData(true);
   };
 
   const handleCopyLink = () => {
@@ -93,7 +133,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
       setTimeout(() => setIsCopied(false), 2000);
   };
 
-  // Aggregate data for charts
+  // Aggregate data for charts (Use all loaded data for now, ideally would use separate aggregate API endpoint)
   const sentimentData = [
     { name: 'Positive', value: data.filter(d => d.sentiment === 'positive').length, color: COLORS.positive },
     { name: 'Neutral', value: data.filter(d => d.sentiment === 'neutral').length, color: COLORS.neutral },
@@ -113,7 +153,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
 
   const handleGenerateReport = async () => {
     setIsGeneratingReport(true);
-    const text = await generateExecutiveReport(data);
+    // Only send the first 50 items to AI to prevent token overflow
+    const contextData = data.slice(0, 50);
+    const text = await generateExecutiveReport(contextData);
     setReportText(text);
     setIsGeneratingReport(false);
   };
@@ -146,7 +188,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
   return (
     <div className="min-h-screen bg-zinc-950 flex flex-col text-zinc-200">
       {/* Admin Header */}
-      <div className="bg-zinc-950 border-b border-zinc-800 z-10">
+      <div className="bg-zinc-950 border-b border-zinc-800 z-10 sticky top-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-4">
              <button onClick={onBack} className="p-2 hover:bg-zinc-900 rounded text-zinc-500 hover:text-white transition-colors">
@@ -185,7 +227,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
                 </button>
              )}
 
-             <button onClick={refreshData} className="p-2 hover:bg-zinc-900 rounded text-zinc-500 hover:text-white transition-colors" title="Refresh Data">
+             <button onClick={() => refreshData()} className="p-2 hover:bg-zinc-900 rounded text-zinc-500 hover:text-white transition-colors" title="Refresh Data">
                 <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
              </button>
              <button 
@@ -267,7 +309,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
                             className="text-xs font-medium bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 px-3 py-1.5 rounded-full transition-colors flex items-center space-x-2 text-zinc-300"
                         >
                             {isGeneratingReport ? <Loader2 size={12} className="animate-spin" /> : <TrendingUp size={12} />}
-                            <span>Generate Report</span>
+                            <span>Generate Report (Based on recent items)</span>
                         </button>
                     )}
                 </div>
@@ -277,7 +319,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
                     </div>
                 ) : (
                     <div className="text-zinc-500 text-sm">
-                        Click the button above to generate an AI-powered summary of all recent feedback and trends.
+                        Click the button above to generate an AI-powered summary of trends and risks.
                     </div>
                 )}
              </div>
@@ -332,8 +374,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
           {/* Recent List */}
           <div className="bg-zinc-900/50 rounded-lg border border-zinc-800 overflow-hidden">
             <div className="p-4 border-b border-zinc-800 flex justify-between items-center bg-zinc-900">
-              <h2 className="text-sm font-bold text-zinc-300 uppercase">Recent Feedback</h2>
-              <button onClick={refreshData} className="text-orange-500 text-xs font-bold hover:text-orange-400">REFRESH</button>
+              <h2 className="text-sm font-bold text-zinc-300 uppercase">Feedback Log</h2>
+              <span className="text-zinc-500 text-xs">Showing {data.length} items</span>
             </div>
             {isLoading ? (
                 <div className="p-8 flex justify-center text-zinc-500">
@@ -341,38 +383,51 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
                 </div>
             ) : (
                 <div className="divide-y divide-zinc-800">
-                {data.slice(0, 10).map((item) => (
-                    <div key={item.id} className="p-4 hover:bg-zinc-900 transition-colors flex items-start space-x-4 animate-fade-in-up">
-                    <div className={`mt-1 p-2 rounded-full flex-shrink-0 bg-black border border-zinc-800`}>
-                        {item.sentiment === 'positive' ? <ThumbsUp size={14} className="text-green-500" /> :
-                        item.sentiment === 'negative' ? <ThumbsDown size={14} className="text-red-500" /> :
-                        <Minus size={14} className="text-yellow-500" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                            <div className="flex space-x-2">
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 uppercase tracking-wide border border-zinc-700">{item.category}</span>
-                                {item.imageUrl && (
-                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-900/30 text-blue-400 border border-blue-900 flex items-center" title="Has Image">
-                                        <ImageIcon size={10} className="mr-1" /> Image
-                                    </span>
-                                )}
-                                {item.ecoImpactScore && item.ecoImpactScore > 70 && (
-                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-900/30 text-green-500 border border-green-900 flex items-center">
-                                        <Leaf size={10} className="mr-1" /> Eco+
-                                    </span>
-                                )}
+                    {data.map((item) => (
+                        <div key={item.id} className="p-4 hover:bg-zinc-900 transition-colors flex items-start space-x-4 animate-fade-in-up">
+                        <div className={`mt-1 p-2 rounded-full flex-shrink-0 bg-black border border-zinc-800`}>
+                            {item.sentiment === 'positive' ? <ThumbsUp size={14} className="text-green-500" /> :
+                            item.sentiment === 'negative' ? <ThumbsDown size={14} className="text-red-500" /> :
+                            <Minus size={14} className="text-yellow-500" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1">
+                                <div className="flex space-x-2">
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 uppercase tracking-wide border border-zinc-700">{item.category}</span>
+                                    {item.imageUrl && (
+                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-900/30 text-blue-400 border border-blue-900 flex items-center" title="Has Image">
+                                            <ImageIcon size={10} className="mr-1" /> Image
+                                        </span>
+                                    )}
+                                    {item.ecoImpactScore && item.ecoImpactScore > 70 && (
+                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-900/30 text-green-500 border border-green-900 flex items-center">
+                                            <Leaf size={10} className="mr-1" /> Eco+
+                                        </span>
+                                    )}
+                                </div>
+                                <span className="text-[10px] text-zinc-500">{item.timestamp.toLocaleDateString()}</span>
                             </div>
-                            <span className="text-[10px] text-zinc-500">{item.timestamp.toLocaleDateString()}</span>
+                            <p className="text-zinc-300 text-sm mb-1">{item.content}</p>
+                            <div className="flex items-center space-x-2 text-[10px] text-zinc-500">
+                                <span className="text-orange-500 font-bold">AI Summary:</span>
+                                <span>{item.summary}</span>
+                            </div>
                         </div>
-                        <p className="text-zinc-300 text-sm mb-1">{item.content}</p>
-                        <div className="flex items-center space-x-2 text-[10px] text-zinc-500">
-                            <span className="text-orange-500 font-bold">AI Summary:</span>
-                            <span>{item.summary}</span>
                         </div>
-                    </div>
-                    </div>
-                ))}
+                    ))}
+                    
+                    {hasMore && (
+                        <div className="p-4 flex justify-center">
+                            <button 
+                                onClick={handleLoadMore} 
+                                disabled={isLoadingMore}
+                                className="flex items-center space-x-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-orange-500 transition-colors disabled:opacity-50"
+                            >
+                                {isLoadingMore ? <Loader2 size={14} className="animate-spin" /> : <ChevronDown size={14} />}
+                                <span>Load More</span>
+                            </button>
+                        </div>
+                    )}
                 </div>
             )}
           </div>

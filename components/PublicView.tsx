@@ -24,7 +24,8 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
         const org = await dataService.getCurrentOrganization();
         setCurrentOrg(org);
 
-        const list = await dataService.getFeedback();
+        // Initial load allows more items
+        const list = await dataService.getFeedback(100, 0);
         setFeedbackList(list);
 
         // Pre-fill live feed with recent items so it isn't empty
@@ -59,7 +60,7 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
           const newFeedback: Feedback = {
             id: newRow.id,
             organizationId: newRow.organization_id,
-            location: newRow.location, // Supabase client handles JSON parsing for jsonb columns usually
+            location: newRow.location, 
             content: newRow.content,
             timestamp: new Date(newRow.timestamp),
             sentiment: newRow.sentiment,
@@ -96,15 +97,21 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
   };
 
   const handleFeedbackSubmit = async (newFeedback: Feedback) => {
-    // Optimistic update happens in dataService.saveFeedback
-    await dataService.saveFeedback(newFeedback);
+    // 1. Optimistic Update: Update UI Immediately
+    setFeedbackList(prev => [newFeedback, ...prev]);
     
-    // We fetch fresh to ensure sync, though Realtime will also catch it
-    const fresh = await dataService.getFeedback();
-    setFeedbackList(fresh);
-    
+    // Close Modal immediately
     setSelectedLocation(null);
     if (showToast) showToast("Feedback Submitted Successfully");
+
+    // 2. Background Sync
+    try {
+        await dataService.saveFeedback(newFeedback);
+    } catch (e) {
+        // If fail, we might want to revert UI, but for now we log
+        console.error("Background sync failed", e);
+        if (showToast) showToast("Synced locally. Will retry connection.", "error");
+    }
   };
 
   const handleMapError = (msg: string) => {

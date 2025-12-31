@@ -52,7 +52,9 @@ const MapArea: React.FC<MapAreaProps> = ({
   
   const userLocationMarkerRef = useRef<any | null>(null);
   const selectionMarkerRef = useRef<any | null>(null);
-  const markersRef = useRef<any[]>([]);
+  
+  // Ref for Marker Cluster Group
+  const clusterGroupRef = useRef<any>(null);
 
   // Use config for default center
   const initialCenter = center 
@@ -157,13 +159,38 @@ const MapArea: React.FC<MapAreaProps> = ({
 
       setLayers({ dark: darkLayer, light: lightLayer, satellite: satelliteLayer });
 
+      // Initialize Cluster Group
+      if (L.markerClusterGroup) {
+        const clusterGroup = L.markerClusterGroup({
+            showCoverageOnHover: false,
+            maxClusterRadius: 40,
+            iconCreateFunction: function(cluster: any) {
+                const count = cluster.getChildCount();
+                let sizeClass = 'w-8 h-8';
+                if (count > 10) sizeClass = 'w-10 h-10';
+                if (count > 100) sizeClass = 'w-12 h-12';
+                
+                return L.divIcon({
+                    html: `<div class="${sizeClass} rounded-full bg-orange-600/90 text-white flex items-center justify-center font-bold text-xs border-2 border-white/20 shadow-lg">${count}</div>`,
+                    className: 'custom-cluster-icon',
+                    iconSize: null
+                });
+            }
+        });
+        clusterGroupRef.current = clusterGroup;
+        map.addLayer(clusterGroup);
+      } else {
+        console.warn("Leaflet.markercluster not loaded");
+        // Fallback group if cluster lib missing
+        clusterGroupRef.current = L.layerGroup().addTo(map);
+      }
+
       map.on('click', (e: any) => {
           if (!interactive) return;
           const { lat, lng } = e.latlng;
           onMapClick({ x: lng, y: lat });
       });
 
-      // Success Handler
       map.on('locationfound', (e: any) => {
         const radius = e.accuracy / 2;
         if (userLocationMarkerRef.current) map.removeLayer(userLocationMarkerRef.current);
@@ -181,7 +208,6 @@ const MapArea: React.FC<MapAreaProps> = ({
         setIsLocating(false);
       });
 
-      // Error Handler
       map.on('locationerror', (e: any) => {
         setIsLocating(false);
         console.warn("Location Access Error:", e);
@@ -197,7 +223,6 @@ const MapArea: React.FC<MapAreaProps> = ({
 
       setTimeout(() => {
         map.invalidateSize();
-        // Only auto-locate if NO center is provided (e.g. during fresh setup)
         if (interactive && !center) {
             map.locate({ setView: true, maxZoom: 16 });
         }
@@ -232,7 +257,6 @@ const MapArea: React.FC<MapAreaProps> = ({
   useEffect(() => {
       if (!mapInstance || !layers) return;
       
-      // Remove all base layers first
       if (mapInstance.hasLayer(layers.dark)) mapInstance.removeLayer(layers.dark);
       if (mapInstance.hasLayer(layers.light)) mapInstance.removeLayer(layers.light);
       if (mapInstance.hasLayer(layers.satellite)) mapInstance.removeLayer(layers.satellite);
@@ -240,40 +264,36 @@ const MapArea: React.FC<MapAreaProps> = ({
       if (isSatellite) {
           mapInstance.addLayer(layers.satellite);
       } else {
-          // Restore theme based layer
           if (isDarkMode) mapInstance.addLayer(layers.dark);
           else mapInstance.addLayer(layers.light);
       }
   }, [isSatellite, mapInstance, layers, isDarkMode]);
 
-  // -- Render Markers --
+  // -- Render Markers into Cluster Group --
   useEffect(() => {
-      if (!mapInstance || !L) return;
+      if (!mapInstance || !L || !clusterGroupRef.current) return;
 
-      // 1. Clear existing
-      markersRef.current.forEach(m => m.remove());
-      markersRef.current = [];
+      // 1. Clear existing cluster layers
+      clusterGroupRef.current.clearLayers();
 
       // 2. Filter List
       const filteredList = activeFilter === 'All' 
         ? feedbackList 
         : feedbackList.filter(f => f.category === activeFilter);
 
-      // 3. Add New Markers
-      filteredList.forEach(fb => {
+      // 3. Create Markers
+      const newMarkers = filteredList.map(fb => {
           let lat = fb.location.y;
           let lng = fb.location.x;
 
-          // Fallback for demo percent data if close to default center
-          const defaultX = APP_CONFIG.MAP.DEFAULT_CENTER.x;
-          const defaultY = APP_CONFIG.MAP.DEFAULT_CENTER.y;
-          
+          // Fallback for demo percent data coordinates
           if (Math.abs(lat) <= 100 && Math.abs(lng) <= 100) {
-              lat = defaultY + (fb.location.y - 50) * 0.0001;
-              lng = defaultX + (fb.location.x - 50) * 0.0001;
+            const defaultX = APP_CONFIG.MAP.DEFAULT_CENTER.x;
+            const defaultY = APP_CONFIG.MAP.DEFAULT_CENTER.y;
+            lat = defaultY + (fb.location.y - 50) * 0.0001;
+            lng = defaultX + (fb.location.x - 50) * 0.0001;
           }
 
-          // Get Style based on Category or Sentiment
           const style = getCategoryStyle(fb.category);
           const iconString = renderToString(style.icon);
 
@@ -294,7 +314,7 @@ const MapArea: React.FC<MapAreaProps> = ({
             popupAnchor: [0, -40]
           });
 
-          const marker = L.marker([lat, lng], { icon: customIcon }).addTo(mapInstance);
+          const marker = L.marker([lat, lng], { icon: customIcon });
           
           const popupContent = `
             <div class="font-sans min-w-[200px] bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-200 p-1">
@@ -313,8 +333,12 @@ const MapArea: React.FC<MapAreaProps> = ({
           marker.bindPopup(popupContent, {
              className: isDarkMode ? 'dark-popup' : 'light-popup'
           });
-          markersRef.current.push(marker);
+
+          return marker;
       });
+
+      // 4. Batch Add to Cluster
+      clusterGroupRef.current.addLayers(newMarkers);
 
   }, [feedbackList, mapInstance, activeFilter, isDarkMode]);
 
@@ -329,7 +353,7 @@ const MapArea: React.FC<MapAreaProps> = ({
 
       {interactive && (
         <>
-            {/* --- CENTRAL COMMAND SEARCH BAR & CATEGORIES --- */}
+            {/* Search and Filters UI (Identical to previous) */}
             <div className="absolute top-24 md:top-6 left-1/2 -translate-x-1/2 w-[90%] md:w-[400px] z-[500] transition-all duration-300">
                 <form onSubmit={handleSearch} className="relative group/search">
                     <div className="relative flex items-center bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md shadow-2xl rounded border border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors">
@@ -353,7 +377,6 @@ const MapArea: React.FC<MapAreaProps> = ({
                     </div>
                 )}
 
-                {/* --- FLOATING FILTER PILLS --- */}
                 <div className="mt-3 flex items-center space-x-2 overflow-x-auto no-scrollbar py-1">
                     {filterCategories.map(cat => (
                         <button
@@ -371,7 +394,6 @@ const MapArea: React.FC<MapAreaProps> = ({
                 </div>
             </div>
 
-            {/* --- RIGHT ACTION STACK --- */}
             <div className="absolute top-24 md:top-6 right-4 z-[500] flex flex-col space-y-3">
                 <button 
                     onClick={handleManualLocate}
@@ -395,22 +417,20 @@ const MapArea: React.FC<MapAreaProps> = ({
       <div ref={mapRef} className="w-full h-full z-0 outline-none bg-zinc-200 dark:bg-zinc-900" />
       
       <style>{`
-        /* Dark Leaflet Popups */
+        /* Reuse existing styles plus generic cluster style fallback */
         .dark-popup .leaflet-popup-content-wrapper {
-            background: #09090b; /* zinc-950 */
-            color: #e4e4e7; /* zinc-200 */
-            border: 1px solid #27272a; /* zinc-800 */
+            background: #09090b; 
+            color: #e4e4e7;
+            border: 1px solid #27272a;
             border-radius: 4px;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
         }
         .dark-popup .leaflet-popup-tip {
-            background: #27272a; /* zinc-800 */
+            background: #27272a;
         }
         .dark-popup .leaflet-popup-close-button {
-            color: #71717a !important; /* zinc-500 */
+            color: #71717a !important;
         }
-
-        /* Light Leaflet Popups */
         .light-popup .leaflet-popup-content-wrapper {
             background: #ffffff;
             color: #18181b;
@@ -424,11 +444,9 @@ const MapArea: React.FC<MapAreaProps> = ({
         .light-popup .leaflet-popup-close-button {
             color: #a1a1aa !important;
         }
-
         .leaflet-container {
             background: transparent !important;
         }
-
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
