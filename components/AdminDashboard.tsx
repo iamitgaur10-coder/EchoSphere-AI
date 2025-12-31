@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, TrendingUp, AlertTriangle, MessageSquare, ThumbsUp, ThumbsDown, Minus, Leaf, Download, FileText, Loader2, RefreshCw, Image as ImageIcon } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { Feedback } from '../types';
+import { Feedback, Organization } from '../types';
 import { generateExecutiveReport } from '../services/geminiService';
 import { dataService } from '../services/dataService';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 const COLORS = {
   positive: '#22c55e', // green-500
@@ -17,6 +18,7 @@ interface AdminDashboardProps {
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
   const [data, setData] = useState<Feedback[]>([]);
+  const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
   const [reportText, setReportText] = useState<string | null>(null);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -24,6 +26,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
   // Load real data
   const loadData = async () => {
     setIsLoading(true);
+    const org = await dataService.getCurrentOrganization();
+    setCurrentOrg(org);
+    
     const result = await dataService.getFeedback();
     setData(result);
     setIsLoading(false);
@@ -32,6 +37,47 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
   useEffect(() => {
     loadData();
   }, []);
+
+  // --- REALTIME SUBSCRIPTION (Priority 4) ---
+  useEffect(() => {
+    if (!isSupabaseConfigured() || !currentOrg) return;
+
+    const channel = supabase!
+      .channel('admin-dashboard')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'feedback' },
+        (payload) => {
+          const newRow = payload.new;
+
+          // Multi-tenancy Security: Only add if it belongs to this Org
+          if (newRow.organization_id !== currentOrg.id) return;
+
+          const newFeedback: Feedback = {
+            id: newRow.id,
+            organizationId: newRow.organization_id,
+            location: newRow.location, // Note: Ensure JSON parsing if needed, though client lib usually handles it
+            content: newRow.content,
+            timestamp: new Date(newRow.timestamp),
+            sentiment: newRow.sentiment,
+            category: newRow.category,
+            summary: newRow.summary,
+            imageUrl: newRow.image_url,
+            riskScore: newRow.risk_score,
+            ecoImpactScore: newRow.eco_impact_score,
+            ecoImpactReasoning: newRow.eco_impact_reasoning,
+            votes: 0
+          };
+
+          setData(prev => [newFeedback, ...prev]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase!.removeChannel(channel);
+    };
+  }, [currentOrg]);
 
   const refreshData = () => {
     loadData();
@@ -98,10 +144,24 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
              </button>
              <div>
                 <h1 className="text-lg font-display font-bold tracking-tight text-white">Dashboard</h1>
-                <div className="text-xs text-zinc-500">Administrator Access</div>
+                <div className="flex items-center space-x-2 text-xs text-zinc-500">
+                    <span>Administrator Access</span>
+                    {currentOrg && (
+                        <>
+                            <span>•</span>
+                            <span className="text-orange-500 font-bold">{currentOrg.name}</span>
+                        </>
+                    )}
+                </div>
              </div>
           </div>
           <div className="flex items-center space-x-3 text-sm">
+             {isSupabaseConfigured() && (
+                 <div className="flex items-center space-x-2 px-3 py-1 bg-green-900/20 border border-green-900/50 rounded-full">
+                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                    <span className="text-[10px] text-green-500 font-bold uppercase tracking-wider">Live Feed</span>
+                 </div>
+             )}
              <button onClick={refreshData} className="p-2 hover:bg-zinc-900 rounded text-zinc-500 hover:text-white transition-colors" title="Refresh Data">
                 <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
              </button>
@@ -259,7 +319,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
             ) : (
                 <div className="divide-y divide-zinc-800">
                 {data.slice(0, 10).map((item) => (
-                    <div key={item.id} className="p-4 hover:bg-zinc-900 transition-colors flex items-start space-x-4">
+                    <div key={item.id} className="p-4 hover:bg-zinc-900 transition-colors flex items-start space-x-4 animate-fade-in-up">
                     <div className={`mt-1 p-2 rounded-full flex-shrink-0 bg-black border border-zinc-800`}>
                         {item.sentiment === 'positive' ? <ThumbsUp size={14} className="text-green-500" /> :
                         item.sentiment === 'negative' ? <ThumbsDown size={14} className="text-red-500" /> :
