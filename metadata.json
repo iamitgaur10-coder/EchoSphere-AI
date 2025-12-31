@@ -1,0 +1,8 @@
+{
+  "name": "EchoSphere AI",
+  "description": "A multi-tenant SaaS platform for geo-located feedback collection with AI-powered insights and sentiment analysis.",
+  "requestFramePermissions": [
+    "geolocation",
+    "microphone"
+  ]
+}
