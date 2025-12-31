@@ -32,7 +32,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
         <div className="bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md border border-zinc-200 dark:border-zinc-800 rounded-full px-4 py-3 md:px-6 md:py-3 flex items-center justify-between md:space-x-6 shadow-2xl transition-all hover:bg-white dark:hover:bg-zinc-900">
             <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
-                <span className="font-display font-bold text-zinc-900 dark:text-white tracking-tight text-sm md:text-base">EchoSphere_OS</span>
+                <span className="font-display font-bold text-zinc-900 dark:text-white tracking-tight text-sm md:text-base">EchoSphere</span>
             </div>
             <div className="hidden md:block h-4 w-[1px] bg-zinc-300 dark:bg-zinc-700"></div>
             <div className="flex items-center space-x-4 text-xs font-mono">
@@ -41,12 +41,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
                         Tenant: {account.organizationName}
                     </button>
                 ) : (
-                    <button onClick={onEnterWizard} className="text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white transition-colors">
-                        [PROVISION]
+                    <button onClick={onEnterWizard} className="text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white transition-colors uppercase tracking-wide">
+                        Get Started
                     </button>
                 )}
-                <button onClick={onEnterAdmin} className="text-zinc-500 hover:text-black dark:hover:text-white transition-colors">
-                    // ADMIN
+                <button onClick={onEnterAdmin} className="text-zinc-500 hover:text-black dark:hover:text-white transition-colors uppercase tracking-wide">
+                    Dashboard
                 </button>
             </div>
         </div>
@@ -78,7 +78,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
             <div className="space-y-8">
                 <div className="inline-flex items-center space-x-2 border border-orange-500/30 bg-orange-500/10 px-3 py-1 rounded text-orange-600 dark:text-orange-400 text-[10px] font-mono tracking-widest uppercase backdrop-blur-md">
                     <Activity size={12} />
-                    <span>System Online • v3.0</span>
+                    <span>Platform Active</span>
                 </div>
                 
                 <h1 className="font-display text-5xl lg:text-8xl font-medium tracking-tighter text-zinc-900 dark:text-white leading-[0.9]">
@@ -95,7 +95,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
                         onClick={onEnterPublic}
                         className="group relative px-8 py-4 bg-zinc-900 dark:bg-white text-white dark:text-black font-display font-bold text-sm tracking-wide transition-all hover:bg-zinc-700 dark:hover:bg-zinc-200 w-full sm:w-auto text-center"
                     >
-                        LAUNCH_PUBLIC_VIEW
+                        OPEN PUBLIC MAP
                         <div className="absolute inset-0 border border-zinc-900 dark:border-white translate-x-1 translate-y-1 group-hover:translate-x-2 group-hover:translate-y-2 transition-transform -z-10 bg-black/5"></div>
                     </button>
                     
@@ -103,7 +103,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
                         onClick={onEnterWizard}
                         className="px-8 py-4 border border-zinc-300 dark:border-zinc-700 bg-white/50 dark:bg-black/20 backdrop-blur-sm text-zinc-700 dark:text-zinc-300 font-display font-medium text-sm tracking-wide hover:border-zinc-500 hover:text-black dark:hover:text-white transition-colors w-full sm:w-auto text-center"
                     >
-                        DEPLOY NEW INSTANCE
+                        CREATE WORKSPACE
                     </button>
                 </div>
             </div>
@@ -118,7 +118,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
                         <div className="w-3 h-3 rounded-full bg-red-500/20 border border-red-500"></div>
                         <div className="w-3 h-3 rounded-full bg-yellow-500/20 border border-yellow-500"></div>
                         <div className="w-3 h-3 rounded-full bg-green-500/20 border border-green-500"></div>
-                        <div className="flex-1 text-center font-mono text-[10px] text-zinc-400 dark:text-zinc-600">Map_View_Controller.tsx • Live Stream</div>
+                        <div className="flex-1 text-center font-mono text-[10px] text-zinc-400 dark:text-zinc-600">Live City Feed • Real-time</div>
                     </div>
 
                     {/* Fake Map Content */}
@@ -152,7 +152,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
                         {/* Floating UI Elements inside 3D */}
                         <div className="absolute bottom-6 left-6 right-6 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-lg border border-zinc-200 dark:border-zinc-800 p-4 rounded font-mono text-xs text-zinc-600 dark:text-zinc-400 shadow-2xl">
                             <div className="flex justify-between mb-2">
-                                <span className="text-zinc-900 dark:text-white">ANALYSIS_QUEUE</span>
+                                <span className="text-zinc-900 dark:text-white">Analysis Status</span>
                                 <span className="text-green-500 flex items-center gap-1"><span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> ACTIVE</span>
                             </div>
                             <div className="space-y-2">
@@ -192,7 +192,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
              <div className="flex-1 p-4 flex items-center justify-center space-x-3">
                 <Cpu className="text-zinc-400 dark:text-zinc-600" size={20} />
                 <div>
-                    <div className="text-xs text-zinc-500 font-mono uppercase">System Latency</div>
+                    <div className="text-xs text-zinc-500 font-mono uppercase">Response Time</div>
                     <div className="text-lg font-display text-green-600 dark:text-green-500">12ms</div>
                 </div>
              </div>
@@ -297,10 +297,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
       <footer className="py-12 px-6 border-t border-zinc-200 dark:border-zinc-900 text-center bg-zinc-100 dark:bg-zinc-950">
         <div className="flex items-center justify-center space-x-2 mb-4 opacity-50 grayscale hover:grayscale-0 transition-all">
             <div className="w-4 h-4 bg-orange-500 rounded-sm"></div>
-            <span className="font-display font-bold text-zinc-900 dark:text-white tracking-tight">EchoSphere_OS</span>
+            <span className="font-display font-bold text-zinc-900 dark:text-white tracking-tight">EchoSphere</span>
         </div>
         <p className="text-xs text-zinc-500 font-mono">
-            SYSTEM_STATUS: NOMINAL <br/>
+            Status: Operational <br/>
             © 2024 ARCHITECTURAL SYSTEMS INC.
         </p>
       </footer>
