@@ -4,6 +4,7 @@ import PublicView from './components/PublicView';
 import AdminDashboard from './components/AdminDashboard';
 import Wizard from './components/Wizard';
 import LandingPage from './components/LandingPage';
+import ContentPage from './components/ContentPage';
 import { ViewState, AccountSetup } from './types';
 import { dataService } from './services/dataService';
 import { authService } from './services/authService';
@@ -210,6 +211,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onBypass, isDarkMode, toggleT
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('landing');
+  const [contentPageId, setContentPageId] = useState<string>('pricing'); // Track sub-page for content view
   const [account, setAccount] = useState<AccountSetup | null>(null);
   
   // 1. Default to LIGHT mode (false)
@@ -315,6 +317,12 @@ const App: React.FC = () => {
     }
   };
 
+  const handleOpenContent = (page: string) => {
+      setContentPageId(page);
+      setCurrentView('content');
+      window.scrollTo(0, 0);
+  };
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsAuthLoading(true);
@@ -383,6 +391,8 @@ const App: React.FC = () => {
         );
       case 'admin':
         return <AdminDashboard onBack={() => setCurrentView('landing')} onSignOut={handleSignOut} />;
+      case 'content':
+        return <ContentPage pageId={contentPageId} onBack={() => setCurrentView('landing')} />;
       case 'landing':
       default:
         return (
@@ -390,6 +400,7 @@ const App: React.FC = () => {
             onEnterPublic={() => setCurrentView('public')}
             onEnterAdmin={() => handleProtectedAction('admin')}
             onEnterWizard={() => handleProtectedAction('wizard')}
+            onOpenContent={handleOpenContent}
             account={account}
             isDarkMode={isDarkMode}
           />

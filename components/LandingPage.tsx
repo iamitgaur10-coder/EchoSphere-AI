@@ -9,6 +9,7 @@ interface LandingPageProps {
   onEnterPublic: () => void;
   onEnterAdmin: () => void;
   onEnterWizard: () => void;
+  onOpenContent: (page: string) => void;
   account: AccountSetup | null;
   isDarkMode?: boolean;
 }
@@ -26,7 +27,7 @@ const VISUAL_FEEDBACK: Feedback[] = [
     { id: 'v7', location: { x: -118.23, y: 34.052 }, content: 'New tree planting', sentiment: 'positive', category: 'Sustainability', timestamp: new Date(), votes: 0 },
 ];
 
-const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, onEnterWizard, account, isDarkMode = false }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, onEnterWizard, onOpenContent, account, isDarkMode = false }) => {
   const [tutorialMode, setTutorialMode] = useState<'citizen' | 'admin'>('citizen');
   const [availableOrgs, setAvailableOrgs] = useState<Organization[]>([]);
   const [showOrgList, setShowOrgList] = useState(false);
@@ -541,28 +542,28 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
                     <ul className="space-y-2 text-xs text-zinc-500">
                         <li><button onClick={onEnterPublic} className="hover:text-orange-500 transition-colors">Public Map</button></li>
                         <li><button onClick={onEnterWizard} className="hover:text-orange-500 transition-colors">For Organizations</button></li>
-                        <li><a href="#" className="hover:text-orange-500 transition-colors">Case Studies</a></li>
-                        <li><a href="#" className="hover:text-orange-500 transition-colors">Pricing</a></li>
+                        <li><button onClick={() => onOpenContent('case-studies')} className="hover:text-orange-500 transition-colors">Case Studies</button></li>
+                        <li><button onClick={() => onOpenContent('pricing')} className="hover:text-orange-500 transition-colors">Pricing</button></li>
                     </ul>
                 </div>
 
                 <div>
                     <h4 className="font-bold text-zinc-900 dark:text-white mb-4 text-xs uppercase tracking-wider">Resources</h4>
                     <ul className="space-y-2 text-xs text-zinc-500">
-                        <li><a href="#" className="hover:text-orange-500 transition-colors">Documentation</a></li>
-                        <li><a href="#" className="hover:text-orange-500 transition-colors">API Reference</a></li>
-                        <li><a href="#" className="hover:text-orange-500 transition-colors">Community Forum</a></li>
-                        <li><a href="#" className="hover:text-orange-500 transition-colors">Help Center</a></li>
+                        <li><button onClick={() => onOpenContent('documentation')} className="hover:text-orange-500 transition-colors">Documentation</button></li>
+                        <li><button onClick={() => onOpenContent('api-reference')} className="hover:text-orange-500 transition-colors">API Reference</button></li>
+                        <li><button onClick={() => onOpenContent('community')} className="hover:text-orange-500 transition-colors">Community Forum</button></li>
+                        <li><button onClick={() => onOpenContent('help')} className="hover:text-orange-500 transition-colors">Help Center</button></li>
                     </ul>
                 </div>
 
                 <div>
                     <h4 className="font-bold text-zinc-900 dark:text-white mb-4 text-xs uppercase tracking-wider">Legal</h4>
                     <ul className="space-y-2 text-xs text-zinc-500">
-                        <li><a href="#" className="hover:text-orange-500 transition-colors">Privacy Policy</a></li>
-                        <li><a href="#" className="hover:text-orange-500 transition-colors">Terms of Service</a></li>
-                        <li><a href="#" className="hover:text-orange-500 transition-colors">Cookie Policy</a></li>
-                        <li><a href="#" className="hover:text-orange-500 transition-colors">Security</a></li>
+                        <li><button onClick={() => onOpenContent('privacy-policy')} className="hover:text-orange-500 transition-colors">Privacy Policy</button></li>
+                        <li><button onClick={() => onOpenContent('terms-of-service')} className="hover:text-orange-500 transition-colors">Terms of Service</button></li>
+                        <li><button onClick={() => onOpenContent('cookies')} className="hover:text-orange-500 transition-colors">Cookie Policy</button></li>
+                        <li><button onClick={() => onOpenContent('security')} className="hover:text-orange-500 transition-colors">Security</button></li>
                     </ul>
                 </div>
             </div>

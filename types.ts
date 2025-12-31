@@ -1,5 +1,5 @@
 
-export type ViewState = 'landing' | 'public' | 'admin' | 'wizard';
+export type ViewState = 'landing' | 'public' | 'admin' | 'wizard' | 'content';
 
 export interface Location {
   x: number; // Longitude (e.g. -74.0060)
