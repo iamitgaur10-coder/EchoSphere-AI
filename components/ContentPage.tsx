@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ArrowLeft, Shield, FileText, Check, AlertCircle, Book, Code, Users, CreditCard, Lock, Server, Globe, Loader2 } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
@@ -11,24 +10,31 @@ interface ContentPageProps {
 const ContentPage: React.FC<ContentPageProps> = ({ pageId, onBack }) => {
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
 
+  // PRODUCTION HOOK: Calls Supabase Edge Function to create Stripe session
   const handleSubscribe = async (plan: string) => {
       setIsProcessing(plan);
       
-      // Simulate API latency
-      await new Promise(r => setTimeout(r, 1500));
-      
       if (isSupabaseConfigured()) {
-          // PROD: This would be the code
-          /*
-          const { data, error } = await supabase.functions.invoke('create-checkout-session', {
-             body: { plan: plan }
-          });
-          if (data?.url) window.location.href = data.url;
-          */
-          alert(`[Stripe Hook] Production: Would redirect to Stripe Checkout for ${plan} plan.`);
+          try {
+              const { data, error } = await supabase!.functions.invoke('create-checkout-session', {
+                  body: { plan: plan }
+              });
+
+              if (error) {
+                  console.error("Stripe Error:", error);
+                  alert("Error: Failed to initiate checkout. Please check backend logs.");
+              } else if (data?.url) {
+                  // Redirect to Stripe Checkout
+                  window.location.href = data.url;
+              } else {
+                  alert("Error: No checkout URL returned from backend.");
+              }
+          } catch (e) {
+              console.error("System Error", e);
+              alert("System Error: Could not connect to payment gateway.");
+          }
       } else {
-          // DEMO
-          alert(`Success! You have subscribed to the ${plan} plan (Demo Mode).`);
+          alert("PRODUCTION ERROR: Supabase backend is not configured. Cannot process payment.");
       }
       setIsProcessing(null);
   };

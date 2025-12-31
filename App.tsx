@@ -339,7 +339,9 @@ const App: React.FC = () => {
     if (result.user && !result.error) {
         setIsAuthenticated(true);
         setShowLogin(false);
-        setCurrentView(pendingView);
+        // If we were pending a view, go there. Otherwise stay where we are (PublicView)
+        if (pendingView) setCurrentView(pendingView);
+        
         showToast(isSignUpMode ? `Account created for ${result.user.email}` : `Welcome back, ${result.user.email}`);
     } else {
         // If in Local/Demo mode, allow admin access with mock auth
@@ -373,6 +375,15 @@ const App: React.FC = () => {
       setNeedsSetup(false);
   };
 
+  // Helper to open login from Public View
+  const handleTriggerLogin = () => {
+      setPendingView('public'); // Stay on public after login
+      setShowLogin(true);
+      setIsSignUpMode(false);
+      setEmail('');
+      setPassword('');
+  };
+
   if (needsSetup) {
       return <SetupScreen onBypass={handleBypassSetup} isDarkMode={isDarkMode} toggleTheme={toggleTheme} />;
   }
@@ -387,6 +398,7 @@ const App: React.FC = () => {
             onBack={() => setCurrentView('landing')} 
             showToast={(msg, type) => showToast(msg, type)} 
             isDarkMode={isDarkMode}
+            onTriggerLogin={handleTriggerLogin}
           />
         );
       case 'admin':
@@ -424,7 +436,7 @@ const App: React.FC = () => {
                         <div className="mx-auto w-12 h-12 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg flex items-center justify-center mb-4 text-orange-500">
                              <Terminal size={24} />
                         </div>
-                        <h3 className="text-xl font-display font-bold dark:text-white tracking-tight">{isSignUpMode ? 'Create Admin Account' : 'Admin Login'}</h3>
+                        <h3 className="text-xl font-display font-bold dark:text-white tracking-tight">{isSignUpMode ? 'Create Account' : 'Login'}</h3>
                         {!isSupabaseConfigured() && (
                             <p className="text-xs text-orange-500 mt-2 font-bold uppercase tracking-wide">Demo Mode Enabled</p>
                         )}

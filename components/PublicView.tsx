@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Plus, Activity, User, LogIn, Trophy, Clock, History, X, Share2, Check } from 'lucide-react';
 import MapArea from './MapArea';
@@ -12,9 +11,10 @@ interface PublicViewProps {
   onBack: () => void;
   showToast?: (msg: string, type?: 'success' | 'error') => void;
   isDarkMode?: boolean;
+  onTriggerLogin?: () => void;
 }
 
-const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode = true }) => {
+const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode = true, onTriggerLogin }) => {
   const [feedbackList, setFeedbackList] = useState<Feedback[]>([]);
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
@@ -144,8 +144,8 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
     }
   };
 
-  const handleLogin = async () => {
-      alert("Please return to the landing page and click 'Admin Login' to simulate account entry. (Citizen Auth is shared in this demo)");
+  const handleLogin = () => {
+      if (onTriggerLogin) onTriggerLogin();
   };
 
   const handleShare = () => {

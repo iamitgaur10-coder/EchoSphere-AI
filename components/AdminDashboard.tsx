@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, TrendingUp, AlertTriangle, MessageSquare, ThumbsUp, ThumbsDown, Minus, Leaf, Download, FileText, Loader2, RefreshCw, Image as ImageIcon, Share2, Copy, Check, ChevronDown, LogOut, Clock, Filter, Mail, Sparkles, Send } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
@@ -174,31 +173,33 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onSignOut }) =>
       setIsDrafting(false);
   };
 
-  // NEW: Email Trigger Logic
+  // PRODUCTION HOOK: Sends email via Supabase Edge Function
   const handleSendEmail = async () => {
     if (!selectedItem || !draftResponse || !selectedItem.contactEmail) return;
 
     if (isSupabaseConfigured()) {
         try {
-            // PROD: Call Edge Function to send real email via Resend/SendGrid
-            /* 
-            const { data, error } = await supabase.functions.invoke('send-email', {
+            const { data, error } = await supabase!.functions.invoke('send-email', {
                 body: { 
                     to: selectedItem.contactEmail,
                     subject: `Update regarding your report: ${selectedItem.category}`,
                     message: draftResponse
                 }
             });
-            */
-            // Mock Success for UI
-            alert(`[Production Hook] Email sent to ${selectedItem.contactEmail} via Supabase Function!`);
-            setDraftResponse(null);
+            
+            if (error) {
+                console.error("Failed to send email via Edge Function", error);
+                alert("Error: Failed to send email via backend function.");
+            } else {
+                alert(`Email successfully dispatched via backend.`);
+                setDraftResponse(null);
+            }
         } catch (e) {
             console.error("Email send failed", e);
+            alert("System Error: Could not invoke send-email function.");
         }
     } else {
-        alert("Simulated: Email sent to " + selectedItem.contactEmail);
-        setDraftResponse(null);
+        alert("PRODUCTION ERROR: Supabase backend is not configured. Cannot send email.");
     }
   };
 
