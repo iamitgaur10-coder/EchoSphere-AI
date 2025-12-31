@@ -18,6 +18,7 @@ export interface Feedback {
   attachments?: ('image' | 'video' | 'audio')[];
   ecoImpactScore?: number; // 0-100, where 100 is high positive impact
   ecoImpactReasoning?: string;
+  riskScore?: number;
 }
 
 export interface ChartData {

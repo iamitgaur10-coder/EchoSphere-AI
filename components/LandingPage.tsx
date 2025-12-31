@@ -158,8 +158,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
                                 <div className="w-4 h-4 bg-orange-500 rounded-full border-2 border-white relative z-10 shadow-[0_0_15px_rgba(249,115,22,1)]"></div>
                                 <div className="absolute left-8 top-0 bg-zinc-950/90 text-[10px] font-mono p-3 rounded-sm border-l-2 border-orange-500 whitespace-nowrap text-orange-100 shadow-xl backdrop-blur-md">
                                     <span className="text-zinc-500 block mb-1">INCIDENT #9021</span>
-                                    > ALERT: Pothole Detected <br/>
-                                    > RISK: <span className="text-red-400">CRITICAL</span>
+                                    &gt; ALERT: Pothole Detected <br/>
+                                    &gt; RISK: <span className="text-red-400">CRITICAL</span>
                                 </div>
                             </div>
                         </div>

@@ -82,7 +82,8 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
       authorName: authorName.trim() || 'Anonymous Citizen',
       attachments: attachments as any,
       ecoImpactScore: analysis.ecoImpactScore,
-      ecoImpactReasoning: analysis.ecoImpactReasoning
+      ecoImpactReasoning: analysis.ecoImpactReasoning,
+      riskScore: analysis.riskScore
     };
 
     onSubmit(newFeedback);
