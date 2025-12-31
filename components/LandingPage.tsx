@@ -61,16 +61,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-200 font-sans overflow-x-hidden selection:bg-orange-500 selection:text-white transition-colors duration-300">
       
       {/* --- Floating Nav --- */}
-      <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[90%] md:w-auto">
-        <div className="bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md border border-zinc-200 dark:border-zinc-800 rounded-full px-4 py-3 md:px-6 md:py-3 flex items-center justify-between md:space-x-6 shadow-2xl transition-all hover:bg-white dark:hover:bg-zinc-900">
+      <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-5xl md:w-auto">
+        <div className="bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md border border-zinc-200 dark:border-zinc-800 rounded-full px-4 py-2 md:px-6 md:py-2.5 flex items-center justify-between md:space-x-6 shadow-xl transition-all hover:bg-white dark:hover:bg-zinc-900">
             <div className="flex items-center space-x-2 cursor-pointer" onClick={() => setShowOrgList(!showOrgList)}>
                 <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                <span className="font-display font-bold text-zinc-900 dark:text-white tracking-tight text-sm md:text-base">EchoSphere</span>
+                <span className="font-display font-bold text-zinc-900 dark:text-white tracking-tight text-sm">EchoSphere</span>
             </div>
-            <div className="hidden md:block h-4 w-[1px] bg-zinc-300 dark:bg-zinc-700"></div>
-            <div className="flex items-center space-x-4 text-xs font-medium">
+            <div className="hidden md:block h-3 w-[1px] bg-zinc-300 dark:bg-zinc-700"></div>
+            <div className="flex items-center space-x-3 md:space-x-4 text-xs font-medium">
                 {account ? (
-                    <button onClick={onEnterPublic} className="text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white transition-colors truncate max-w-[100px] md:max-w-none font-bold">
+                    <button onClick={onEnterPublic} className="text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white transition-colors truncate max-w-[80px] md:max-w-none font-bold">
                         {account.organizationName}
                     </button>
                 ) : (
@@ -85,35 +85,35 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
                 {availableOrgs.length > 0 && (
                      <div className="relative group">
                         <button onClick={() => setShowOrgList(!showOrgList)} className="flex items-center space-x-1 text-orange-600 hover:text-orange-500 transition-colors">
-                            <Globe2 size={14} />
+                            <Globe2 size={12} />
                             <span className="hidden sm:inline">Explore</span>
                         </button>
                         
                         {/* Dropdown for Communities */}
                         {showOrgList && (
-                             <div className="absolute top-full right-0 mt-4 w-64 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-2xl overflow-hidden py-2 animate-fade-in-up">
+                             <div className="absolute top-full right-0 mt-3 w-60 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-2xl overflow-hidden py-1 animate-fade-in-up">
                                  <div className="px-4 py-2 text-[10px] font-bold uppercase text-zinc-500 tracking-wider border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950">
                                      Active Communities
                                  </div>
-                                 <div className="max-h-60 overflow-y-auto">
+                                 <div className="max-h-56 overflow-y-auto">
                                      {availableOrgs.map(org => (
                                          <button 
                                             key={org.id}
                                             onClick={() => handleSwitchOrg(org.slug)}
-                                            className="w-full text-left px-4 py-3 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors flex items-center justify-between group"
+                                            className="w-full text-left px-4 py-2.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors flex items-center justify-between group"
                                          >
                                              <div>
-                                                 <div className="text-sm font-bold text-zinc-800 dark:text-zinc-200 group-hover:text-orange-600">{org.name}</div>
-                                                 <div className="text-[10px] text-zinc-500">{org.focusArea || 'General'}</div>
+                                                 <div className="text-xs font-bold text-zinc-800 dark:text-zinc-200 group-hover:text-orange-600">{org.name}</div>
+                                                 <div className="text-[9px] text-zinc-500">{org.focusArea || 'General'}</div>
                                              </div>
-                                             <ArrowRight size={12} className="opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all text-orange-500" />
+                                             <ArrowRight size={10} className="opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all text-orange-500" />
                                          </button>
                                      ))}
                                  </div>
-                                 <div className="border-t border-zinc-200 dark:border-zinc-800 p-2">
+                                 <div className="border-t border-zinc-200 dark:border-zinc-800 p-1.5">
                                      <button 
                                         onClick={onEnterWizard}
-                                        className="w-full py-2 text-xs font-bold text-center bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded text-zinc-600 dark:text-zinc-400"
+                                        className="w-full py-1.5 text-[10px] font-bold text-center bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded text-zinc-600 dark:text-zinc-400"
                                      >
                                          + Create New
                                      </button>
@@ -127,7 +127,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
       </nav>
 
       {/* --- Section 1: Hero --- */}
-      <section className="relative min-h-screen flex flex-col justify-center pt-24 px-6 lg:px-12 border-b border-zinc-200 dark:border-zinc-900 overflow-hidden">
+      <section className="relative pt-24 pb-12 lg:py-0 lg:min-h-screen flex flex-col justify-center px-4 sm:px-6 lg:px-12 border-b border-zinc-200 dark:border-zinc-900 overflow-hidden">
         
         {/* Background Texture */}
         <div className="absolute inset-0 z-0 pointer-events-none grayscale">
@@ -142,35 +142,35 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
         <div className="absolute inset-0 z-0 bg-gradient-to-t from-zinc-50 dark:from-zinc-950 via-zinc-50/80 dark:via-zinc-950/80 to-transparent"></div>
         <div className="absolute inset-0 z-0 bg-gradient-to-r from-zinc-50 dark:from-zinc-950 via-zinc-50/80 dark:via-zinc-950/80 to-transparent"></div>
 
-        <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-12 gap-8 items-center relative z-10 pb-20">
+        <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-12 gap-8 lg:gap-12 items-center relative z-10 lg:pb-16">
             
             {/* Left: Typography */}
-            <div className="lg:col-span-5 space-y-8">
-                <div className="inline-flex items-center space-x-2 border border-orange-500/30 bg-orange-500/10 px-3 py-1 rounded text-orange-600 dark:text-orange-400 text-xs font-medium tracking-wide">
-                    <Activity size={12} />
+            <div className="lg:col-span-5 space-y-6 text-center lg:text-left">
+                <div className="inline-flex items-center space-x-2 border border-orange-500/30 bg-orange-500/10 px-2.5 py-0.5 rounded text-orange-600 dark:text-orange-400 text-[10px] font-medium tracking-wide">
+                    <Activity size={10} />
                     <span>System Online</span>
                 </div>
                 
-                <h1 className="font-display text-5xl lg:text-7xl font-bold tracking-tight text-zinc-900 dark:text-white leading-none">
+                <h1 className="font-display text-4xl sm:text-5xl lg:text-7xl font-bold tracking-tight text-zinc-900 dark:text-white leading-[1.1]">
                     Better Cities, <br/>
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500">Together.</span>
                 </h1>
                 
-                <p className="text-zinc-600 dark:text-zinc-400 max-w-lg text-lg leading-relaxed border-l-2 border-zinc-300 dark:border-zinc-800 pl-6">
+                <p className="text-zinc-600 dark:text-zinc-400 text-base sm:text-lg leading-relaxed max-w-lg mx-auto lg:mx-0 lg:border-l-2 lg:border-zinc-300 lg:dark:border-zinc-800 lg:pl-6">
                     A platform for communities to share feedback, report issues, and improve their neighborhoods using AI-powered insights.
                 </p>
 
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pt-4">
+                <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 pt-2">
                     <button 
                         onClick={onEnterPublic}
-                        className="group relative px-8 py-4 bg-zinc-900 dark:bg-white text-white dark:text-black font-bold text-sm tracking-wide transition-all hover:bg-zinc-700 dark:hover:bg-zinc-200 w-full sm:w-auto text-center rounded-lg shadow-lg"
+                        className="group relative px-6 py-3 bg-zinc-900 dark:bg-white text-white dark:text-black font-bold text-sm tracking-wide transition-all hover:bg-zinc-700 dark:hover:bg-zinc-200 w-full sm:w-auto text-center rounded-lg shadow-lg"
                     >
                         View Public Map
                     </button>
                     
                     <button 
                         onClick={onEnterWizard}
-                        className="px-8 py-4 border border-zinc-300 dark:border-zinc-700 bg-white/50 dark:bg-black/20 backdrop-blur-sm text-zinc-700 dark:text-zinc-300 font-medium text-sm tracking-wide hover:border-zinc-500 hover:text-black dark:hover:text-white transition-colors w-full sm:w-auto text-center rounded-lg"
+                        className="px-6 py-3 border border-zinc-300 dark:border-zinc-700 bg-white/50 dark:bg-black/20 backdrop-blur-sm text-zinc-700 dark:text-zinc-300 font-medium text-sm tracking-wide hover:border-zinc-500 hover:text-black dark:hover:text-white transition-colors w-full sm:w-auto text-center rounded-lg"
                     >
                         Create Organization
                     </button>
@@ -178,23 +178,23 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
                 
                 {/* Org Quick Links */}
                 {availableOrgs.length > 0 && (
-                    <div className="pt-4">
-                        <p className="text-xs font-bold uppercase text-zinc-500 mb-3 tracking-wider">Active Communities</p>
-                        <div className="flex flex-wrap gap-2">
+                    <div className="pt-2 hidden sm:block">
+                        <p className="text-[10px] font-bold uppercase text-zinc-500 mb-2 tracking-wider">Active Communities</p>
+                        <div className="flex flex-wrap justify-center lg:justify-start gap-2">
                             {availableOrgs.slice(0, 3).map(org => (
                                 <button 
                                     key={org.id} 
                                     onClick={() => handleSwitchOrg(org.slug)}
-                                    className="flex items-center space-x-2 px-3 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full text-xs hover:border-orange-500 hover:text-orange-600 transition-all shadow-sm"
+                                    className="flex items-center space-x-1.5 px-2.5 py-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full text-[10px] hover:border-orange-500 hover:text-orange-600 transition-all shadow-sm"
                                 >
-                                    <Building2 size={12} />
+                                    <Building2 size={10} />
                                     <span>{org.name}</span>
                                 </button>
                             ))}
                             {availableOrgs.length > 3 && (
                                 <button 
                                     onClick={() => setShowOrgList(true)}
-                                    className="px-3 py-1.5 text-xs text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
+                                    className="px-2 py-1 text-[10px] text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
                                 >
                                     +{availableOrgs.length - 3} more
                                 </button>
@@ -205,17 +205,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
             </div>
 
             {/* Right: 3D Interface Simulation */}
-            <div className="lg:col-span-7 relative h-[500px] xl:h-[550px] hidden lg:block perspective-1000 -mr-20">
+            <div className="lg:col-span-7 relative h-[400px] lg:h-[500px] xl:h-[550px] hidden lg:block perspective-1000 -mr-16">
                 {/* The Tilted Plane */}
                 <div className="absolute inset-0 bg-white dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl transform rotate-y-12 rotate-x-6 hover:rotate-y-0 hover:rotate-x-0 transition-transform duration-1000 overflow-hidden group">
                     
                     {/* Fake Header */}
-                    <div className="h-10 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 flex items-center px-4 space-x-2 relative z-20">
-                        <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                        <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                        <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                        <div className="flex-1 text-center font-mono text-xs text-zinc-400 dark:text-zinc-600">Live Map View (LA)</div>
-                        <MousePointerClick size={14} className="text-zinc-400" />
+                    <div className="h-8 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 flex items-center px-4 space-x-2 relative z-20">
+                        <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
+                        <div className="w-2.5 h-2.5 rounded-full bg-yellow-500"></div>
+                        <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
+                        <div className="flex-1 text-center font-mono text-[10px] text-zinc-400 dark:text-zinc-600">Live Map View (LA)</div>
+                        <MousePointerClick size={12} className="text-zinc-400" />
                     </div>
 
                     {/* Map Content */}
@@ -246,11 +246,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
                         {/* Floating UI Elements inside 3D */}
                         <div className="absolute bottom-6 left-6 right-6 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-lg border border-zinc-200 dark:border-zinc-800 p-4 rounded-lg text-sm text-zinc-600 dark:text-zinc-400 shadow-xl z-30 pointer-events-none">
                             <div className="flex justify-between mb-2">
-                                <span className="text-zinc-900 dark:text-white font-medium">AI Analysis</span>
-                                <span className="text-green-600 font-bold text-xs flex items-center gap-1"><span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> ACTIVE</span>
+                                <span className="text-zinc-900 dark:text-white font-medium text-xs">AI Analysis</span>
+                                <span className="text-green-600 font-bold text-[10px] flex items-center gap-1"><span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> ACTIVE</span>
                             </div>
                             <div className="space-y-2">
-                                <div className="h-1.5 w-full bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+                                <div className="h-1 w-full bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
                                     <div className="h-full bg-gradient-to-r from-orange-500 to-amber-500 w-3/4 animate-pulse"></div>
                                 </div>
                             </div>
@@ -262,43 +262,43 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
 
         {/* --- Global Metrics Strip --- */}
         <div className="absolute bottom-12 left-0 right-0 z-20 border-t border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md hidden lg:flex divide-x divide-zinc-200 dark:divide-zinc-800">
-             <div className="flex-1 p-4 flex items-center justify-center space-x-3">
-                <Globe2 className="text-zinc-400 dark:text-zinc-600" size={20} />
+             <div className="flex-1 p-3 flex items-center justify-center space-x-3">
+                <Globe2 className="text-zinc-400 dark:text-zinc-600" size={18} />
                 <div>
-                    <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Communities</div>
-                    <div className="text-lg font-display font-bold text-zinc-900 dark:text-white">
+                    <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Communities</div>
+                    <div className="text-base font-display font-bold text-zinc-900 dark:text-white">
                         {availableOrgs.length > 124 ? availableOrgs.length : '124+'}
                     </div>
                 </div>
              </div>
-             <div className="flex-1 p-4 flex items-center justify-center space-x-3">
-                <Database className="text-zinc-400 dark:text-zinc-600" size={20} />
+             <div className="flex-1 p-3 flex items-center justify-center space-x-3">
+                <Database className="text-zinc-400 dark:text-zinc-600" size={18} />
                 <div>
-                    <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Reports Filed</div>
-                    <div className="text-lg font-display font-bold text-zinc-900 dark:text-white">8.2M+</div>
+                    <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Reports Filed</div>
+                    <div className="text-base font-display font-bold text-zinc-900 dark:text-white">8.2M+</div>
                 </div>
              </div>
-             <div className="flex-1 p-4 flex items-center justify-center space-x-3">
-                <Network className="text-zinc-400 dark:text-zinc-600" size={20} />
+             <div className="flex-1 p-3 flex items-center justify-center space-x-3">
+                <Network className="text-zinc-400 dark:text-zinc-600" size={18} />
                 <div>
-                    <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Issues Resolved</div>
-                    <div className="text-lg font-display font-bold text-zinc-900 dark:text-white">94.8%</div>
+                    <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Issues Resolved</div>
+                    <div className="text-base font-display font-bold text-zinc-900 dark:text-white">94.8%</div>
                 </div>
              </div>
-             <div className="flex-1 p-4 flex items-center justify-center space-x-3">
-                <Cpu className="text-zinc-400 dark:text-zinc-600" size={20} />
+             <div className="flex-1 p-3 flex items-center justify-center space-x-3">
+                <Cpu className="text-zinc-400 dark:text-zinc-600" size={18} />
                 <div>
-                    <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Avg. Response</div>
-                    <div className="text-lg font-display font-bold text-green-600 dark:text-green-500">24h</div>
+                    <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Avg. Response</div>
+                    <div className="text-base font-display font-bold text-green-600 dark:text-green-500">24h</div>
                 </div>
              </div>
         </div>
 
         {/* --- Infinite Data Marquee --- */}
-        <div className="absolute bottom-0 left-0 right-0 h-12 bg-white dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800 flex items-center overflow-hidden z-20">
+        <div className="absolute bottom-0 left-0 right-0 h-10 bg-white dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800 flex items-center overflow-hidden z-20">
             <div className="flex items-center space-x-12 animate-marquee whitespace-nowrap">
                 {dataStream.map((item, i) => (
-                    <div key={i} className="flex items-center space-x-3 font-mono text-[10px] text-zinc-500 opacity-60">
+                    <div key={i} className="flex items-center space-x-3 font-mono text-[9px] text-zinc-500 opacity-60">
                         <span className="text-zinc-700 dark:text-zinc-500">ID: {item.id}</span>
                         <span>LAT: {item.lat}</span>
                         <span>LNG: {item.lng}</span>
@@ -310,24 +310,24 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
       </section>
 
       {/* --- Section 2: How It Works --- */}
-      <section className="py-24 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-900">
-        <div className="max-w-6xl mx-auto px-6">
+      <section className="py-12 md:py-16 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-900">
+        <div className="max-w-6xl mx-auto px-4 md:px-6">
             
-            <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 md:mb-12 gap-6">
                 <div>
                     <div className="inline-flex items-center space-x-2 text-orange-600 mb-2">
-                        <Scan size={16} />
-                        <span className="text-xs font-bold uppercase tracking-widest">Guide</span>
+                        <Scan size={14} />
+                        <span className="text-[10px] font-bold uppercase tracking-widest">Guide</span>
                     </div>
-                    <h2 className="font-display text-3xl font-bold text-zinc-900 dark:text-white">How It Works</h2>
-                    <p className="text-zinc-500 mt-2">See how EchoSphere helps both residents and city managers.</p>
+                    <h2 className="font-display text-2xl md:text-3xl font-bold text-zinc-900 dark:text-white">How It Works</h2>
+                    <p className="text-sm text-zinc-500 mt-2">See how EchoSphere helps both residents and city managers.</p>
                 </div>
 
                 {/* Role Switcher */}
-                <div className="bg-zinc-100 dark:bg-zinc-900 p-1.5 rounded-lg inline-flex border border-zinc-200 dark:border-zinc-800">
+                <div className="bg-zinc-100 dark:bg-zinc-900 p-1 rounded-lg inline-flex border border-zinc-200 dark:border-zinc-800 self-start md:self-auto">
                     <button 
                         onClick={() => setTutorialMode('citizen')}
-                        className={`px-4 py-2 rounded-md text-xs font-bold uppercase transition-all ${
+                        className={`px-3 py-1.5 rounded-md text-[10px] md:text-xs font-bold uppercase transition-all ${
                             tutorialMode === 'citizen' 
                             ? 'bg-white dark:bg-zinc-800 text-black dark:text-white shadow-sm' 
                             : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'
@@ -337,7 +337,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
                     </button>
                     <button 
                         onClick={() => setTutorialMode('admin')}
-                        className={`px-4 py-2 rounded-md text-xs font-bold uppercase transition-all ${
+                        className={`px-3 py-1.5 rounded-md text-[10px] md:text-xs font-bold uppercase transition-all ${
                             tutorialMode === 'admin' 
                             ? 'bg-white dark:bg-zinc-800 text-black dark:text-white shadow-sm' 
                             : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'
@@ -348,73 +348,73 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
                 </div>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {tutorialMode === 'citizen' ? (
                     <>
-                        <div className="group p-8 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 hover:border-orange-500/50 transition-all">
-                            <div className="w-12 h-12 bg-white dark:bg-zinc-800 rounded-xl flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform duration-500">
-                                <MapPin size={24} className="text-zinc-900 dark:text-white" />
+                        <div className="group p-6 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 hover:border-orange-500/50 transition-all">
+                            <div className="w-10 h-10 bg-white dark:bg-zinc-800 rounded-lg flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform duration-500">
+                                <MapPin size={20} className="text-zinc-900 dark:text-white" />
                             </div>
-                            <div className="text-xs font-bold text-orange-600 mb-2 uppercase">Step 1</div>
-                            <h3 className="font-display text-xl font-bold text-zinc-900 dark:text-white mb-3">Drop a Pin</h3>
-                            <p className="text-sm text-zinc-500 leading-relaxed">
+                            <div className="text-[10px] font-bold text-orange-600 mb-1.5 uppercase">Step 1</div>
+                            <h3 className="font-display text-lg font-bold text-zinc-900 dark:text-white mb-2">Drop a Pin</h3>
+                            <p className="text-xs text-zinc-500 leading-relaxed">
                                 Open the <span className="text-zinc-900 dark:text-zinc-300 font-bold">Public Map</span> and click on the location where you want to leave feedback or report an issue.
                             </p>
                         </div>
 
-                        <div className="group p-8 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 hover:border-orange-500/50 transition-all">
-                            <div className="w-12 h-12 bg-white dark:bg-zinc-800 rounded-xl flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform duration-500">
-                                <Mic size={24} className="text-zinc-900 dark:text-white" />
+                        <div className="group p-6 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 hover:border-orange-500/50 transition-all">
+                            <div className="w-10 h-10 bg-white dark:bg-zinc-800 rounded-lg flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform duration-500">
+                                <Mic size={20} className="text-zinc-900 dark:text-white" />
                             </div>
-                            <div className="text-xs font-bold text-orange-600 mb-2 uppercase">Step 2</div>
-                            <h3 className="font-display text-xl font-bold text-zinc-900 dark:text-white mb-3">Describe It</h3>
-                            <p className="text-sm text-zinc-500 leading-relaxed">
+                            <div className="text-[10px] font-bold text-orange-600 mb-1.5 uppercase">Step 2</div>
+                            <h3 className="font-display text-lg font-bold text-zinc-900 dark:text-white mb-2">Describe It</h3>
+                            <p className="text-xs text-zinc-500 leading-relaxed">
                                 Type your message, use <span className="text-zinc-900 dark:text-zinc-300 font-bold">Voice Input</span>, or upload a photo. You can describe what you see in your own words.
                             </p>
                         </div>
 
-                        <div className="group p-8 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 hover:border-orange-500/50 transition-all">
-                            <div className="w-12 h-12 bg-white dark:bg-zinc-800 rounded-xl flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform duration-500">
-                                <Cpu size={24} className="text-zinc-900 dark:text-white" />
+                        <div className="group p-6 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 hover:border-orange-500/50 transition-all">
+                            <div className="w-10 h-10 bg-white dark:bg-zinc-800 rounded-lg flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform duration-500">
+                                <Cpu size={20} className="text-zinc-900 dark:text-white" />
                             </div>
-                            <div className="text-xs font-bold text-orange-600 mb-2 uppercase">Step 3</div>
-                            <h3 className="font-display text-xl font-bold text-zinc-900 dark:text-white mb-3">Instant Analysis</h3>
-                            <p className="text-sm text-zinc-500 leading-relaxed">
+                            <div className="text-[10px] font-bold text-orange-600 mb-1.5 uppercase">Step 3</div>
+                            <h3 className="font-display text-lg font-bold text-zinc-900 dark:text-white mb-2">Instant Analysis</h3>
+                            <p className="text-xs text-zinc-500 leading-relaxed">
                                 Our AI instantly reads your feedback, checks the priority, and makes sure it gets to the right department.
                             </p>
                         </div>
                     </>
                 ) : (
                     <>
-                        <div className="group p-8 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 hover:border-blue-500/50 transition-all">
-                            <div className="w-12 h-12 bg-white dark:bg-zinc-800 rounded-xl flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform duration-500">
-                                <PenTool size={24} className="text-zinc-900 dark:text-white" />
+                        <div className="group p-6 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 hover:border-blue-500/50 transition-all">
+                            <div className="w-10 h-10 bg-white dark:bg-zinc-800 rounded-lg flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform duration-500">
+                                <PenTool size={20} className="text-zinc-900 dark:text-white" />
                             </div>
-                            <div className="text-xs font-bold text-blue-500 mb-2 uppercase">Phase 1</div>
-                            <h3 className="font-display text-xl font-bold text-zinc-900 dark:text-white mb-3">Create Workspace</h3>
-                            <p className="text-sm text-zinc-500 leading-relaxed">
+                            <div className="text-[10px] font-bold text-blue-500 mb-1.5 uppercase">Phase 1</div>
+                            <h3 className="font-display text-lg font-bold text-zinc-900 dark:text-white mb-2">Create Workspace</h3>
+                            <p className="text-xs text-zinc-500 leading-relaxed">
                                 Use the <span className="text-zinc-900 dark:text-zinc-300 font-bold">Setup Wizard</span> to name your organization and select the area you want to manage.
                             </p>
                         </div>
 
-                        <div className="group p-8 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 hover:border-blue-500/50 transition-all">
-                            <div className="w-12 h-12 bg-white dark:bg-zinc-800 rounded-xl flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform duration-500">
-                                <LayoutDashboard size={24} className="text-zinc-900 dark:text-white" />
+                        <div className="group p-6 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 hover:border-blue-500/50 transition-all">
+                            <div className="w-10 h-10 bg-white dark:bg-zinc-800 rounded-lg flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform duration-500">
+                                <LayoutDashboard size={20} className="text-zinc-900 dark:text-white" />
                             </div>
-                            <div className="text-xs font-bold text-blue-500 mb-2 uppercase">Phase 2</div>
-                            <h3 className="font-display text-xl font-bold text-zinc-900 dark:text-white mb-3">Launch & Monitor</h3>
-                            <p className="text-sm text-zinc-500 leading-relaxed">
+                            <div className="text-[10px] font-bold text-blue-500 mb-1.5 uppercase">Phase 2</div>
+                            <h3 className="font-display text-lg font-bold text-zinc-900 dark:text-white mb-2">Launch & Monitor</h3>
+                            <p className="text-xs text-zinc-500 leading-relaxed">
                                 Publish your public map. Use the <span className="text-zinc-900 dark:text-zinc-300 font-bold">Dashboard</span> to see real-time feedback and issues as they arrive.
                             </p>
                         </div>
 
-                        <div className="group p-8 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 hover:border-blue-500/50 transition-all">
-                            <div className="w-12 h-12 bg-white dark:bg-zinc-800 rounded-xl flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform duration-500">
-                                <BarChart3 size={24} className="text-zinc-900 dark:text-white" />
+                        <div className="group p-6 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 hover:border-blue-500/50 transition-all">
+                            <div className="w-10 h-10 bg-white dark:bg-zinc-800 rounded-lg flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform duration-500">
+                                <BarChart3 size={20} className="text-zinc-900 dark:text-white" />
                             </div>
-                            <div className="text-xs font-bold text-blue-500 mb-2 uppercase">Phase 3</div>
-                            <h3 className="font-display text-xl font-bold text-zinc-900 dark:text-white mb-3">Get Insights</h3>
-                            <p className="text-sm text-zinc-500 leading-relaxed">
+                            <div className="text-[10px] font-bold text-blue-500 mb-1.5 uppercase">Phase 3</div>
+                            <h3 className="font-display text-lg font-bold text-zinc-900 dark:text-white mb-2">Get Insights</h3>
+                            <p className="text-xs text-zinc-500 leading-relaxed">
                                 Generate <span className="text-zinc-900 dark:text-zinc-300 font-bold">Reports</span> with one click. AI helps you spot trends, risks, and ways to improve sustainability.
                             </p>
                         </div>
@@ -422,13 +422,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
                 )}
             </div>
             
-            <div className="mt-12 text-center">
+            <div className="mt-8 text-center">
                  {tutorialMode === 'citizen' ? (
-                     <button onClick={onEnterPublic} className="text-sm font-bold border-b border-orange-500 text-zinc-900 dark:text-white pb-0.5 hover:text-orange-500 transition-colors">
+                     <button onClick={onEnterPublic} className="text-xs font-bold border-b border-orange-500 text-zinc-900 dark:text-white pb-0.5 hover:text-orange-500 transition-colors">
                         Go to Public Map &rarr;
                      </button>
                  ) : (
-                     <button onClick={onEnterWizard} className="text-sm font-bold border-b border-blue-500 text-zinc-900 dark:text-white pb-0.5 hover:text-blue-500 transition-colors">
+                     <button onClick={onEnterWizard} className="text-xs font-bold border-b border-blue-500 text-zinc-900 dark:text-white pb-0.5 hover:text-blue-500 transition-colors">
                         Start Setup &rarr;
                      </button>
                  )}
@@ -438,47 +438,47 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
       </section>
 
       {/* --- Section 3: Technology --- */}
-      <section className="py-24 bg-zinc-100 dark:bg-black border-b border-zinc-200 dark:border-zinc-900 relative">
-        <div className="max-w-6xl mx-auto px-6">
-            <div className="mb-16">
-                <h2 className="font-display text-3xl font-bold text-zinc-900 dark:text-white">Our Technology</h2>
-                <p className="text-zinc-500 mt-2">Turning messy data into clear action plans.</p>
+      <section className="py-12 md:py-16 bg-zinc-100 dark:bg-black border-b border-zinc-200 dark:border-zinc-900 relative">
+        <div className="max-w-6xl mx-auto px-4 md:px-6">
+            <div className="mb-8 md:mb-12">
+                <h2 className="font-display text-2xl md:text-3xl font-bold text-zinc-900 dark:text-white">Our Technology</h2>
+                <p className="text-sm text-zinc-500 mt-2">Turning messy data into clear action plans.</p>
             </div>
             
-            <div className="grid md:grid-cols-3 gap-8 relative">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
                 {/* Connecting Line */}
-                <div className="hidden md:block absolute top-12 left-0 w-full h-[2px] bg-gradient-to-r from-zinc-300 dark:from-zinc-800 via-orange-500/50 to-zinc-300 dark:to-zinc-800 -z-10"></div>
+                <div className="hidden md:block absolute top-10 left-0 w-full h-[2px] bg-gradient-to-r from-zinc-300 dark:from-zinc-800 via-orange-500/50 to-zinc-300 dark:to-zinc-800 -z-10"></div>
 
                 {/* Node 1 */}
-                <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 p-8 rounded-2xl relative group hover:border-zinc-400 dark:hover:border-zinc-700 transition-colors shadow-sm">
-                    <div className="w-12 h-12 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl flex items-center justify-center mb-6 z-10 relative group-hover:bg-zinc-100 dark:group-hover:bg-zinc-800">
-                        <Share2 size={24} className="text-blue-500 dark:text-blue-400" />
+                <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 p-6 rounded-2xl relative group hover:border-zinc-400 dark:hover:border-zinc-700 transition-colors shadow-sm">
+                    <div className="w-10 h-10 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg flex items-center justify-center mb-4 z-10 relative group-hover:bg-zinc-100 dark:group-hover:bg-zinc-800">
+                        <Share2 size={20} className="text-blue-500 dark:text-blue-400" />
                     </div>
                     <h3 className="font-display text-lg font-bold text-zinc-900 dark:text-white mb-2">Easy Collection</h3>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-500 leading-relaxed">
+                    <p className="text-xs text-zinc-600 dark:text-zinc-500 leading-relaxed">
                         Gather feedback from mobile apps, social media, and web forms all in one place.
                     </p>
                 </div>
 
                 {/* Node 2 (Center) */}
-                <div className="bg-white dark:bg-zinc-950 border border-orange-500/30 p-8 rounded-2xl relative shadow-[0_0_30px_rgba(249,115,22,0.1)]">
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-orange-500 text-black text-[10px] font-bold uppercase tracking-wider rounded-full">AI Powered</div>
-                    <div className="w-12 h-12 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-500/50 rounded-xl flex items-center justify-center mb-6 z-10 relative">
-                        <Cpu size={24} className="text-orange-500" />
+                <div className="bg-white dark:bg-zinc-950 border border-orange-500/30 p-6 rounded-2xl relative shadow-[0_0_30px_rgba(249,115,22,0.1)]">
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-orange-500 text-black text-[9px] font-bold uppercase tracking-wider rounded-full">AI Powered</div>
+                    <div className="w-10 h-10 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-500/50 rounded-lg flex items-center justify-center mb-4 z-10 relative">
+                        <Cpu size={20} className="text-orange-500" />
                     </div>
                     <h3 className="font-display text-lg font-bold text-zinc-900 dark:text-white mb-2">Smart Analysis</h3>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
                         Google Gemini AI reads every report to understand the problem, sentiment, and urgency instantly.
                     </p>
                 </div>
 
                 {/* Node 3 */}
-                <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 p-8 rounded-2xl relative group hover:border-zinc-400 dark:hover:border-zinc-700 transition-colors shadow-sm">
-                    <div className="w-12 h-12 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl flex items-center justify-center mb-6 z-10 relative group-hover:bg-zinc-100 dark:group-hover:bg-zinc-800">
-                        <Zap size={24} className="text-green-500 dark:text-green-400" />
+                <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 p-6 rounded-2xl relative group hover:border-zinc-400 dark:hover:border-zinc-700 transition-colors shadow-sm">
+                    <div className="w-10 h-10 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg flex items-center justify-center mb-4 z-10 relative group-hover:bg-zinc-100 dark:group-hover:bg-zinc-800">
+                        <Zap size={20} className="text-green-500 dark:text-green-400" />
                     </div>
                     <h3 className="font-display text-lg font-bold text-zinc-900 dark:text-white mb-2">Fast Action</h3>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-500 leading-relaxed">
+                    <p className="text-xs text-zinc-600 dark:text-zinc-500 leading-relaxed">
                         Automated alerts and reports help city teams respond faster and prioritize what matters most.
                     </p>
                 </div>
@@ -487,12 +487,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
       </section>
 
       {/* --- Section 6: Use Cases --- */}
-      <section className="py-24 px-6 bg-zinc-50 dark:bg-black border-t border-zinc-200 dark:border-zinc-900">
+      <section className="py-12 md:py-16 px-4 md:px-6 bg-zinc-50 dark:bg-black border-t border-zinc-200 dark:border-zinc-900">
         <div className="max-w-6xl mx-auto">
-             <div className="flex flex-col md:flex-row justify-between items-end mb-12">
+             <div className="flex flex-col md:flex-row justify-between items-end mb-8 md:mb-12">
                 <div>
-                    <h2 className="font-display text-3xl font-bold text-zinc-900 dark:text-white">Use Cases</h2>
-                    <p className="text-zinc-500 mt-2">Works for any community need.</p>
+                    <h2 className="font-display text-2xl md:text-3xl font-bold text-zinc-900 dark:text-white">Use Cases</h2>
+                    <p className="text-sm text-zinc-500 mt-2">Works for any community need.</p>
                 </div>
                 <div className="hidden md:flex space-x-2">
                     <div className="w-12 h-1 bg-orange-500"></div>
@@ -500,17 +500,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
                 </div>
              </div>
 
-             <div className="grid md:grid-cols-4 gap-6">
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                  {[
-                    { icon: <Siren size={24} />, title: "Public Safety", desc: "Report hazards, light outages, and safety concerns." },
-                    { icon: <Truck size={24} />, title: "Sanitation", desc: "Track trash pickup, illegal dumping, and street cleaning." },
-                    { icon: <Trees size={24} />, title: "Parks & Rec", desc: "Maintenance requests for parks, trails, and public spaces." },
-                    { icon: <Shield size={24} />, title: "Disaster Ops", desc: "Real-time logs for storms, floods, and emergencies." }
+                    { icon: <Siren size={20} />, title: "Public Safety", desc: "Report hazards, light outages, and safety concerns." },
+                    { icon: <Truck size={20} />, title: "Sanitation", desc: "Track trash pickup, illegal dumping, and street cleaning." },
+                    { icon: <Trees size={20} />, title: "Parks & Rec", desc: "Maintenance requests for parks, trails, and public spaces." },
+                    { icon: <Shield size={20} />, title: "Disaster Ops", desc: "Real-time logs for storms, floods, and emergencies." }
                  ].map((item, i) => (
-                     <div key={i} className="group border border-zinc-200 dark:border-zinc-800 p-6 rounded-xl hover:bg-white dark:hover:bg-zinc-900 transition-all cursor-default shadow-sm hover:shadow-md">
-                        <div className="mb-4 text-zinc-400 dark:text-zinc-400 group-hover:text-orange-500 dark:group-hover:text-white transition-colors">{item.icon}</div>
-                        <h4 className="font-bold text-zinc-900 dark:text-white mb-2">{item.title}</h4>
-                        <p className="text-sm text-zinc-500 leading-relaxed group-hover:text-zinc-600 dark:group-hover:text-zinc-400">{item.desc}</p>
+                     <div key={i} className="group border border-zinc-200 dark:border-zinc-800 p-5 rounded-xl hover:bg-white dark:hover:bg-zinc-900 transition-all cursor-default shadow-sm hover:shadow-md">
+                        <div className="mb-3 text-zinc-400 dark:text-zinc-400 group-hover:text-orange-500 dark:group-hover:text-white transition-colors">{item.icon}</div>
+                        <h4 className="font-bold text-zinc-900 dark:text-white mb-1.5">{item.title}</h4>
+                        <p className="text-xs text-zinc-500 leading-relaxed group-hover:text-zinc-600 dark:group-hover:text-zinc-400">{item.desc}</p>
                      </div>
                  ))}
              </div>
@@ -518,12 +518,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
       </section>
 
       {/* --- Footer --- */}
-      <footer className="py-12 px-6 border-t border-zinc-200 dark:border-zinc-900 text-center bg-zinc-100 dark:bg-zinc-950">
-        <div className="flex items-center justify-center space-x-2 mb-4 opacity-50 grayscale hover:grayscale-0 transition-all">
-            <div className="w-4 h-4 bg-orange-500 rounded-sm"></div>
-            <span className="font-display font-bold text-zinc-900 dark:text-white tracking-tight">EchoSphere</span>
+      <footer className="py-8 px-6 border-t border-zinc-200 dark:border-zinc-900 text-center bg-zinc-100 dark:bg-zinc-950">
+        <div className="flex items-center justify-center space-x-2 mb-3 opacity-50 grayscale hover:grayscale-0 transition-all">
+            <div className="w-3 h-3 bg-orange-500 rounded-sm"></div>
+            <span className="font-display font-bold text-sm text-zinc-900 dark:text-white tracking-tight">EchoSphere</span>
         </div>
-        <p className="text-xs text-zinc-500">
+        <p className="text-[10px] text-zinc-500">
             System Operational <br/>
             © 2024 EchoSphere AI
         </p>
