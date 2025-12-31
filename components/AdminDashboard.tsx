@@ -19,14 +19,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
   const [data, setData] = useState<Feedback[]>([]);
   const [reportText, setReportText] = useState<string | null>(null);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Load real data
+  const loadData = async () => {
+    setIsLoading(true);
+    const result = await dataService.getFeedback();
+    setData(result);
+    setIsLoading(false);
+  };
+
   useEffect(() => {
-    setData(dataService.getFeedback());
+    loadData();
   }, []);
 
   const refreshData = () => {
-    setData(dataService.getFeedback());
+    loadData();
   };
 
   // Aggregate data for charts
@@ -93,7 +101,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
           </div>
           <div className="flex items-center space-x-3 text-sm">
              <button onClick={refreshData} className="p-2 hover:bg-zinc-900 rounded text-zinc-500 hover:text-white transition-colors" title="Refresh Data">
-                <RefreshCw size={16} />
+                <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
              </button>
              <button 
                 onClick={handleDownloadCSV}
@@ -242,40 +250,46 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
               <h2 className="text-sm font-bold text-zinc-300 font-mono uppercase">Live Data Feed</h2>
               <button onClick={refreshData} className="text-orange-500 text-xs font-mono hover:text-orange-400">[REFRESH]</button>
             </div>
-            <div className="divide-y divide-zinc-800">
-              {data.slice(0, 10).map((item) => (
-                <div key={item.id} className="p-4 hover:bg-zinc-900 transition-colors flex items-start space-x-4">
-                  <div className={`mt-1 p-2 rounded flex-shrink-0 bg-black border border-zinc-800`}>
-                    {item.sentiment === 'positive' ? <ThumbsUp size={14} className="text-green-500" /> :
-                     item.sentiment === 'negative' ? <ThumbsDown size={14} className="text-red-500" /> :
-                     <Minus size={14} className="text-yellow-500" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                        <div className="flex space-x-2">
-                             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 uppercase tracking-wide border border-zinc-700">{item.category}</span>
-                             {item.imageUrl && (
-                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-900/30 text-blue-400 border border-blue-900 flex items-center" title="Has Image Evidence">
-                                    <ImageIcon size={8} className="mr-1" /> IMG
-                                </span>
-                             )}
-                             {item.ecoImpactScore && item.ecoImpactScore > 70 && (
-                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-green-900/30 text-green-500 border border-green-900 flex items-center">
-                                    <Leaf size={8} className="mr-1" /> ECO+
-                                </span>
-                             )}
-                        </div>
-                        <span className="text-[10px] font-mono text-zinc-600">{item.timestamp.toLocaleDateString()}</span>
-                    </div>
-                    <p className="text-zinc-300 text-sm mb-1">{item.content}</p>
-                    <div className="flex items-center space-x-2 text-[10px] text-zinc-500 font-mono">
-                        <span className="text-orange-500">AI_SUMMARY::</span>
-                        <span>{item.summary}</span>
-                    </div>
-                  </div>
+            {isLoading ? (
+                <div className="p-8 flex justify-center text-zinc-500">
+                    <Loader2 className="animate-spin" />
                 </div>
-              ))}
-            </div>
+            ) : (
+                <div className="divide-y divide-zinc-800">
+                {data.slice(0, 10).map((item) => (
+                    <div key={item.id} className="p-4 hover:bg-zinc-900 transition-colors flex items-start space-x-4">
+                    <div className={`mt-1 p-2 rounded flex-shrink-0 bg-black border border-zinc-800`}>
+                        {item.sentiment === 'positive' ? <ThumbsUp size={14} className="text-green-500" /> :
+                        item.sentiment === 'negative' ? <ThumbsDown size={14} className="text-red-500" /> :
+                        <Minus size={14} className="text-yellow-500" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                            <div className="flex space-x-2">
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 uppercase tracking-wide border border-zinc-700">{item.category}</span>
+                                {item.imageUrl && (
+                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-900/30 text-blue-400 border border-blue-900 flex items-center" title="Has Image Evidence">
+                                        <ImageIcon size={8} className="mr-1" /> IMG
+                                    </span>
+                                )}
+                                {item.ecoImpactScore && item.ecoImpactScore > 70 && (
+                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-green-900/30 text-green-500 border border-green-900 flex items-center">
+                                        <Leaf size={8} className="mr-1" /> ECO+
+                                    </span>
+                                )}
+                            </div>
+                            <span className="text-[10px] font-mono text-zinc-600">{item.timestamp.toLocaleDateString()}</span>
+                        </div>
+                        <p className="text-zinc-300 text-sm mb-1">{item.content}</p>
+                        <div className="flex items-center space-x-2 text-[10px] text-zinc-500 font-mono">
+                            <span className="text-orange-500">AI_SUMMARY::</span>
+                            <span>{item.summary}</span>
+                        </div>
+                    </div>
+                    </div>
+                ))}
+                </div>
+            )}
           </div>
 
         </div>

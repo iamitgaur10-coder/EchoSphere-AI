@@ -1,39 +1,77 @@
 import { Feedback, AccountSetup } from '../types';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
-// Key for LocalStorage
+// Key for LocalStorage Fallback
 const STORAGE_KEY_FEEDBACK = 'echosphere_feedback';
 const STORAGE_KEY_ACCOUNT = 'echosphere_account';
 
-// Initial Seed Data (using Standard Coords: x=Lng, y=Lat)
+// Initial Seed Data
 const SEED_FEEDBACK: Feedback[] = [
-  // NYC Coords: Lat 40.7128, Lng -74.0060
   { id: '1', location: { x: -74.0060, y: 40.7128 }, content: 'More trash cans needed.', sentiment: 'neutral', category: 'Sanitation', timestamp: new Date(), votes: 5, summary: "Need bins", ecoImpactScore: 60, ecoImpactReasoning: "Reduces litter.", riskScore: 30 },
   { id: '2', location: { x: -74.0075, y: 40.7135 }, content: 'Dangerous pothole.', sentiment: 'negative', category: 'Infrastructure', timestamp: new Date(), votes: 12, summary: "Pothole fix", ecoImpactScore: 10, ecoImpactReasoning: "Safety issue.", riskScore: 85 },
-  { id: '3', location: { x: -74.0050, y: 40.7115 }, content: 'Love the mural!', sentiment: 'positive', category: 'Culture', timestamp: new Date(), votes: 20, summary: "Nice mural", ecoImpactScore: 40, ecoImpactReasoning: "Cultural value.", riskScore: 5 },
 ];
 
 export const dataService = {
-  getFeedback: (): Feedback[] => {
+  getFeedback: async (): Promise<Feedback[]> => {
+    // 1. Try Supabase
+    if (isSupabaseConfigured()) {
+      const { data, error } = await supabase!
+        .from('feedback')
+        .select('*')
+        .order('timestamp', { ascending: false });
+      
+      if (!error && data) {
+        return data.map((item: any) => ({
+          ...item,
+          timestamp: new Date(item.timestamp),
+          location: typeof item.location === 'string' ? JSON.parse(item.location) : item.location
+        }));
+      }
+    }
+
+    // 2. Fallback to LocalStorage
     try {
       const stored = localStorage.getItem(STORAGE_KEY_FEEDBACK);
-      if (!stored) {
-        // Initialize with seed data if empty
-        return SEED_FEEDBACK;
-      }
-      // Need to convert date strings back to Date objects
+      if (!stored) return SEED_FEEDBACK;
       const parsed = JSON.parse(stored);
       return parsed.map((item: any) => ({
         ...item,
         timestamp: new Date(item.timestamp)
       }));
     } catch (e) {
-      console.error("DB Load Error", e);
       return [];
     }
   },
 
-  saveFeedback: (newFeedback: Feedback) => {
-    const current = dataService.getFeedback();
+  saveFeedback: async (newFeedback: Feedback): Promise<Feedback[]> => {
+    // 1. Try Supabase
+    if (isSupabaseConfigured()) {
+        const { error } = await supabase!.from('feedback').insert({
+            id: newFeedback.id,
+            location: newFeedback.location, // Supabase handles JSONB
+            content: newFeedback.content,
+            sentiment: newFeedback.sentiment,
+            category: newFeedback.category,
+            "imageUrl": newFeedback.imageUrl,
+            timestamp: newFeedback.timestamp.toISOString(),
+            // Store other AI fields if you add columns for them in Supabase
+        });
+        if (error) console.error("Supabase Save Error:", error);
+    }
+
+    // 2. Always update LocalStorage (for UI Optimistic Update + Fallback)
+    // In a real app, we would re-fetch from DB, but for speed we append locally
+    let current: Feedback[] = [];
+    try {
+        const stored = localStorage.getItem(STORAGE_KEY_FEEDBACK);
+        if (stored) {
+             const parsed = JSON.parse(stored);
+             current = parsed.map((item: any) => ({ ...item, timestamp: new Date(item.timestamp) }));
+        } else {
+            current = SEED_FEEDBACK;
+        }
+    } catch(e) {}
+    
     const updated = [newFeedback, ...current];
     localStorage.setItem(STORAGE_KEY_FEEDBACK, JSON.stringify(updated));
     return updated;
@@ -48,8 +86,6 @@ export const dataService = {
     localStorage.setItem(STORAGE_KEY_ACCOUNT, JSON.stringify(account));
   },
   
-  clearData: () => {
-    localStorage.removeItem(STORAGE_KEY_FEEDBACK);
-    localStorage.removeItem(STORAGE_KEY_ACCOUNT);
-  }
+  // New helper to check if we are in production mode
+  isProduction: () => isSupabaseConfigured()
 };

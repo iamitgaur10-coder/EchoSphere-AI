@@ -16,13 +16,17 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast }) => {
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [liveFeed, setLiveFeed] = useState<string[]>([]);
 
-  // Load data
+  // Load data async
   useEffect(() => {
-    setFeedbackList(dataService.getFeedback());
-    const storedAccount = dataService.getAccount();
-    if (storedAccount) {
-        setAccount(storedAccount);
-    }
+    const load = async () => {
+        const list = await dataService.getFeedback();
+        setFeedbackList(list);
+        const storedAccount = dataService.getAccount();
+        if (storedAccount) {
+            setAccount(storedAccount);
+        }
+    };
+    load();
 
     // Simulate Live Feed
     const actions = ["New pothole reported downtown", "Safety score updated", "Vote recorded on Main St", "Feedback analyzed by AI"];
@@ -39,8 +43,8 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast }) => {
     setSelectedLocation(loc);
   };
 
-  const handleFeedbackSubmit = (newFeedback: Feedback) => {
-    const updatedList = dataService.saveFeedback(newFeedback);
+  const handleFeedbackSubmit = async (newFeedback: Feedback) => {
+    const updatedList = await dataService.saveFeedback(newFeedback);
     setFeedbackList(updatedList);
     setSelectedLocation(null);
     if (showToast) showToast("DATA_LOGGED: ANALYSIS_COMPLETE");

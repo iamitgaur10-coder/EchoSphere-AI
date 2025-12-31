@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle, AlertCircle, Terminal } from 'lucide-react';
+import { X, CheckCircle, AlertCircle, Terminal, Cloud, Database, UserPlus, LogIn } from 'lucide-react';
 import PublicView from './components/PublicView';
 import AdminDashboard from './components/AdminDashboard';
 import Wizard from './components/Wizard';
 import LandingPage from './components/LandingPage';
 import { ViewState, AccountSetup } from './types';
 import { dataService } from './services/dataService';
+import { authService } from './services/authService';
 
 // -- Toast Component --
 interface ToastProps {
@@ -27,7 +28,6 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
         </div>
     );
 };
-// --------------------
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('landing');
@@ -35,12 +35,16 @@ const App: React.FC = () => {
   
   // Auth State
   const [showLogin, setShowLogin] = useState(false);
+  const [isSignUpMode, setIsSignUpMode] = useState(false);
   const [pendingView, setPendingView] = useState<ViewState>('landing');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Toast State
   const [toast, setToast] = useState<{msg: string, type: 'success' | 'error'} | null>(null);
+  const [systemMode, setSystemMode] = useState<'LOCAL' | 'CLOUD'>('LOCAL');
 
   const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
       setToast({ msg, type });
@@ -51,6 +55,8 @@ const App: React.FC = () => {
     if (storedAccount) {
       setAccount(storedAccount);
     }
+    // Check mode
+    setSystemMode(dataService.isProduction() ? 'CLOUD' : 'LOCAL');
   }, []);
 
   const handleProtectedAction = (targetView: ViewState) => {
@@ -59,19 +65,32 @@ const App: React.FC = () => {
     } else {
         setPendingView(targetView);
         setShowLogin(true);
+        setEmail('');
         setPassword('');
+        setIsSignUpMode(false);
     }
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'admin') { 
+    setIsAuthLoading(true);
+
+    let result;
+    if (isSignUpMode) {
+        result = await authService.signUp(email, password);
+    } else {
+        result = await authService.signIn(email, password);
+    }
+
+    setIsAuthLoading(false);
+
+    if (result.user && !result.error) {
         setIsAuthenticated(true);
         setShowLogin(false);
         setCurrentView(pendingView);
-        showToast("ACCESS_GRANTED: ADMIN_LEVEL_1");
+        showToast(isSignUpMode ? `ACCOUNT_CREATED: ${result.user.email?.toUpperCase()}` : `IDENTITY_VERIFIED: ${result.user.email?.toUpperCase()}`);
     } else {
-        showToast("ACCESS_DENIED: INVALID_CREDENTIALS", 'error');
+        showToast(result.error?.message || "AUTHENTICATION_FAILED", 'error');
     }
   };
 
@@ -105,41 +124,83 @@ const App: React.FC = () => {
 
   return (
     <div className="font-sans antialiased bg-zinc-950 text-zinc-200 min-h-screen selection:bg-orange-500 selection:text-white">
+        
+        {/* System Status Indicator */}
+        <div className="fixed top-0 left-0 right-0 h-1 z-[100] flex">
+            {systemMode === 'CLOUD' ? (
+                <div className="flex-1 bg-green-500 shadow-[0_0_10px_#22c55e]"></div>
+            ) : (
+                <div className="flex-1 bg-zinc-800"></div>
+            )}
+        </div>
+
         {renderView()}
         
         {toast && <Toast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
 
-        {/* Global Admin Login Modal (Triggered by Landing Page) */}
+        {/* Global Admin Login Modal */}
         {showLogin && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in-up">
                 <div className="bg-zinc-950 border border-zinc-800 text-zinc-200 rounded-lg shadow-2xl p-8 w-full max-w-sm relative overflow-hidden">
-                    {/* Decorative Scanner Line */}
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-orange-500 to-transparent opacity-50"></div>
                     
-                    <div className="text-center mb-8">
+                    <div className="text-center mb-6">
                         <div className="mx-auto w-12 h-12 bg-zinc-900 border border-zinc-800 rounded-lg flex items-center justify-center mb-4 text-orange-500">
                              <Terminal size={24} />
                         </div>
-                        <h3 className="text-xl font-display font-bold text-white tracking-tight">System Access</h3>
-                        <p className="text-xs font-mono text-zinc-500 mt-2">AUTHENTICATION_REQUIRED</p>
+                        <h3 className="text-xl font-display font-bold text-white tracking-tight">{isSignUpMode ? 'Register Operator' : 'System Access'}</h3>
+                        <div className="flex items-center justify-center space-x-2 mt-2">
+                             <span className="text-[10px] font-mono text-zinc-500">CONNECTION:</span>
+                             {systemMode === 'CLOUD' ? (
+                                <span className="text-[10px] font-mono text-green-500 flex items-center"><Cloud size={10} className="mr-1"/> SECURE_LINK</span>
+                             ) : (
+                                <span className="text-[10px] font-mono text-yellow-500 flex items-center"><Database size={10} className="mr-1"/> LOCAL_CACHE</span>
+                             )}
+                        </div>
                     </div>
-                    <form onSubmit={handleLogin} className="space-y-4">
+
+                    <form onSubmit={handleAuth} className="space-y-4">
+                        <div>
+                            <input 
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="OPERATOR_EMAIL"
+                                className="w-full p-3 bg-black border border-zinc-800 rounded focus:border-orange-500 outline-none text-sm font-mono text-center placeholder-zinc-700 transition-colors text-white"
+                                autoFocus
+                            />
+                        </div>
                         <div>
                             <input 
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                placeholder="ENTER_PASSPHRASE"
+                                placeholder="ACCESS_KEY (Password)"
                                 className="w-full p-3 bg-black border border-zinc-800 rounded focus:border-orange-500 outline-none text-sm font-mono text-center placeholder-zinc-700 transition-colors text-white"
-                                autoFocus
                             />
                         </div>
                         <button 
                             type="submit"
-                            className="w-full py-3 bg-zinc-100 hover:bg-white text-black font-display font-bold text-sm tracking-wide rounded uppercase transition-all"
+                            disabled={isAuthLoading}
+                            className={`w-full py-3 text-black font-display font-bold text-sm tracking-wide rounded uppercase transition-all flex justify-center ${isSignUpMode ? 'bg-orange-500 hover:bg-orange-400' : 'bg-zinc-100 hover:bg-white'}`}
                         >
-                            Authenticate
+                            {isAuthLoading ? "Processing..." : (isSignUpMode ? "Initialize Account" : "Authenticate")}
                         </button>
+
+                        <div className="pt-2 flex justify-center">
+                            <button
+                                type="button"
+                                onClick={() => setIsSignUpMode(!isSignUpMode)}
+                                className="text-[10px] font-mono text-zinc-500 hover:text-white flex items-center space-x-1"
+                            >
+                                {isSignUpMode ? (
+                                    <><span>ALREADY_REGISTERED?</span> <LogIn size={10} /></>
+                                ) : (
+                                    <><span>NEW_OPERATOR?</span> <UserPlus size={10} /></>
+                                )}
+                            </button>
+                        </div>
+
                         <button 
                             type="button"
                             onClick={() => setShowLogin(false)}

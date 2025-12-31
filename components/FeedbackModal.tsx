@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Loader2, Send, Mic, MicOff, Image as ImageIcon, Video, Paperclip, User, Trash2 } from 'lucide-react';
 import { analyzeFeedbackContent } from '../services/geminiService';
+import { storageService } from '../services/storageService';
 import { Location, Feedback } from '../types';
 
 interface FeedbackModalProps {
@@ -15,6 +16,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [attachments, setAttachments] = useState<string[]>([]);
   const [imageBase64, setImageBase64] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [isListening, setIsListening] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -53,6 +55,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setImageBase64(reader.result as string);
@@ -70,6 +73,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
 
   const removeImage = () => {
     setImageBase64(null);
+    setImageFile(null);
     setAttachments(prev => prev.filter(t => t !== 'image'));
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
@@ -80,11 +84,19 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
 
     setIsAnalyzing(true);
     
-    // Call Gemini API to analyze the text AND image
-    // If no text is provided but image is, we use a default prompt
+    // 1. Analyze Content (Text + Local Image Base64)
     const textToAnalyze = content || "Analyze this image for urban planning issues.";
-    
     const analysis = await analyzeFeedbackContent(textToAnalyze, imageBase64 || undefined);
+
+    // 2. Upload Image to Cloud (if present)
+    let publicImageUrl = undefined;
+    if (imageFile) {
+        const url = await storageService.uploadImage(imageFile);
+        if (url) publicImageUrl = url;
+    } else if (imageBase64) {
+        // Fallback for when storage isn't configured, use base64 for local demo
+        publicImageUrl = imageBase64;
+    }
 
     const newId = Date.now().toString(36) + Math.random().toString(36).substr(2);
 
@@ -99,7 +111,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
       votes: 0,
       authorName: authorName.trim() || 'Anonymous Citizen',
       attachments: attachments as any,
-      imageUrl: imageBase64 || undefined,
+      imageUrl: publicImageUrl,
       ecoImpactScore: analysis.ecoImpactScore,
       ecoImpactReasoning: analysis.ecoImpactReasoning,
       riskScore: analysis.riskScore
