@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type, HarmCategory, HarmBlockThreshold } from "@google/genai";
 import { AnalysisResponse, Feedback, GenAIPart } from '../types';
 import { APP_CONFIG } from '../config/constants';
@@ -90,6 +91,32 @@ export const checkDuplicates = async (newContent: string, existingItems: Feedbac
     } catch (e) {
         return null;
     }
+};
+
+// NEW: Agentic Email Drafting
+export const generateResponseDraft = async (feedback: Feedback): Promise<string> => {
+  if (!apiKey || !ai) throw new Error("System Error: Gemini API Key is not configured.");
+
+  const prompt = `
+    You are a polite and professional city official. 
+    Write a short email response to a resident regarding the following issue.
+    Status: ${feedback.status.replace('_', ' ')}.
+    Issue Category: ${feedback.category}.
+    Issue Content: "${feedback.content}".
+    Resident sentiment: ${feedback.sentiment}.
+    
+    Tone: Empathetic, reassuring, and professional. 
+    If status is 'resolved', thank them. 
+    If 'received', say it is being reviewed.
+    Keep it under 100 words.
+  `;
+
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-flash-preview',
+    contents: prompt
+  });
+  
+  return response.text || "Could not generate draft.";
 };
 
 export const generateSurveyQuestions = async (orgName: string, focusArea: string): Promise<string[]> => {

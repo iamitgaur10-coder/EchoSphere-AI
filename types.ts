@@ -14,6 +14,8 @@ export interface Organization {
   focusArea: string;
 }
 
+export type FeedbackStatus = 'received' | 'triaged' | 'in_progress' | 'resolved';
+
 export interface Feedback {
   id: string;
   organizationId?: string; // Link to specific tenant
@@ -22,6 +24,9 @@ export interface Feedback {
   timestamp: Date;
   sentiment: 'positive' | 'negative' | 'neutral';
   category: string;
+  status: FeedbackStatus; // New Workflow Field
+  contactEmail?: string; // New "Close the Loop" Field
+  adminNotes?: string[]; // New Collaboration Field
   summary?: string;
   authorName?: string;
   votes: number;

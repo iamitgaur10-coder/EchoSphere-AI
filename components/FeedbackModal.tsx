@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Loader2, Send, Mic, MicOff, Image as ImageIcon, Video, Paperclip, User, Trash2, ThumbsUp, AlertTriangle, Clock } from 'lucide-react';
+import { X, Loader2, Send, Mic, MicOff, Image as ImageIcon, Video, Paperclip, User, Trash2, ThumbsUp, AlertTriangle, Clock, Mail } from 'lucide-react';
 import { analyzeFeedbackContent, checkDuplicates } from '../services/geminiService';
 import { storageService } from '../services/storageService';
 import { rateLimitService } from '../services/rateLimitService';
@@ -16,6 +17,7 @@ interface FeedbackModalProps {
 const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubmit, existingFeedback = [] }) => {
   const [content, setContent] = useState('');
   const [authorName, setAuthorName] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [attachments, setAttachments] = useState<string[]>([]);
   const [imageBase64, setImageBase64] = useState<string | null>(null);
@@ -60,7 +62,6 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
           setIsCheckingDupes(true);
           
           // 1. Filter local items by distance (Optimization: only check items within 100m)
-          // Simple euclidean approximation for speed
           const nearbyCandidates = existingFeedback.filter(f => {
               const dx = f.location.x - location.x;
               const dy = f.location.y - location.y;
@@ -179,7 +180,9 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
             category: analysis.category,
             summary: analysis.summary,
             votes: 0,
+            status: 'received',
             authorName: authorName.trim() || 'Anonymous Citizen',
+            contactEmail: contactEmail.trim() || undefined,
             attachments: attachments as any,
             imageUrl: publicImageUrl,
             ecoImpactScore: analysis.ecoImpactScore,
@@ -267,22 +270,43 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
             <span>{location.y.toFixed(4)}, {location.x.toFixed(4)}</span>
           </div>
 
-          {/* Identity Field */}
-          <div>
-            <label className="block text-xs font-bold text-zinc-500 uppercase mb-1 tracking-widest">
-                Name (Optional)
-            </label>
-            <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400 dark:text-zinc-600 group-focus-within:text-orange-500 transition-colors">
-                    <User size={14} />
+          <div className="grid grid-cols-2 gap-4">
+            {/* Identity Field */}
+            <div>
+                <label className="block text-xs font-bold text-zinc-500 uppercase mb-1 tracking-widest">
+                    Name (Optional)
+                </label>
+                <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400 dark:text-zinc-600 group-focus-within:text-orange-500 transition-colors">
+                        <User size={14} />
+                    </div>
+                    <input 
+                        type="text"
+                        value={authorName}
+                        onChange={(e) => setAuthorName(e.target.value)}
+                        className="w-full pl-9 p-2.5 bg-white dark:bg-black border border-zinc-300 dark:border-zinc-800 rounded focus:border-orange-500 outline-none text-sm text-zinc-900 dark:text-zinc-300 placeholder-zinc-400 dark:placeholder-zinc-700 transition-colors"
+                        placeholder="Anonymous"
+                    />
                 </div>
-                <input 
-                    type="text"
-                    value={authorName}
-                    onChange={(e) => setAuthorName(e.target.value)}
-                    className="w-full pl-9 p-2.5 bg-white dark:bg-black border border-zinc-300 dark:border-zinc-800 rounded focus:border-orange-500 outline-none text-sm text-zinc-900 dark:text-zinc-300 placeholder-zinc-400 dark:placeholder-zinc-700 transition-colors"
-                    placeholder="Anonymous"
-                />
+            </div>
+
+            {/* Contact Info (Closing the Loop) */}
+            <div>
+                <label className="block text-xs font-bold text-zinc-500 uppercase mb-1 tracking-widest">
+                    Email (Optional)
+                </label>
+                <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400 dark:text-zinc-600 group-focus-within:text-orange-500 transition-colors">
+                        <Mail size={14} />
+                    </div>
+                    <input 
+                        type="email"
+                        value={contactEmail}
+                        onChange={(e) => setContactEmail(e.target.value)}
+                        className="w-full pl-9 p-2.5 bg-white dark:bg-black border border-zinc-300 dark:border-zinc-800 rounded focus:border-orange-500 outline-none text-sm text-zinc-900 dark:text-zinc-300 placeholder-zinc-400 dark:placeholder-zinc-700 transition-colors"
+                        placeholder="For updates"
+                    />
+                </div>
             </div>
           </div>
 

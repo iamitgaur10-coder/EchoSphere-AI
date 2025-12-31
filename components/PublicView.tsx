@@ -65,6 +65,7 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
             timestamp: new Date(newRow.timestamp),
             sentiment: newRow.sentiment,
             category: newRow.category,
+            status: newRow.status || 'received',
             summary: newRow.summary,
             imageUrl: newRow.image_url,
             votes: 0

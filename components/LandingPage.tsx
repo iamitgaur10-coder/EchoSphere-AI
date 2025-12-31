@@ -18,13 +18,13 @@ const LA_CENTER = { x: -118.2437, y: 34.0522 };
 
 // Mock data for the visual map effect
 const VISUAL_FEEDBACK: Feedback[] = [
-    { id: 'v1', location: { x: -118.25, y: 34.05 }, content: 'Traffic light sync issue', sentiment: 'negative', category: 'Traffic', timestamp: new Date(), votes: 0 },
-    { id: 'v2', location: { x: -118.24, y: 34.06 }, content: 'Park clean up needed', sentiment: 'neutral', category: 'Sanitation', timestamp: new Date(), votes: 0 },
-    { id: 'v3', location: { x: -118.235, y: 34.045 }, content: 'Great new bike lane', sentiment: 'positive', category: 'Infrastructure', timestamp: new Date(), votes: 0 },
-    { id: 'v4', location: { x: -118.26, y: 34.055 }, content: 'Suspicious activity', sentiment: 'negative', category: 'Safety', timestamp: new Date(), votes: 0 },
-    { id: 'v5', location: { x: -118.245, y: 34.04 }, content: 'Pothole repair', sentiment: 'neutral', category: 'Infrastructure', timestamp: new Date(), votes: 0 },
-    { id: 'v6', location: { x: -118.255, y: 34.065 }, content: 'Noise complaint', sentiment: 'negative', category: 'General', timestamp: new Date(), votes: 0 },
-    { id: 'v7', location: { x: -118.23, y: 34.052 }, content: 'New tree planting', sentiment: 'positive', category: 'Sustainability', timestamp: new Date(), votes: 0 },
+    { id: 'v1', location: { x: -118.25, y: 34.05 }, content: 'Traffic light sync issue', sentiment: 'negative', category: 'Traffic', timestamp: new Date(), votes: 0, status: 'received' },
+    { id: 'v2', location: { x: -118.24, y: 34.06 }, content: 'Park clean up needed', sentiment: 'neutral', category: 'Sanitation', timestamp: new Date(), votes: 0, status: 'triaged' },
+    { id: 'v3', location: { x: -118.235, y: 34.045 }, content: 'Great new bike lane', sentiment: 'positive', category: 'Infrastructure', timestamp: new Date(), votes: 0, status: 'resolved' },
+    { id: 'v4', location: { x: -118.26, y: 34.055 }, content: 'Suspicious activity', sentiment: 'negative', category: 'Safety', timestamp: new Date(), votes: 0, status: 'received' },
+    { id: 'v5', location: { x: -118.245, y: 34.04 }, content: 'Pothole repair', sentiment: 'neutral', category: 'Infrastructure', timestamp: new Date(), votes: 0, status: 'in_progress' },
+    { id: 'v6', location: { x: -118.255, y: 34.065 }, content: 'Noise complaint', sentiment: 'negative', category: 'General', timestamp: new Date(), votes: 0, status: 'received' },
+    { id: 'v7', location: { x: -118.23, y: 34.052 }, content: 'New tree planting', sentiment: 'positive', category: 'Sustainability', timestamp: new Date(), votes: 0, status: 'resolved' },
 ];
 
 const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, onEnterWizard, onOpenContent, account, isDarkMode = false }) => {
