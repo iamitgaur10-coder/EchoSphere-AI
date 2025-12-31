@@ -77,8 +77,9 @@ const MapArea: React.FC<MapAreaProps> = ({
       if (!mapInstance || !layers) return;
       if (isSatellite) return; // Satellite overrides theme
 
-      mapInstance.removeLayer(layers.dark);
-      mapInstance.removeLayer(layers.light);
+      // Safely remove both to avoid duplicates
+      if (mapInstance.hasLayer(layers.dark)) mapInstance.removeLayer(layers.dark);
+      if (mapInstance.hasLayer(layers.light)) mapInstance.removeLayer(layers.light);
 
       if (isDarkMode) {
           mapInstance.addLayer(layers.dark);
@@ -134,12 +135,14 @@ const MapArea: React.FC<MapAreaProps> = ({
 
       // CartoDB Dark Matter (Dark Mode)
       const darkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 20 });
-      // CartoDB Positron (Light Mode)
-      const lightLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 20 });
+      
+      // CartoDB Voyager (Light Mode - More Colorful/Visible than Positron)
+      const lightLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 20 });
+      
       // Satellite
       const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
 
-      // Initial Add
+      // Initial Add based on current prop
       if (isDarkMode) darkLayer.addTo(map);
       else lightLayer.addTo(map);
 
@@ -204,12 +207,16 @@ const MapArea: React.FC<MapAreaProps> = ({
   // -- Toggle Satellite --
   useEffect(() => {
       if (!mapInstance || !layers) return;
+      
+      // Remove all base layers first
+      if (mapInstance.hasLayer(layers.dark)) mapInstance.removeLayer(layers.dark);
+      if (mapInstance.hasLayer(layers.light)) mapInstance.removeLayer(layers.light);
+      if (mapInstance.hasLayer(layers.satellite)) mapInstance.removeLayer(layers.satellite);
+
       if (isSatellite) {
-          mapInstance.removeLayer(layers.dark);
-          mapInstance.removeLayer(layers.light);
           mapInstance.addLayer(layers.satellite);
       } else {
-          mapInstance.removeLayer(layers.satellite);
+          // Restore theme based layer
           if (isDarkMode) mapInstance.addLayer(layers.dark);
           else mapInstance.addLayer(layers.light);
       }
@@ -285,7 +292,7 @@ const MapArea: React.FC<MapAreaProps> = ({
   }, [feedbackList, mapInstance, activeFilter, isDarkMode]);
 
   return (
-    <div className="relative w-full h-full bg-zinc-50 dark:bg-zinc-900 overflow-hidden group transition-colors duration-300">
+    <div className="relative w-full h-full bg-zinc-200 dark:bg-zinc-900 overflow-hidden group transition-colors duration-300">
       
       {!isMapLoaded && (
           <div className="absolute inset-0 flex items-center justify-center bg-zinc-50 dark:bg-zinc-950 z-10">
