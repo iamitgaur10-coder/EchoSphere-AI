@@ -29,7 +29,9 @@ export const APP_CONFIG = {
       4. Assign a Risk Score (0-100, 100=urgent).
       5. Assign an Eco-Impact Score (0-100) assessing if this suggestion helps the environment.
       6. Provide 1 sentence reasoning for the Eco-Impact in ${lang}.
-      7. CRITICAL: Determine if this is a valid civic issue (potholes, safety, trash, parks, traffic) OR if it is irrelevant (commercial reviews, dating profiles, spam, general rants).
+      7. CRITICAL: Determine if this is a VALID CIVIC ISSUE.
+         - TRUE: Potholes, broken lights, trash, safety hazards, park maintenance, traffic issues, public transit, community improvement ideas.
+         - FALSE: Commercial reviews ("Best pizza", "Great photographer"), dating/personal ads, spam, gibberish, political rants without local context, or generic compliments ("I love this city") that lack actionable feedback.
       Set isCivicIssue to true only for valid city/community issues.`,
       
     SURVEY_PROMPT: `Generate 5 engaging, short, and relevant feedback questions for a public engagement platform.`,

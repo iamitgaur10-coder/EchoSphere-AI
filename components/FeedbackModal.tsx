@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Loader2, Send, Mic, MicOff, Image as ImageIcon, Video, Paperclip, User, Trash2, ThumbsUp, AlertTriangle, Clock, Mail } from 'lucide-react';
+import { X, Loader2, Send, Mic, MicOff, Image as ImageIcon, Video, Paperclip, User, Trash2, ThumbsUp, AlertTriangle, Clock, Mail, CheckCircle2 } from 'lucide-react';
 import { analyzeFeedbackContent, checkDuplicates } from '../services/geminiService';
 import { storageService } from '../services/storageService';
 import { rateLimitService } from '../services/rateLimitService';
@@ -203,7 +203,11 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
         onSubmit(newFeedback);
     } catch (err: any) {
         console.error(err);
-        setErrorMsg(err.message || "An unexpected error occurred.");
+        if (err.message && (err.message.includes("API key") || err.message.includes("403"))) {
+             setErrorMsg("System Error: AI Service Key Expired or Invalid. Please contact admin.");
+        } else {
+             setErrorMsg(err.message || "An unexpected error occurred.");
+        }
     } finally {
         setIsAnalyzing(false);
     }
@@ -226,6 +230,29 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5 relative">
           
+          {/* Visual Education Guide */}
+          <div className="bg-blue-50 dark:bg-blue-900/10 p-3 rounded-md border border-blue-100 dark:border-blue-800/50">
+            <div className="flex justify-between items-start gap-2">
+                 <div className="flex-1">
+                     <p className="text-[10px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wide mb-1 flex items-center">
+                        <CheckCircle2 size={10} className="mr-1" /> What to report
+                     </p>
+                     <p className="text-[10px] text-blue-600 dark:text-blue-300 leading-snug">
+                         Infrastructure (potholes, lights), Sanitation (trash), Safety hazards, or Community improvement ideas.
+                     </p>
+                 </div>
+                 <div className="w-[1px] bg-blue-200 dark:bg-blue-800 h-8 mx-2"></div>
+                 <div className="flex-1">
+                     <p className="text-[10px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wide mb-1 flex items-center">
+                        <X size={10} className="mr-1" /> Do NOT report
+                     </p>
+                     <p className="text-[10px] text-red-600 dark:text-red-300 leading-snug">
+                         Commercial reviews, personal ads, spam, or generic compliments.
+                     </p>
+                 </div>
+            </div>
+          </div>
+
           {/* Rate Limit Banner */}
           {rateLimitWait > 0 && (
               <div className="bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-500/50 rounded p-3 flex items-center space-x-3 text-orange-800 dark:text-orange-200 mb-4">
