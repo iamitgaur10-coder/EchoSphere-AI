@@ -16,7 +16,7 @@ interface MapAreaProps {
   onError?: (msg: string) => void;
 }
 
-const DEFAULT_CENTER = [40.7128, -74.0060];
+const DEFAULT_CENTER = [34.0522, -118.2437]; // Los Angeles
 
 // Category styling map
 const CATEGORY_STYLES: Record<string, { color: string, icon: React.ReactNode }> = {

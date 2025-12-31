@@ -20,7 +20,7 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel }) => {
     organizationName: '',
     regionCode: '',
     focusArea: 'Urban Development',
-    center: { x: -74.0060, y: 40.7128 }, 
+    center: { x: -118.2437, y: 34.0522 }, // Los Angeles
     questions: []
   });
 

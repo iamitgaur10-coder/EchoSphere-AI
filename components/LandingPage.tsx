@@ -15,8 +15,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
   // Fake "Data Stream" for the marquee
   const baseData = Array(10).fill(0).map((_, i) => ({
     id: `FB-${Math.floor(Math.random() * 9000) + 1000}`,
-    lat: (40.7 + Math.random() * 0.1).toFixed(4),
-    lng: (-74.0 + Math.random() * 0.1).toFixed(4),
+    // LA Coordinates (approx 34.05, -118.24)
+    lat: (34.05 + Math.random() * 0.1).toFixed(4),
+    lng: (-118.24 + Math.random() * 0.1).toFixed(4),
     status: Math.random() > 0.5 ? 'Processing' : 'Saved'
   }));
   
