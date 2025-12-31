@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Layers, Loader2, Locate, Navigation, Search, X } from 'lucide-react';
+import { Box, Layers, Loader2, Locate, Navigation, Search, X, Filter, Leaf, ShieldAlert, Trash2, Car, HardHat, Palette, HelpCircle } from 'lucide-react';
 import { Location, Feedback } from '../types';
 import { searchLocation } from '../services/geoService';
+import { renderToString } from 'react-dom/server';
 
 declare var L: any;
 
@@ -9,12 +10,22 @@ interface MapAreaProps {
   feedbackList: Feedback[];
   onMapClick: (loc: Location) => void;
   interactive?: boolean;
-  center?: Location; // Optional override for map center
-  showSelectionMarker?: boolean; // If true, show a pin at the 'center' location
+  center?: Location;
+  showSelectionMarker?: boolean;
 }
 
-// Default Center (New York City) - Fallback
 const DEFAULT_CENTER = [40.7128, -74.0060];
+
+// Category styling map
+const CATEGORY_STYLES: Record<string, { color: string, icon: React.ReactNode }> = {
+  'Sanitation': { color: '#ef4444', icon: <Trash2 size={14} color="white" /> },
+  'Infrastructure': { color: '#f97316', icon: <HardHat size={14} color="white" /> },
+  'Safety': { color: '#dc2626', icon: <ShieldAlert size={14} color="white" /> },
+  'Traffic': { color: '#6366f1', icon: <Car size={14} color="white" /> },
+  'Sustainability': { color: '#22c55e', icon: <Leaf size={14} color="white" /> },
+  'Culture': { color: '#db2777', icon: <Palette size={14} color="white" /> },
+  'General': { color: '#64748b', icon: <HelpCircle size={14} color="white" /> }
+};
 
 const MapArea: React.FC<MapAreaProps> = ({ 
   feedbackList, 
@@ -30,23 +41,22 @@ const MapArea: React.FC<MapAreaProps> = ({
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   
-  // Search State
+  // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<string>('All');
   
   const userLocationMarkerRef = useRef<any | null>(null);
   const selectionMarkerRef = useRef<any | null>(null);
   const markersRef = useRef<any[]>([]);
 
-  // Determine initial center
   const initialCenter = center ? [center.y, center.x] : DEFAULT_CENTER;
 
-  // Initialize Leaflet Map
+  // -- Initialize Map --
   useEffect(() => {
     if (!mapRef.current) return;
     
-    // Check for Leaflet global variable
     const checkLeaflet = setInterval(() => {
         if ((window as any).L) {
             clearInterval(checkLeaflet);
@@ -57,89 +67,70 @@ const MapArea: React.FC<MapAreaProps> = ({
     return () => clearInterval(checkLeaflet);
   }, []);
 
-  // Effect to update view if center prop changes
+  // -- Fly to Center Update --
   useEffect(() => {
     if (mapInstance && center) {
-        // Fly to the new center smoothly
         mapInstance.flyTo([center.y, center.x], 13);
     }
   }, [center, mapInstance]);
 
-  // Handle Selection Marker (for Wizard)
+  // -- Handle Tenant Center Marker --
   useEffect(() => {
     if (!mapInstance || !L) return;
 
     if (showSelectionMarker && center) {
-        if (selectionMarkerRef.current) {
-            selectionMarkerRef.current.remove();
-        }
+        if (selectionMarkerRef.current) selectionMarkerRef.current.remove();
         
-        // Create a distinct marker for the "Tenant Center"
         const centerIcon = L.divIcon({
             html: `
-                <div style="
-                    color: #4f46e5; 
-                    filter: drop-shadow(0 4px 3px rgb(0 0 0 / 0.3));
-                ">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
-                        <circle cx="12" cy="10" r="3" fill="white"/>
-                    </svg>
+                <div class="relative flex items-center justify-center">
+                    <div class="absolute w-12 h-12 bg-indigo-500/20 rounded-full animate-ping"></div>
+                    <div class="relative z-10 text-indigo-600 drop-shadow-xl">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" stroke="white" stroke-width="2">
+                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                            <circle cx="12" cy="9" r="2.5" fill="white"/>
+                        </svg>
+                    </div>
                 </div>
             `,
             className: 'center-pin-marker',
-            iconSize: [40, 40],
-            iconAnchor: [20, 40]
+            iconSize: [48, 48],
+            iconAnchor: [24, 48]
         });
 
         selectionMarkerRef.current = L.marker([center.y, center.x], { icon: centerIcon }).addTo(mapInstance);
-    } else if (selectionMarkerRef.current) {
-        selectionMarkerRef.current.remove();
-        selectionMarkerRef.current = null;
     }
   }, [center, showSelectionMarker, mapInstance]);
 
   const initMap = () => {
-      if (mapInstance) return; // Already initialized
+      if (mapInstance) return;
 
       const map = L.map(mapRef.current, {
         center: initialCenter,
-        zoom: 13, // Start slightly zoomed out
-        zoomControl: false
+        zoom: 13,
+        zoomControl: false,
+        attributionControl: false // Cleaner look
       });
 
-      // Define Layers
+      // High-quality CartoDB Voyager tiles (Clean, modern look)
       const streetLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-          subdomains: 'abcd',
           maxZoom: 20
       });
 
-      const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-          attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-      });
+      const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
 
-      // Add default layer
       streetLayer.addTo(map);
-
-      // Save layers for toggling
       setLayers({ street: streetLayer, satellite: satelliteLayer });
 
-      // Click Handler
       map.on('click', (e: any) => {
           if (!interactive) return;
           const { lat, lng } = e.latlng;
-          // Return as x (lng) and y (lat)
           onMapClick({ x: lng, y: lat });
       });
 
-      // Location Found Handler
       map.on('locationfound', (e: any) => {
         const radius = e.accuracy / 2;
-        
-        if (userLocationMarkerRef.current) {
-            map.removeLayer(userLocationMarkerRef.current);
-        }
+        if (userLocationMarkerRef.current) map.removeLayer(userLocationMarkerRef.current);
 
         const userIcon = L.divIcon({
             html: '<div class="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg pulse-ring"></div>',
@@ -150,26 +141,16 @@ const MapArea: React.FC<MapAreaProps> = ({
 
         const marker = L.marker(e.latlng, { icon: userIcon }).addTo(map);
         marker.bindPopup(`You are within ${Math.round(radius)} meters from this point`).openPopup();
-        
         userLocationMarkerRef.current = marker;
         setIsLocating(false);
-      });
-
-      map.on('locationerror', (e: any) => {
-          console.warn("Location access denied", e.message);
-          setIsLocating(false);
       });
 
       setMapInstance(map);
       setIsMapLoaded(true);
 
-      // Fix for Leaflet partial rendering issues on load
       setTimeout(() => {
         map.invalidateSize();
-        // Only auto-locate if we are using default center (no specific tenant center provided) and interactive
-        if (interactive && !center) {
-            map.locate({ setView: true, maxZoom: 16 });
-        }
+        if (interactive && !center) map.locate({ setView: true, maxZoom: 16 });
       }, 500);
   };
 
@@ -182,7 +163,6 @@ const MapArea: React.FC<MapAreaProps> = ({
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    e.stopPropagation();
     if (!searchQuery.trim() || !mapInstance) return;
 
     setIsSearching(true);
@@ -192,18 +172,15 @@ const MapArea: React.FC<MapAreaProps> = ({
     
     if (result) {
         mapInstance.flyTo([result.lat, result.lon], 14);
-        // Optional: If this is the Wizard, we might want to auto-select this point? 
-        // For now, we just fly there and let the user click.
     } else {
         setSearchError(true);
     }
     setIsSearching(false);
   };
 
-  // Handle Layer Toggle
+  // -- Toggle Satellite --
   useEffect(() => {
       if (!mapInstance || !layers) return;
-      
       if (isSatellite) {
           mapInstance.removeLayer(layers.street);
           mapInstance.addLayer(layers.satellite);
@@ -213,76 +190,63 @@ const MapArea: React.FC<MapAreaProps> = ({
       }
   }, [isSatellite, mapInstance, layers]);
 
-  // Handle Markers
+  // -- Render Markers --
   useEffect(() => {
       if (!mapInstance || !L) return;
 
-      // Clear existing markers
+      // 1. Clear existing
       markersRef.current.forEach(m => m.remove());
       markersRef.current = [];
 
-      // Add new markers
-      feedbackList.forEach(fb => {
-          // Standard: y is Latitude, x is Longitude
+      // 2. Filter List
+      const filteredList = activeFilter === 'All' 
+        ? feedbackList 
+        : feedbackList.filter(f => f.category === activeFilter);
+
+      // 3. Add New Markers
+      filteredList.forEach(fb => {
           let lat = fb.location.y;
           let lng = fb.location.x;
 
-          // Legacy percent-based data support logic (simple projection fallback)
+          // Fallback for demo percent data
           if (Math.abs(lat) <= 100 && Math.abs(lng) <= 100) {
               lat = DEFAULT_CENTER[0] + (fb.location.y - 50) * 0.0001;
               lng = DEFAULT_CENTER[1] + (fb.location.x - 50) * 0.0001;
           }
 
-          // Custom Icon
-          const getMarkerColor = (sentiment: string) => {
-             if (sentiment === 'positive') return '#22c55e';
-             if (sentiment === 'negative') return '#ef4444';
-             return '#eab308';
-          };
-          
+          // Get Style based on Category or Sentiment
+          const style = CATEGORY_STYLES[fb.category] || CATEGORY_STYLES['General'];
+          const iconString = renderToString(style.icon);
+
           const iconHtml = `
-            <div style="
-              background-color: ${getMarkerColor(fb.sentiment)};
-              width: 24px;
-              height: 24px;
-              border-radius: 50%;
-              border: 2px solid white;
-              box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            ">
+            <div class="relative group">
+                <div style="background-color: ${style.color}" class="w-8 h-8 rounded-full border-2 border-white shadow-lg flex items-center justify-center transform transition-transform group-hover:scale-110">
+                    ${iconString}
+                </div>
+                <div style="border-top-color: ${style.color}" class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px]"></div>
             </div>
           `;
 
           const customIcon = L.divIcon({
             html: iconHtml,
             className: 'custom-marker',
-            iconSize: [24, 24],
-            iconAnchor: [12, 12]
+            iconSize: [32, 40],
+            iconAnchor: [16, 40],
+            popupAnchor: [0, -40]
           });
 
           const marker = L.marker([lat, lng], { icon: customIcon }).addTo(mapInstance);
           
-          // Popup
           const popupContent = `
-            <div style="min-width: 200px; font-family: sans-serif;">
-                <div style="font-weight: bold; margin-bottom: 4px; color: #1e293b;">${fb.category}</div>
-                <div style="font-size: 13px; color: #475569; margin-bottom: 8px;">${fb.content}</div>
-                <div style="display:flex; align-items:center; justify-content:space-between;">
-                    <div style="
-                        display: inline-block;
-                        padding: 2px 8px;
-                        border-radius: 9999px;
-                        font-size: 10px;
-                        font-weight: 600;
-                        text-transform: uppercase;
-                        background-color: ${fb.sentiment === 'positive' ? '#dcfce7' : fb.sentiment === 'negative' ? '#fee2e2' : '#fef9c3'};
-                        color: ${fb.sentiment === 'positive' ? '#166534' : fb.sentiment === 'negative' ? '#991b1b' : '#854d0e'};
-                    ">
-                        ${fb.sentiment}
-                    </div>
-                    <div style="font-size: 10px; color: #94a3b8;">${new Date(fb.timestamp).toLocaleDateString()}</div>
+            <div class="font-sans min-w-[200px]">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold uppercase tracking-wide text-slate-500">${fb.category}</span>
+                    <span class="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-500">${new Date(fb.timestamp).toLocaleDateString()}</span>
+                </div>
+                <div class="text-sm text-slate-800 font-medium mb-2 leading-snug">"${fb.content}"</div>
+                <div class="flex items-center space-x-2">
+                    <div class="h-2 w-2 rounded-full ${fb.sentiment === 'positive' ? 'bg-green-500' : fb.sentiment === 'negative' ? 'bg-red-500' : 'bg-yellow-500'}"></div>
+                    <span class="text-xs text-slate-600 capitalize">${fb.sentiment}</span>
                 </div>
             </div>
           `;
@@ -291,70 +255,79 @@ const MapArea: React.FC<MapAreaProps> = ({
           markersRef.current.push(marker);
       });
 
-  }, [feedbackList, mapInstance]);
+  }, [feedbackList, mapInstance, activeFilter]);
+
+  // Unique Categories for Filter
+  const categories = ['All', ...Array.from(new Set(feedbackList.map(f => f.category)))];
 
   return (
-    <div className="relative w-full h-full bg-slate-100 overflow-hidden">
+    <div className="relative w-full h-full bg-slate-100 overflow-hidden group">
       
-      {/* Loading State */}
       {!isMapLoaded && (
-          <div className="absolute inset-0 flex items-center justify-center bg-slate-100 z-10">
-              <div className="flex flex-col items-center space-y-2">
-                 <Loader2 className="animate-spin text-indigo-600" size={32} />
-                 <p className="text-sm text-slate-500">Initializing Map...</p>
-              </div>
+          <div className="absolute inset-0 flex items-center justify-center bg-slate-50 z-10">
+              <Loader2 className="animate-spin text-indigo-600" size={32} />
           </div>
       )}
 
-      {/* Interactive Controls Overlay */}
       {interactive && isMapLoaded && (
         <>
-            {/* Search Bar (Top Center/Left) */}
-            <div className="absolute top-4 left-4 right-16 md:right-auto md:w-80 z-[500]">
-                <form onSubmit={handleSearch} className="relative shadow-md rounded-lg">
-                    <input 
-                        type="text" 
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search city, street..."
-                        className={`w-full p-3 pl-10 pr-10 rounded-lg outline-none border transition-all ${searchError ? 'border-red-400 bg-red-50 text-red-900 placeholder-red-400' : 'border-white bg-white/90 focus:bg-white text-slate-800'}`}
-                    />
-                    <div className="absolute left-3 top-3 text-slate-400">
-                        <Search size={18} />
+            {/* --- CENTRAL COMMAND SEARCH BAR --- */}
+            <div className="absolute top-24 md:top-6 left-1/2 -translate-x-1/2 w-[90%] md:w-[400px] z-[500] transition-all duration-300">
+                <form onSubmit={handleSearch} className="relative group/search">
+                    <div className={`absolute inset-0 bg-white/40 rounded-full blur-md transition-opacity ${isSearching ? 'opacity-100' : 'opacity-0'}`}></div>
+                    <div className="relative flex items-center bg-white/90 backdrop-blur-md shadow-xl rounded-full border border-white/50 transition-all hover:bg-white hover:scale-[1.02] focus-within:scale-[1.02] focus-within:ring-2 focus-within:ring-indigo-500/20">
+                        <Search className="ml-4 text-slate-400" size={18} />
+                        <input 
+                            type="text" 
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Search city, neighborhood, or landmark..."
+                            className={`w-full py-3 px-3 bg-transparent outline-none text-slate-800 placeholder-slate-400 text-sm`}
+                        />
+                        {searchQuery && (
+                            <button type="button" onClick={() => setSearchQuery('')} className="p-2 mr-1 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100"><X size={14} /></button>
+                        )}
+                        {isSearching && <Loader2 size={16} className="mr-4 animate-spin text-indigo-500" />}
                     </div>
-                    {searchQuery && (
-                        <button 
-                            type="button"
-                            onClick={() => { setSearchQuery(''); setSearchError(false); }}
-                            className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
-                        >
-                            <X size={16} />
-                        </button>
-                    )}
-                    {isSearching && (
-                        <div className="absolute right-10 top-3">
-                             <Loader2 size={16} className="animate-spin text-indigo-500" />
-                        </div>
-                    )}
                 </form>
+                {searchError && (
+                    <div className="absolute top-full mt-2 left-0 right-0 bg-red-50 text-red-600 text-xs py-2 px-4 rounded-lg shadow-lg text-center animate-fade-in-up border border-red-100">
+                        Location not found. Try a broader search.
+                    </div>
+                )}
+
+                {/* --- FLOATING FILTER PILLS --- */}
+                <div className="mt-3 flex items-center justify-center space-x-2 overflow-x-auto no-scrollbar py-1 mask-linear-fade">
+                    {categories.slice(0, 4).map(cat => (
+                        <button
+                            key={cat}
+                            onClick={() => setActiveFilter(cat)}
+                            className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-medium shadow-sm border transition-all ${
+                                activeFilter === cat 
+                                ? 'bg-slate-800 text-white border-slate-800 transform scale-105' 
+                                : 'bg-white/90 text-slate-600 border-white/50 hover:bg-white'
+                            }`}
+                        >
+                            {cat}
+                        </button>
+                    ))}
+                </div>
             </div>
 
-            {/* Map Tools (Top Right) */}
-            <div className="absolute top-4 right-4 z-[500] flex flex-col space-y-2">
-                {/* Locate Me */}
+            {/* --- RIGHT ACTION STACK --- */}
+            <div className="absolute top-24 md:top-6 right-4 z-[500] flex flex-col space-y-3">
                 <button 
                     onClick={handleManualLocate}
-                    className="bg-white/90 p-2.5 rounded-lg shadow-md hover:bg-white text-slate-700 hover:text-indigo-600 transition-colors border border-slate-200"
-                    title="Use My Location"
+                    className="bg-white/90 backdrop-blur p-3 rounded-2xl shadow-lg border border-white/50 text-slate-600 hover:text-indigo-600 hover:bg-white transition-all hover:scale-105 active:scale-95"
+                    title="Locate Me"
                 >
                     {isLocating ? <Loader2 size={20} className="animate-spin" /> : <Navigation size={20} className={userLocationMarkerRef.current ? "fill-indigo-500 text-indigo-600" : ""} />}
                 </button>
 
-                {/* View Toggle */}
                 <button 
                     onClick={(e) => { e.stopPropagation(); setIsSatellite(!isSatellite); }}
-                    className="bg-white/90 p-2.5 rounded-lg shadow-md hover:bg-white text-slate-700 hover:text-indigo-600 transition-colors border border-slate-200"
-                    title="Toggle Satellite View"
+                    className="bg-white/90 backdrop-blur p-3 rounded-2xl shadow-lg border border-white/50 text-slate-600 hover:text-indigo-600 hover:bg-white transition-all hover:scale-105 active:scale-95"
+                    title="Layers"
                 >
                     {isSatellite ? <Layers size={20} /> : <Box size={20} />}
                 </button>
@@ -362,7 +335,8 @@ const MapArea: React.FC<MapAreaProps> = ({
         </>
       )}
 
-      <div ref={mapRef} className="w-full h-full z-0" />
+      <div ref={mapRef} className="w-full h-full z-0 outline-none" />
+      
       <style>{`
         .pulse-ring {
             box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
@@ -372,6 +346,13 @@ const MapArea: React.FC<MapAreaProps> = ({
             0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
             70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
             100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
       `}</style>
     </div>
