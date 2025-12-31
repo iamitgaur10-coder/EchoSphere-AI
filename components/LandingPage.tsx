@@ -11,7 +11,6 @@ interface LandingPageProps {
 
 const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, onEnterWizard, account }) => {
   const [activeTab, setActiveTab] = useState<'scan' | 'analyze'>('scan');
-  const [demoText, setDemoText] = useState("The streetlights on 5th Ave have been broken for 3 weeks.");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
 
@@ -24,20 +23,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
   }));
   
   const dataStream = [...baseData, ...baseData, ...baseData, ...baseData];
-
-  const handleRunDemo = () => {
-    setIsAnalyzing(true);
-    setAnalysisResult(null);
-    setTimeout(() => {
-        setIsAnalyzing(false);
-        setAnalysisResult({
-            sentiment: "Negative",
-            urgency: "High (85/100)",
-            category: "Infrastructure",
-            dept: "Public Works"
-        });
-    }, 1500);
-  };
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-200 font-sans overflow-x-hidden selection:bg-orange-500 selection:text-white transition-colors duration-300">
@@ -70,11 +55,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
       {/* --- Section 1: The Blueprint Hero --- */}
       <section className="relative min-h-screen flex flex-col justify-center pt-24 px-6 lg:px-12 border-b border-zinc-200 dark:border-zinc-900 overflow-hidden">
         
-        {/* Background Texture */}
-        <div className="absolute inset-0 z-0 opacity-10 dark:opacity-20 pointer-events-none grayscale mix-blend-screen">
+        {/* Background Texture - Adjusted for Light Mode Visibility */}
+        <div className="absolute inset-0 z-0 pointer-events-none grayscale">
              <img 
                 src="https://images.unsplash.com/photo-1549488497-8a176881c195?q=80&w=2070&auto=format&fit=crop" 
-                className="w-full h-full object-cover" 
+                className="w-full h-full object-cover opacity-10 mix-blend-multiply dark:opacity-20 dark:mix-blend-screen" 
                 alt="Dark Map"
              />
         </div>
@@ -83,9 +68,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
         <div className="absolute inset-0 z-0 bg-gradient-to-t from-zinc-50 dark:from-zinc-950 via-zinc-50/80 dark:via-zinc-950/80 to-transparent"></div>
         <div className="absolute inset-0 z-0 bg-gradient-to-r from-zinc-50 dark:from-zinc-950 via-zinc-50/80 dark:via-zinc-950/80 to-transparent"></div>
 
-        {/* Grid Overlay */}
+        {/* Grid Overlay - Darker in light mode */}
         <div className="absolute inset-0 z-0 dark:block hidden" style={{ backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)', backgroundSize: '60px 60px' }}></div>
-        <div className="absolute inset-0 z-0 dark:hidden block" style={{ backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px)', backgroundSize: '60px 60px' }}></div>
+        <div className="absolute inset-0 z-0 dark:hidden block" style={{ backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 0, 0.1) 1px, transparent 1px)', backgroundSize: '60px 60px' }}></div>
 
         <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-12 lg:gap-24 items-center relative z-10 pb-20">
             
@@ -126,7 +111,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
             {/* Right: 3D Interface Simulation (Larger) */}
             <div className="relative h-[600px] hidden lg:block perspective-1000">
                 {/* The Tilted Plane */}
-                <div className="absolute inset-0 bg-white/50 dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl transform rotate-y-12 rotate-x-6 hover:rotate-y-0 hover:rotate-x-0 transition-transform duration-1000 overflow-hidden group">
+                <div className="absolute inset-0 bg-white dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl transform rotate-y-12 rotate-x-6 hover:rotate-y-0 hover:rotate-x-0 transition-transform duration-1000 overflow-hidden group">
                     
                     {/* Fake Header */}
                     <div className="h-10 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 flex items-center px-4 space-x-2">
@@ -137,11 +122,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
                     </div>
 
                     {/* Fake Map Content */}
-                    <div className="relative h-full bg-zinc-100 dark:bg-zinc-900">
-                         {/* Map Image Underlay */}
+                    <div className="relative h-full bg-zinc-100 dark:bg-zinc-900 overflow-hidden">
+                         {/* Map Image Underlay - Adjusted for Light/Dark visibility */}
                         <img 
                             src="https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=2074&auto=format&fit=crop"
-                            className="absolute inset-0 w-full h-full object-cover opacity-20 mix-blend-screen"
+                            className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500 opacity-50 mix-blend-multiply grayscale dark:opacity-20 dark:mix-blend-screen"
                             alt="City Map"
                         />
                         

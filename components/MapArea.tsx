@@ -136,8 +136,8 @@ const MapArea: React.FC<MapAreaProps> = ({
       // CartoDB Dark Matter (Dark Mode)
       const darkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 20 });
       
-      // CartoDB Voyager (Light Mode - More Colorful/Visible than Positron)
-      const lightLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 20 });
+      // Standard OSM (Light Mode) - High contrast, always reliable
+      const lightLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 });
       
       // Satellite
       const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
@@ -295,14 +295,15 @@ const MapArea: React.FC<MapAreaProps> = ({
     <div className="relative w-full h-full bg-zinc-200 dark:bg-zinc-900 overflow-hidden group transition-colors duration-300">
       
       {!isMapLoaded && (
-          <div className="absolute inset-0 flex items-center justify-center bg-zinc-50 dark:bg-zinc-950 z-10">
+          <div className="absolute inset-0 flex items-center justify-center bg-zinc-50 dark:bg-zinc-950 z-10 pointer-events-none">
               <Loader2 className="animate-spin text-orange-600" size={32} />
           </div>
       )}
 
-      {interactive && isMapLoaded && (
+      {interactive && (
         <>
-            {/* --- CENTRAL COMMAND SEARCH BAR --- */}
+            {/* --- CENTRAL COMMAND SEARCH BAR & CATEGORIES --- */}
+            {/* Always rendered, independent of map load state for UI stability */}
             <div className="absolute top-24 md:top-6 left-1/2 -translate-x-1/2 w-[90%] md:w-[400px] z-[500] transition-all duration-300">
                 <form onSubmit={handleSearch} className="relative group/search">
                     <div className="relative flex items-center bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md shadow-2xl rounded border border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors">
@@ -327,7 +328,7 @@ const MapArea: React.FC<MapAreaProps> = ({
                 )}
 
                 {/* --- FLOATING FILTER PILLS --- */}
-                <div className="mt-3 flex items-center space-x-2 overflow-x-auto no-scrollbar py-1 mask-linear-fade">
+                <div className="mt-3 flex items-center space-x-2 overflow-x-auto no-scrollbar py-1">
                     {PREDEFINED_CATEGORIES.map(cat => (
                         <button
                             key={cat}
