@@ -1,18 +1,9 @@
-import React, { useState } from 'react';
-import { ArrowLeft, TrendingUp, AlertTriangle, MessageSquare, ThumbsUp, ThumbsDown, Minus, Leaf, Download, FileText, Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, TrendingUp, AlertTriangle, MessageSquare, ThumbsUp, ThumbsDown, Minus, Leaf, Download, FileText, Loader2, RefreshCw } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Feedback } from '../types';
 import { generateExecutiveReport } from '../services/geminiService';
-
-// Mock Data for Admin with updated Eco fields
-const MOCK_DATA: Feedback[] = [
-  { id: '1', location: { x: 20, y: 30 }, content: 'More trash cans needed.', sentiment: 'neutral', category: 'Sanitation', timestamp: new Date(), votes: 5, summary: "Need bins", ecoImpactScore: 60, ecoImpactReasoning: "Reduces litter." },
-  { id: '2', location: { x: 55, y: 60 }, content: 'Dangerous pothole.', sentiment: 'negative', category: 'Infrastructure', timestamp: new Date(), votes: 12, summary: "Pothole fix", ecoImpactScore: 10, ecoImpactReasoning: "Safety issue, neutral eco impact." },
-  { id: '3', location: { x: 70, y: 25 }, content: 'Love the mural!', sentiment: 'positive', category: 'Culture', timestamp: new Date(), votes: 20, summary: "Nice mural", ecoImpactScore: 40, ecoImpactReasoning: "Cultural value." },
-  { id: '4', location: { x: 10, y: 10 }, content: 'Street lights are out on Main St.', sentiment: 'negative', category: 'Safety', timestamp: new Date(), votes: 8, summary: "Dark streets", ecoImpactScore: 20, ecoImpactReasoning: "Safety priority." },
-  { id: '5', location: { x: 40, y: 80 }, content: 'Great new bike lane.', sentiment: 'positive', category: 'Infrastructure', timestamp: new Date(), votes: 15, summary: "Good bike lane", ecoImpactScore: 90, ecoImpactReasoning: "Encourages low-carbon transport." },
-  { id: '6', location: { x: 80, y: 50 }, content: 'Bus schedule is unreliable.', sentiment: 'negative', category: 'Transport', timestamp: new Date(), votes: 3, summary: "Late buses", ecoImpactScore: 85, ecoImpactReasoning: "Better transit reduces cars." },
-];
+import { dataService } from '../services/dataService';
 
 const COLORS = {
   positive: '#22c55e', // green-500
@@ -25,41 +16,52 @@ interface AdminDashboardProps {
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
+  const [data, setData] = useState<Feedback[]>([]);
   const [reportText, setReportText] = useState<string | null>(null);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
+  // Load real data
+  useEffect(() => {
+    setData(dataService.getFeedback());
+  }, []);
+
+  const refreshData = () => {
+    setData(dataService.getFeedback());
+  };
+
   // Aggregate data for charts
   const sentimentData = [
-    { name: 'Positive', value: MOCK_DATA.filter(d => d.sentiment === 'positive').length, color: COLORS.positive },
-    { name: 'Neutral', value: MOCK_DATA.filter(d => d.sentiment === 'neutral').length, color: COLORS.neutral },
-    { name: 'Negative', value: MOCK_DATA.filter(d => d.sentiment === 'negative').length, color: COLORS.negative },
+    { name: 'Positive', value: data.filter(d => d.sentiment === 'positive').length, color: COLORS.positive },
+    { name: 'Neutral', value: data.filter(d => d.sentiment === 'neutral').length, color: COLORS.neutral },
+    { name: 'Negative', value: data.filter(d => d.sentiment === 'negative').length, color: COLORS.negative },
   ];
 
   const categoryCount: Record<string, number> = {};
-  MOCK_DATA.forEach(d => {
+  data.forEach(d => {
     categoryCount[d.category] = (categoryCount[d.category] || 0) + 1;
   });
   const categoryData = Object.keys(categoryCount).map(k => ({ name: k, value: categoryCount[k] }));
 
   // Eco Score average
-  const avgEcoScore = Math.round(MOCK_DATA.reduce((acc, curr) => acc + (curr.ecoImpactScore || 0), 0) / MOCK_DATA.length);
+  const avgEcoScore = data.length > 0 
+    ? Math.round(data.reduce((acc, curr) => acc + (curr.ecoImpactScore || 0), 0) / data.length)
+    : 0;
 
   const handleGenerateReport = async () => {
     setIsGeneratingReport(true);
-    const text = await generateExecutiveReport(MOCK_DATA);
+    const text = await generateExecutiveReport(data);
     setReportText(text);
     setIsGeneratingReport(false);
   };
 
   const handleDownloadCSV = () => {
-    const headers = ["ID", "Category", "Sentiment", "Content", "Eco Score", "Risk Score"];
-    const rows = MOCK_DATA.map(f => [
+    const headers = ["ID", "Category", "Sentiment", "Content", "Eco Score"];
+    const rows = data.map(f => [
         f.id, 
         f.category, 
         f.sentiment, 
         `"${f.content.replace(/"/g, '""')}"`, 
-        f.ecoImpactScore || 0,
-        0 // Risk score placeholder
+        f.ecoImpactScore || 0
     ]);
     
     const csvContent = [
@@ -86,6 +88,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
              <h1 className="text-xl font-bold tracking-tight">EchoSphere <span className="text-indigo-400">Admin</span></h1>
           </div>
           <div className="flex items-center space-x-3 text-sm">
+             <button onClick={refreshData} className="p-2 hover:bg-slate-800 rounded-full text-slate-400 hover:text-white transition-colors" title="Refresh Data">
+                <RefreshCw size={18} />
+             </button>
              <button 
                 onClick={handleDownloadCSV}
                 className="flex items-center space-x-2 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border border-slate-700 transition-colors text-slate-300"
@@ -106,7 +111,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-slate-500">Total Feedback</p>
-                  <p className="text-3xl font-bold text-slate-800">{MOCK_DATA.length}</p>
+                  <p className="text-3xl font-bold text-slate-800">{data.length}</p>
                 </div>
                 <div className="p-3 bg-indigo-50 rounded-lg text-indigo-600">
                   <MessageSquare size={24} />
@@ -129,7 +134,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
                 <div>
                   <p className="text-sm font-medium text-slate-500">Positive Sentiment</p>
                   <p className="text-3xl font-bold text-slate-800">
-                    {Math.round((sentimentData[0].value / MOCK_DATA.length) * 100)}%
+                    {data.length > 0 ? Math.round((sentimentData[0].value / data.length) * 100) : 0}%
                   </p>
                 </div>
                 <div className="p-3 bg-green-50 rounded-lg text-green-600">
@@ -141,7 +146,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
                <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-slate-500">Critical Issues</p>
-                  <p className="text-3xl font-bold text-slate-800">2</p>
+                  <p className="text-3xl font-bold text-slate-800">{data.filter(d => d.riskScore && d.riskScore > 80).length}</p>
                 </div>
                 <div className="p-3 bg-red-50 rounded-lg text-red-600">
                   <AlertTriangle size={24} />
@@ -232,10 +237,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center">
               <h2 className="text-lg font-bold text-slate-800">Recent AI-Analyzed Feedback</h2>
-              <button className="text-indigo-600 text-sm font-medium hover:text-indigo-700">View All</button>
+              <button onClick={refreshData} className="text-indigo-600 text-sm font-medium hover:text-indigo-700">Refresh List</button>
             </div>
             <div className="divide-y divide-slate-100">
-              {MOCK_DATA.map((item) => (
+              {data.slice(0, 10).map((item) => (
                 <div key={item.id} className="p-4 hover:bg-slate-50 transition-colors flex items-start space-x-4">
                   <div className={`mt-1 p-2 rounded-full flex-shrink-0 ${
                     item.sentiment === 'positive' ? 'bg-green-100 text-green-600' :

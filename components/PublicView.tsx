@@ -1,30 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Plus } from 'lucide-react';
 import MapArea from './MapArea';
 import FeedbackModal from './FeedbackModal';
 import { Feedback, Location } from '../types';
-
-// Initial Mock Data
-const MOCK_FEEDBACK: Feedback[] = [
-  { id: '1', location: { x: 20, y: 30 }, content: 'The park is beautiful but needs more trash cans.', sentiment: 'neutral', category: 'Sanitation', timestamp: new Date(), votes: 5 },
-  { id: '2', location: { x: 55, y: 60 }, content: 'Dangerous pothole here! Nearly crashed my bike.', sentiment: 'negative', category: 'Infrastructure', timestamp: new Date(), votes: 12 },
-  { id: '3', location: { x: 70, y: 25 }, content: 'Love the new mural downtown!', sentiment: 'positive', category: 'Culture', timestamp: new Date(), votes: 20 },
-];
+import { dataService } from '../services/dataService';
 
 interface PublicViewProps {
   onBack: () => void;
 }
 
 const PublicView: React.FC<PublicViewProps> = ({ onBack }) => {
-  const [feedbackList, setFeedbackList] = useState<Feedback[]>(MOCK_FEEDBACK);
+  const [feedbackList, setFeedbackList] = useState<Feedback[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
+
+  // Load data from "backend" (localStorage) on mount
+  useEffect(() => {
+    setFeedbackList(dataService.getFeedback());
+  }, []);
 
   const handleMapClick = (loc: Location) => {
     setSelectedLocation(loc);
   };
 
   const handleFeedbackSubmit = (newFeedback: Feedback) => {
-    setFeedbackList((prev) => [...prev, newFeedback]);
+    // Save to "backend"
+    const updatedList = dataService.saveFeedback(newFeedback);
+    setFeedbackList(updatedList);
     setSelectedLocation(null);
   };
 
@@ -63,7 +64,7 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack }) => {
             <div className="bg-indigo-500 p-1.5 rounded-full">
                 <Plus size={16} />
             </div>
-            <span className="text-sm font-medium">Click anywhere on the map to add a feedback pin</span>
+            <span className="text-sm font-medium">Click map to add pin</span>
         </div>
       </div>
 

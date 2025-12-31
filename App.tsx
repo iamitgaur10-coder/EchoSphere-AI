@@ -1,16 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout, MapPin, Globe2, Sparkles, Building2 } from 'lucide-react';
 import PublicView from './components/PublicView';
 import AdminDashboard from './components/AdminDashboard';
 import Wizard from './components/Wizard';
 import { ViewState, AccountSetup } from './types';
+import { dataService } from './services/dataService';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('landing');
   const [account, setAccount] = useState<AccountSetup | null>(null);
 
+  // Load account from "backend" on start
+  useEffect(() => {
+    const storedAccount = dataService.getAccount();
+    if (storedAccount) {
+      setAccount(storedAccount);
+    }
+  }, []);
+
   const handleProvision = (config: AccountSetup) => {
     console.log("Provisioning Tenant:", config);
+    dataService.saveAccount(config);
     setAccount(config);
     // After provisioning, go to Admin to see the "dashboard" for this new tenant
     setCurrentView('admin');

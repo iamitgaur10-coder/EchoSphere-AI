@@ -1,6 +1,8 @@
-import React, { useState, useRef } from 'react';
-import { MapPin, Box, Layers } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Box, Layers, Loader2 } from 'lucide-react';
 import { Location, Feedback } from '../types';
+
+declare var google: any;
 
 interface MapAreaProps {
   feedbackList: Feedback[];
@@ -8,100 +10,149 @@ interface MapAreaProps {
   interactive?: boolean;
 }
 
+// Default Center (New York City)
+const DEFAULT_CENTER = { lat: 40.7128, lng: -74.0060 };
+
 const MapArea: React.FC<MapAreaProps> = ({ feedbackList, onMapClick, interactive = true }) => {
   const mapRef = useRef<HTMLDivElement>(null);
+  const [mapInstance, setMapInstance] = useState<any | null>(null);
   const [is3DMode, setIs3DMode] = useState(false);
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const markersRef = useRef<any[]>([]);
 
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!interactive || !mapRef.current) return;
+  // Initialize Map
+  useEffect(() => {
+    if (!mapRef.current) return;
     
-    // We only allow clicking in 2D mode for accuracy, or we need to account for transform
-    // For MVP, simplifying to 2D click only or approximate
-    const rect = mapRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    const checkGoogle = setInterval(() => {
+        if ((window as any).google) {
+            clearInterval(checkGoogle);
+            initMap();
+        }
+    }, 100);
     
-    onMapClick({ x, y });
+    return () => clearInterval(checkGoogle);
+  }, []);
+
+  const initMap = () => {
+      // Access google from global scope (declared as any) or window
+      if (!google) return;
+
+      const map = new google.maps.Map(mapRef.current as HTMLElement, {
+          center: DEFAULT_CENTER,
+          zoom: 17, // High zoom for 3D effect
+          mapId: 'DEMO_MAP_ID', // Required for some advanced features
+          disableDefaultUI: false,
+          mapTypeId: 'satellite',
+          heading: 0,
+          tilt: 0,
+      });
+
+      map.addListener('click', (e: any) => {
+          if (!interactive) return;
+          const lat = e.latLng.lat();
+          const lng = e.latLng.lng();
+          // We treat Location type as {x: lng, y: lat} for Real Maps, 
+          // though types.ts says 0-100, we overload it here for the Real Map implementation
+          onMapClick({ x: lng, y: lat }); 
+      });
+
+      setMapInstance(map);
+      setIsMapLoaded(true);
   };
 
-  return (
-    <div className="relative w-full h-full bg-slate-100 overflow-hidden perspective-1000">
+  // Handle 3D Toggle
+  useEffect(() => {
+      if (!mapInstance) return;
       
+      if (is3DMode) {
+          mapInstance.setTilt(45);
+          mapInstance.setHeading(90);
+          mapInstance.setMapTypeId('hybrid');
+      } else {
+          mapInstance.setTilt(0);
+          mapInstance.setHeading(0);
+          mapInstance.setMapTypeId('roadmap');
+      }
+  }, [is3DMode, mapInstance]);
+
+  // Handle Markers
+  useEffect(() => {
+      if (!mapInstance || !google) return;
+
+      // Clear existing markers
+      markersRef.current.forEach(m => m.setMap(null));
+      markersRef.current = [];
+
+      // Add new markers
+      feedbackList.forEach(fb => {
+          // Check if location is real geo (lat/lng) or legacy percentage
+          // If x is small (< 100) and y is small (< 100), it's percentage data from old mock.
+          // We map old mock data to NYC area for demo purposes if needed, or skip.
+          let lat = fb.location.y;
+          let lng = fb.location.x;
+
+          // Simple heuristic: if it looks like percentage, project it to NYC
+          if (Math.abs(lat) <= 100 && Math.abs(lng) <= 100) {
+              lat = DEFAULT_CENTER.lat + (fb.location.y - 50) * 0.0001;
+              lng = DEFAULT_CENTER.lng + (fb.location.x - 50) * 0.0001;
+          }
+
+          const marker = new google.maps.Marker({
+              position: { lat, lng },
+              map: mapInstance,
+              title: fb.category,
+              animation: google.maps.Animation.DROP,
+              // Color coding markers based on sentiment?
+              // Standard API markers are red, but we could use custom icons. 
+              // For MVP keeping standard.
+          });
+          
+          // Add info window
+          const infoWindow = new google.maps.InfoWindow({
+              content: `
+                <div style="color: black; padding: 4px;">
+                    <h3 style="font-weight: bold;">${fb.category}</h3>
+                    <p>${fb.content}</p>
+                    <small>Sentiment: ${fb.sentiment}</small>
+                </div>
+              `
+          });
+
+          marker.addListener('click', () => {
+              infoWindow.open(mapInstance, marker);
+          });
+
+          markersRef.current.push(marker);
+      });
+
+  }, [feedbackList, mapInstance]);
+
+  return (
+    <div className="relative w-full h-full bg-slate-100 overflow-hidden">
+      
+      {/* Loading State */}
+      {!isMapLoaded && (
+          <div className="absolute inset-0 flex items-center justify-center bg-slate-100 z-10">
+              <div className="flex flex-col items-center space-y-2">
+                 <Loader2 className="animate-spin text-indigo-600" size={32} />
+                 <p className="text-sm text-slate-500">Connecting to Google Maps...</p>
+              </div>
+          </div>
+      )}
+
       {/* 3D Toggle Control */}
-      {interactive && (
+      {interactive && isMapLoaded && (
         <button 
           onClick={(e) => { e.stopPropagation(); setIs3DMode(!is3DMode); }}
-          className="absolute top-4 right-4 z-20 bg-white/90 p-2 rounded-lg shadow-md hover:bg-white text-slate-700 font-medium text-xs flex items-center space-x-2 border border-slate-200"
+          className="absolute top-4 right-16 z-20 bg-white/90 p-2 rounded-lg shadow-md hover:bg-white text-slate-700 font-medium text-xs flex items-center space-x-2 border border-slate-200"
         >
           {is3DMode ? <Layers size={16} /> : <Box size={16} />}
-          <span>{is3DMode ? "2D Map" : "3D View"}</span>
+          <span>{is3DMode ? "2D Map" : "3D Mode"}</span>
         </button>
       )}
 
-      <div 
-        ref={mapRef}
-        onClick={handleClick}
-        className={`relative w-full h-full bg-slate-200 transition-transform duration-700 ease-in-out transform-style-3d shadow-2xl ${
-          is3DMode ? 'rotate-x-45 scale-75 origin-center translate-y-12' : ''
-        } ${interactive ? 'cursor-crosshair' : 'cursor-default'}`}
-      >
-        {/* Background Map Placeholder */}
-        <img 
-          src="https://picsum.photos/1200/800?grayscale&blur=2" 
-          alt="City Map" 
-          className="w-full h-full object-cover opacity-60 mix-blend-multiply pointer-events-none"
-        />
-        
-        {/* Grid overlay for tech feel */}
-        <div className="absolute inset-0 opacity-10 pointer-events-none" 
-          style={{ 
-            backgroundImage: 'linear-gradient(to right, #64748b 1px, transparent 1px), linear-gradient(to bottom, #64748b 1px, transparent 1px)',
-            backgroundSize: '40px 40px'
-          }} 
-        />
-
-        {/* Existing Pins */}
-        {feedbackList.map((fb) => (
-          <div
-            key={fb.id}
-            className={`absolute transform -translate-x-1/2 -translate-y-full hover:z-10 transition-all duration-200 ${is3DMode ? 'hover:-translate-y-[120%]' : ''}`}
-            style={{ 
-                left: `${fb.location.x}%`, 
-                top: `${fb.location.y}%`,
-                // In 3D mode, we make pins stand up by rotating them opposite to the map tilt
-                transform: is3DMode 
-                    ? 'translate(-50%, -100%) rotateX(-45deg) scale(1.5)' 
-                    : 'translate(-50%, -100%)'
-            }}
-          >
-            <div className="group/pin relative">
-              <MapPin 
-                size={32} 
-                className={`drop-shadow-lg ${
-                  fb.sentiment === 'positive' ? 'text-green-500' :
-                  fb.sentiment === 'negative' ? 'text-red-500' : 'text-yellow-500'
-                }`}
-                fill="currentColor"
-              />
-              
-              {/* Tooltip */}
-              <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-white text-slate-800 text-xs p-2 rounded shadow-xl opacity-0 group-hover/pin:opacity-100 transition-opacity pointer-events-none z-20 ${is3DMode ? 'hidden' : ''}`}>
-                <p className="font-bold">{fb.category}</p>
-                <p className="line-clamp-2">{fb.content}</p>
-                <div className="mt-1 flex justify-between text-[10px] text-slate-500">
-                  <span>{new Date(fb.timestamp).toLocaleDateString()}</span>
-                  <span className="capitalize">{fb.sentiment}</span>
-                </div>
-              </div>
-            </div>
-            
-            {/* Pulse effect on ground in 3D */}
-            {is3DMode && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 w-4 h-4 bg-white/50 rounded-full animate-ping -mt-1"></div>
-            )}
-          </div>
-        ))}
-      </div>
+      <div ref={mapRef} className="w-full h-full" />
     </div>
   );
 };

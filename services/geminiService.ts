@@ -1,19 +1,18 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { AnalysisResponse, Feedback } from '../types';
 
-// NOTE: This assumes process.env.API_KEY is available in the build environment.
-const apiKey = process.env.API_KEY || 'YOUR_API_KEY_HERE';
-const ai = new GoogleGenAI({ apiKey });
+// Using the provided API Key from environment variable
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const analyzeFeedbackContent = async (text: string): Promise<AnalysisResponse> => {
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-3-flash-preview', // Switching to 3-flash-preview per guidelines
       contents: `Analyze the following public feedback for a city planning tool. 
       
       Tasks:
       1. Identify sentiment (positive/negative/neutral).
-      2. Categorize the topic (Infrastructure, Safety, Recreation, Traffic, Sanitation, Sustainability).
+      2. Categorize the topic (Infrastructure, Safety, Recreation, Traffic, Sanitation, Sustainability, Culture).
       3. Provide a 5-10 word summary.
       4. Assign a Risk Score (0-100, 100=urgent).
       5. Assign an Eco-Impact Score (0-100) assessing if this suggestion helps the environment (e.g. planting trees = high, more parking = low).
