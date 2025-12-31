@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Layers, Loader2 } from 'lucide-react';
+import { Box, Layers, Loader2, Locate, Navigation } from 'lucide-react';
 import { Location, Feedback } from '../types';
 
 declare var L: any;
@@ -10,7 +10,7 @@ interface MapAreaProps {
   interactive?: boolean;
 }
 
-// Default Center (New York City)
+// Default Center (New York City) - Fallback
 const DEFAULT_CENTER = [40.7128, -74.0060];
 
 const MapArea: React.FC<MapAreaProps> = ({ feedbackList, onMapClick, interactive = true }) => {
@@ -19,6 +19,8 @@ const MapArea: React.FC<MapAreaProps> = ({ feedbackList, onMapClick, interactive
   const [layers, setLayers] = useState<any | null>(null);
   const [isSatellite, setIsSatellite] = useState(false);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+  const userLocationMarkerRef = useRef<any | null>(null);
   const markersRef = useRef<any[]>([]);
 
   // Initialize Leaflet Map
@@ -41,7 +43,7 @@ const MapArea: React.FC<MapAreaProps> = ({ feedbackList, onMapClick, interactive
 
       const map = L.map(mapRef.current, {
         center: DEFAULT_CENTER,
-        zoom: 16,
+        zoom: 13, // Start slightly zoomed out
         zoomControl: false
       });
 
@@ -70,13 +72,51 @@ const MapArea: React.FC<MapAreaProps> = ({ feedbackList, onMapClick, interactive
           onMapClick({ x: lng, y: lat });
       });
 
+      // Location Found Handler
+      map.on('locationfound', (e: any) => {
+        const radius = e.accuracy / 2;
+        
+        if (userLocationMarkerRef.current) {
+            map.removeLayer(userLocationMarkerRef.current);
+        }
+
+        const userIcon = L.divIcon({
+            html: '<div class="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg pulse-ring"></div>',
+            className: 'user-location-marker',
+            iconSize: [16, 16],
+            iconAnchor: [8, 8]
+        });
+
+        const marker = L.marker(e.latlng, { icon: userIcon }).addTo(map);
+        marker.bindPopup(`You are within ${Math.round(radius)} meters from this point`).openPopup();
+        
+        userLocationMarkerRef.current = marker;
+        setIsLocating(false);
+      });
+
+      map.on('locationerror', (e: any) => {
+          console.warn("Location access denied", e.message);
+          setIsLocating(false);
+      });
+
       setMapInstance(map);
       setIsMapLoaded(true);
 
       // Fix for Leaflet partial rendering issues on load
       setTimeout(() => {
         map.invalidateSize();
-      }, 200);
+        // Auto-locate on load if interactive
+        if (interactive) {
+            map.locate({ setView: true, maxZoom: 16 });
+        }
+      }, 500);
+  };
+
+  const handleManualLocate = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!mapInstance) return;
+    setIsLocating(true);
+    mapInstance.locate({ setView: true, maxZoom: 16 });
   };
 
   // Handle Layer Toggle
@@ -102,10 +142,12 @@ const MapArea: React.FC<MapAreaProps> = ({ feedbackList, onMapClick, interactive
 
       // Add new markers
       feedbackList.forEach(fb => {
+          // Standard: y is Latitude, x is Longitude
           let lat = fb.location.y;
           let lng = fb.location.x;
 
-          // Legacy percent-based data support logic (simple projection)
+          // Legacy percent-based data support logic (simple projection fallback)
+          // Only applies if coordinates look like percentages (0-100)
           if (Math.abs(lat) <= 100 && Math.abs(lng) <= 100) {
               lat = DEFAULT_CENTER[0] + (fb.location.y - 50) * 0.0001;
               lng = DEFAULT_CENTER[1] + (fb.location.x - 50) * 0.0001;
@@ -126,7 +168,11 @@ const MapArea: React.FC<MapAreaProps> = ({ feedbackList, onMapClick, interactive
               border-radius: 50%;
               border: 2px solid white;
               box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            "></div>
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            ">
+            </div>
           `;
 
           const customIcon = L.divIcon({
@@ -143,17 +189,20 @@ const MapArea: React.FC<MapAreaProps> = ({ feedbackList, onMapClick, interactive
             <div style="min-width: 200px; font-family: sans-serif;">
                 <div style="font-weight: bold; margin-bottom: 4px; color: #1e293b;">${fb.category}</div>
                 <div style="font-size: 13px; color: #475569; margin-bottom: 8px;">${fb.content}</div>
-                <div style="
-                    display: inline-block;
-                    padding: 2px 8px;
-                    border-radius: 9999px;
-                    font-size: 10px;
-                    font-weight: 600;
-                    text-transform: uppercase;
-                    background-color: ${fb.sentiment === 'positive' ? '#dcfce7' : fb.sentiment === 'negative' ? '#fee2e2' : '#fef9c3'};
-                    color: ${fb.sentiment === 'positive' ? '#166534' : fb.sentiment === 'negative' ? '#991b1b' : '#854d0e'};
-                ">
-                    ${fb.sentiment}
+                <div style="display:flex; align-items:center; justify-content:space-between;">
+                    <div style="
+                        display: inline-block;
+                        padding: 2px 8px;
+                        border-radius: 9999px;
+                        font-size: 10px;
+                        font-weight: 600;
+                        text-transform: uppercase;
+                        background-color: ${fb.sentiment === 'positive' ? '#dcfce7' : fb.sentiment === 'negative' ? '#fee2e2' : '#fef9c3'};
+                        color: ${fb.sentiment === 'positive' ? '#166534' : fb.sentiment === 'negative' ? '#991b1b' : '#854d0e'};
+                    ">
+                        ${fb.sentiment}
+                    </div>
+                    <div style="font-size: 10px; color: #94a3b8;">${new Date(fb.timestamp).toLocaleDateString()}</div>
                 </div>
             </div>
           `;
@@ -177,18 +226,42 @@ const MapArea: React.FC<MapAreaProps> = ({ feedbackList, onMapClick, interactive
           </div>
       )}
 
-      {/* Layer Toggle Control */}
+      {/* Map Controls */}
       {interactive && isMapLoaded && (
-        <button 
-          onClick={(e) => { e.stopPropagation(); setIsSatellite(!isSatellite); }}
-          className="absolute top-4 right-4 z-[500] bg-white/90 p-2 rounded-lg shadow-md hover:bg-white text-slate-700 font-medium text-xs flex items-center space-x-2 border border-slate-200"
-        >
-          {isSatellite ? <Layers size={16} /> : <Box size={16} />}
-          <span>{isSatellite ? "Street View" : "Satellite"}</span>
-        </button>
+        <div className="absolute top-4 right-4 z-[500] flex flex-col space-y-2">
+            
+            {/* Locate Me */}
+            <button 
+                onClick={handleManualLocate}
+                className="bg-white/90 p-2.5 rounded-lg shadow-md hover:bg-white text-slate-700 hover:text-indigo-600 transition-colors border border-slate-200"
+                title="Use My Location"
+            >
+                {isLocating ? <Loader2 size={20} className="animate-spin" /> : <Navigation size={20} className={userLocationMarkerRef.current ? "fill-indigo-500 text-indigo-600" : ""} />}
+            </button>
+
+            {/* View Toggle */}
+            <button 
+                onClick={(e) => { e.stopPropagation(); setIsSatellite(!isSatellite); }}
+                className="bg-white/90 p-2.5 rounded-lg shadow-md hover:bg-white text-slate-700 hover:text-indigo-600 transition-colors border border-slate-200"
+                title="Toggle Satellite View"
+            >
+                {isSatellite ? <Layers size={20} /> : <Box size={20} />}
+            </button>
+        </div>
       )}
 
       <div ref={mapRef} className="w-full h-full z-0" />
+      <style>{`
+        .pulse-ring {
+            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+            animation: pulse-blue 2s infinite;
+        }
+        @keyframes pulse-blue {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+      `}</style>
     </div>
   );
 };
