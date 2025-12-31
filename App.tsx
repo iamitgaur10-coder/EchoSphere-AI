@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle, AlertCircle } from 'lucide-react';
+import { X, CheckCircle, AlertCircle, Terminal } from 'lucide-react';
 import PublicView from './components/PublicView';
 import AdminDashboard from './components/AdminDashboard';
 import Wizard from './components/Wizard';
@@ -20,10 +20,10 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
     }, [onClose]);
 
     return (
-        <div className={`fixed bottom-6 right-6 z-[9999] flex items-center space-x-3 px-4 py-3 rounded-lg shadow-2xl backdrop-blur-md animate-fade-in-up transition-all border ${type === 'success' ? 'bg-slate-900/90 text-white border-green-500/30' : 'bg-red-900/90 text-white border-red-500/30'}`}>
-            {type === 'success' ? <CheckCircle size={18} className="text-green-400" /> : <AlertCircle size={18} className="text-red-400" />}
-            <p className="text-sm font-medium">{message}</p>
-            <button onClick={onClose} className="ml-4 opacity-70 hover:opacity-100"><X size={14} /></button>
+        <div className={`fixed bottom-6 right-6 z-[9999] flex items-center space-x-3 px-4 py-3 rounded border backdrop-blur-md animate-fade-in-up transition-all font-mono text-xs shadow-2xl ${type === 'success' ? 'bg-zinc-900/90 text-zinc-200 border-green-500/30' : 'bg-zinc-900/90 text-red-200 border-red-500/30'}`}>
+            {type === 'success' ? <CheckCircle size={14} className="text-green-500" /> : <AlertCircle size={14} className="text-red-500" />}
+            <p className="uppercase tracking-wide">{message}</p>
+            <button onClick={onClose} className="ml-4 opacity-70 hover:opacity-100 hover:text-white"><X size={12} /></button>
         </div>
     );
 };
@@ -69,9 +69,9 @@ const App: React.FC = () => {
         setIsAuthenticated(true);
         setShowLogin(false);
         setCurrentView(pendingView);
-        showToast("Authenticated as Administrator");
+        showToast("ACCESS_GRANTED: ADMIN_LEVEL_1");
     } else {
-        showToast("Invalid Password (Try 'admin')", 'error');
+        showToast("ACCESS_DENIED: INVALID_CREDENTIALS", 'error');
     }
   };
 
@@ -79,7 +79,7 @@ const App: React.FC = () => {
     dataService.saveAccount(config);
     setAccount(config);
     setCurrentView('admin');
-    showToast(`Tenant "${config.organizationName}" provisioned successfully!`);
+    showToast(`TENANT_PROVISIONED: ${config.organizationName.toUpperCase()}`);
   };
 
   const renderView = () => {
@@ -104,7 +104,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="font-sans antialiased text-slate-900">
+    <div className="font-sans antialiased bg-zinc-950 text-zinc-200 min-h-screen selection:bg-orange-500 selection:text-white">
         {renderView()}
         
         {toast && <Toast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
@@ -112,34 +112,40 @@ const App: React.FC = () => {
         {/* Global Admin Login Modal (Triggered by Landing Page) */}
         {showLogin && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in-up">
-                <div className="bg-slate-900 border border-slate-800 text-white rounded-xl shadow-2xl p-6 w-full max-w-xs">
-                    <div className="text-center mb-6">
-                        <h3 className="text-lg font-bold">Admin Access</h3>
-                        <p className="text-xs text-slate-500">Security Level 1</p>
+                <div className="bg-zinc-950 border border-zinc-800 text-zinc-200 rounded-lg shadow-2xl p-8 w-full max-w-sm relative overflow-hidden">
+                    {/* Decorative Scanner Line */}
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-orange-500 to-transparent opacity-50"></div>
+                    
+                    <div className="text-center mb-8">
+                        <div className="mx-auto w-12 h-12 bg-zinc-900 border border-zinc-800 rounded-lg flex items-center justify-center mb-4 text-orange-500">
+                             <Terminal size={24} />
+                        </div>
+                        <h3 className="text-xl font-display font-bold text-white tracking-tight">System Access</h3>
+                        <p className="text-xs font-mono text-zinc-500 mt-2">AUTHENTICATION_REQUIRED</p>
                     </div>
-                    <form onSubmit={handleLogin} className="space-y-3">
+                    <form onSubmit={handleLogin} className="space-y-4">
                         <div>
                             <input 
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                placeholder="Password"
-                                className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none text-sm"
+                                placeholder="ENTER_PASSPHRASE"
+                                className="w-full p-3 bg-black border border-zinc-800 rounded focus:border-orange-500 outline-none text-sm font-mono text-center placeholder-zinc-700 transition-colors text-white"
                                 autoFocus
                             />
                         </div>
                         <button 
                             type="submit"
-                            className="w-full py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-500 transition-colors"
+                            className="w-full py-3 bg-zinc-100 hover:bg-white text-black font-display font-bold text-sm tracking-wide rounded uppercase transition-all"
                         >
-                            Login
+                            Authenticate
                         </button>
                         <button 
                             type="button"
                             onClick={() => setShowLogin(false)}
-                            className="w-full py-2 text-slate-500 hover:text-slate-400 text-xs"
+                            className="w-full py-2 text-zinc-600 hover:text-zinc-400 text-xs font-mono uppercase tracking-wider"
                         >
-                            Cancel
+                            [Cancel_Request]
                         </button>
                     </form>
                 </div>

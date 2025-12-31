@@ -16,15 +16,15 @@ interface MapAreaProps {
 
 const DEFAULT_CENTER = [40.7128, -74.0060];
 
-// Category styling map
+// Category styling map (Neon/Cyberpunk colors)
 const CATEGORY_STYLES: Record<string, { color: string, icon: React.ReactNode }> = {
-  'Sanitation': { color: '#ef4444', icon: <Trash2 size={14} color="white" /> },
-  'Infrastructure': { color: '#f97316', icon: <HardHat size={14} color="white" /> },
-  'Safety': { color: '#dc2626', icon: <ShieldAlert size={14} color="white" /> },
-  'Traffic': { color: '#6366f1', icon: <Car size={14} color="white" /> },
-  'Sustainability': { color: '#22c55e', icon: <Leaf size={14} color="white" /> },
-  'Culture': { color: '#db2777', icon: <Palette size={14} color="white" /> },
-  'General': { color: '#64748b', icon: <HelpCircle size={14} color="white" /> }
+  'Sanitation': { color: '#ef4444', icon: <Trash2 size={14} color="black" /> }, // Red
+  'Infrastructure': { color: '#f97316', icon: <HardHat size={14} color="black" /> }, // Orange
+  'Safety': { color: '#eab308', icon: <ShieldAlert size={14} color="black" /> }, // Yellow
+  'Traffic': { color: '#3b82f6', icon: <Car size={14} color="black" /> }, // Blue
+  'Sustainability': { color: '#22c55e', icon: <Leaf size={14} color="black" /> }, // Green
+  'Culture': { color: '#d946ef', icon: <Palette size={14} color="black" /> }, // Fuchsia
+  'General': { color: '#94a3b8', icon: <HelpCircle size={14} color="black" /> } // Slate
 };
 
 const MapArea: React.FC<MapAreaProps> = ({ 
@@ -84,11 +84,11 @@ const MapArea: React.FC<MapAreaProps> = ({
         const centerIcon = L.divIcon({
             html: `
                 <div class="relative flex items-center justify-center">
-                    <div class="absolute w-12 h-12 bg-indigo-500/20 rounded-full animate-ping"></div>
-                    <div class="relative z-10 text-indigo-600 drop-shadow-xl">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" stroke="white" stroke-width="2">
+                    <div class="absolute w-12 h-12 bg-orange-500/20 rounded-full animate-ping"></div>
+                    <div class="relative z-10 text-orange-500 drop-shadow-[0_0_10px_rgba(249,115,22,0.5)]">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" stroke="black" stroke-width="1">
                             <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-                            <circle cx="12" cy="9" r="2.5" fill="white"/>
+                            <circle cx="12" cy="9" r="2.5" fill="black"/>
                         </svg>
                     </div>
                 </div>
@@ -109,11 +109,11 @@ const MapArea: React.FC<MapAreaProps> = ({
         center: initialCenter,
         zoom: 13,
         zoomControl: false,
-        attributionControl: false // Cleaner look
+        attributionControl: false
       });
 
-      // High-quality CartoDB Voyager tiles (Clean, modern look)
-      const streetLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      // CartoDB Dark Matter Tiles for the "OS" look
+      const streetLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png', {
           maxZoom: 20
       });
 
@@ -133,7 +133,7 @@ const MapArea: React.FC<MapAreaProps> = ({
         if (userLocationMarkerRef.current) map.removeLayer(userLocationMarkerRef.current);
 
         const userIcon = L.divIcon({
-            html: '<div class="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg pulse-ring"></div>',
+            html: '<div class="w-4 h-4 bg-orange-500 rounded-full border border-zinc-900 shadow-[0_0_15px_rgba(249,115,22,0.8)]"></div>',
             className: 'user-location-marker',
             iconSize: [16, 16],
             iconAnchor: [8, 8]
@@ -220,7 +220,7 @@ const MapArea: React.FC<MapAreaProps> = ({
 
           const iconHtml = `
             <div class="relative group">
-                <div style="background-color: ${style.color}" class="w-8 h-8 rounded-full border-2 border-white shadow-lg flex items-center justify-center transform transition-transform group-hover:scale-110">
+                <div style="background-color: ${style.color}" class="w-8 h-8 rounded-full border border-black shadow-[0_0_10px_${style.color}80] flex items-center justify-center transform transition-transform group-hover:scale-110">
                     ${iconString}
                 </div>
                 <div style="border-top-color: ${style.color}" class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px]"></div>
@@ -238,20 +238,22 @@ const MapArea: React.FC<MapAreaProps> = ({
           const marker = L.marker([lat, lng], { icon: customIcon }).addTo(mapInstance);
           
           const popupContent = `
-            <div class="font-sans min-w-[200px]">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-xs font-bold uppercase tracking-wide text-slate-500">${fb.category}</span>
-                    <span class="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-500">${new Date(fb.timestamp).toLocaleDateString()}</span>
+            <div class="font-sans min-w-[200px] bg-zinc-950 text-zinc-200 p-1">
+                <div class="flex items-center justify-between mb-2 pb-2 border-b border-zinc-800">
+                    <span class="text-[10px] font-mono font-bold uppercase tracking-wide text-zinc-500">${fb.category}</span>
+                    <span class="text-[10px] bg-zinc-900 px-1.5 py-0.5 rounded text-zinc-500 border border-zinc-800">${new Date(fb.timestamp).toLocaleDateString()}</span>
                 </div>
-                <div class="text-sm text-slate-800 font-medium mb-2 leading-snug">"${fb.content}"</div>
+                <div class="text-xs text-white font-medium mb-3 leading-snug">"${fb.content}"</div>
                 <div class="flex items-center space-x-2">
-                    <div class="h-2 w-2 rounded-full ${fb.sentiment === 'positive' ? 'bg-green-500' : fb.sentiment === 'negative' ? 'bg-red-500' : 'bg-yellow-500'}"></div>
-                    <span class="text-xs text-slate-600 capitalize">${fb.sentiment}</span>
+                    <div class="h-1.5 w-1.5 rounded-full ${fb.sentiment === 'positive' ? 'bg-green-500' : fb.sentiment === 'negative' ? 'bg-red-500' : 'bg-yellow-500'}"></div>
+                    <span class="text-[10px] text-zinc-400 capitalize font-mono">${fb.sentiment}</span>
                 </div>
             </div>
           `;
 
-          marker.bindPopup(popupContent);
+          marker.bindPopup(popupContent, {
+             className: 'dark-popup'
+          });
           markersRef.current.push(marker);
       });
 
@@ -261,11 +263,11 @@ const MapArea: React.FC<MapAreaProps> = ({
   const categories = ['All', ...Array.from(new Set(feedbackList.map(f => f.category)))];
 
   return (
-    <div className="relative w-full h-full bg-slate-100 overflow-hidden group">
+    <div className="relative w-full h-full bg-zinc-900 overflow-hidden group">
       
       {!isMapLoaded && (
-          <div className="absolute inset-0 flex items-center justify-center bg-slate-50 z-10">
-              <Loader2 className="animate-spin text-indigo-600" size={32} />
+          <div className="absolute inset-0 flex items-center justify-center bg-zinc-950 z-10">
+              <Loader2 className="animate-spin text-orange-600" size={32} />
           </div>
       )}
 
@@ -274,25 +276,24 @@ const MapArea: React.FC<MapAreaProps> = ({
             {/* --- CENTRAL COMMAND SEARCH BAR --- */}
             <div className="absolute top-24 md:top-6 left-1/2 -translate-x-1/2 w-[90%] md:w-[400px] z-[500] transition-all duration-300">
                 <form onSubmit={handleSearch} className="relative group/search">
-                    <div className={`absolute inset-0 bg-white/40 rounded-full blur-md transition-opacity ${isSearching ? 'opacity-100' : 'opacity-0'}`}></div>
-                    <div className="relative flex items-center bg-white/90 backdrop-blur-md shadow-xl rounded-full border border-white/50 transition-all hover:bg-white hover:scale-[1.02] focus-within:scale-[1.02] focus-within:ring-2 focus-within:ring-indigo-500/20">
-                        <Search className="ml-4 text-slate-400" size={18} />
+                    <div className="relative flex items-center bg-zinc-900/90 backdrop-blur-md shadow-2xl rounded border border-zinc-700 hover:border-zinc-600 transition-colors">
+                        <Search className="ml-4 text-zinc-500" size={14} />
                         <input 
                             type="text" 
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Search city, neighborhood, or landmark..."
-                            className={`w-full py-3 px-3 bg-transparent outline-none text-slate-800 placeholder-slate-400 text-sm`}
+                            placeholder="SEARCH_LOCUS..."
+                            className={`w-full py-3 px-3 bg-transparent outline-none text-zinc-200 placeholder-zinc-600 text-xs font-mono uppercase`}
                         />
                         {searchQuery && (
-                            <button type="button" onClick={() => setSearchQuery('')} className="p-2 mr-1 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100"><X size={14} /></button>
+                            <button type="button" onClick={() => setSearchQuery('')} className="p-2 mr-1 text-zinc-500 hover:text-zinc-300"><X size={12} /></button>
                         )}
-                        {isSearching && <Loader2 size={16} className="mr-4 animate-spin text-indigo-500" />}
+                        {isSearching && <Loader2 size={14} className="mr-4 animate-spin text-orange-500" />}
                     </div>
                 </form>
                 {searchError && (
-                    <div className="absolute top-full mt-2 left-0 right-0 bg-red-50 text-red-600 text-xs py-2 px-4 rounded-lg shadow-lg text-center animate-fade-in-up border border-red-100">
-                        Location not found. Try a broader search.
+                    <div className="absolute top-full mt-2 left-0 right-0 bg-red-900/50 border border-red-500/30 text-red-200 text-xs py-2 px-4 rounded text-center animate-fade-in-up font-mono">
+                        ERR_LOC_NOT_FOUND
                     </div>
                 )}
 
@@ -302,10 +303,10 @@ const MapArea: React.FC<MapAreaProps> = ({
                         <button
                             key={cat}
                             onClick={() => setActiveFilter(cat)}
-                            className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-medium shadow-sm border transition-all ${
+                            className={`whitespace-nowrap px-3 py-1.5 rounded-sm text-[10px] font-mono uppercase tracking-wide border transition-all ${
                                 activeFilter === cat 
-                                ? 'bg-slate-800 text-white border-slate-800 transform scale-105' 
-                                : 'bg-white/90 text-slate-600 border-white/50 hover:bg-white'
+                                ? 'bg-orange-600 text-black border-orange-600 font-bold' 
+                                : 'bg-zinc-900/90 text-zinc-500 border-zinc-700 hover:text-zinc-300 hover:border-zinc-500'
                             }`}
                         >
                             {cat}
@@ -318,35 +319,44 @@ const MapArea: React.FC<MapAreaProps> = ({
             <div className="absolute top-24 md:top-6 right-4 z-[500] flex flex-col space-y-3">
                 <button 
                     onClick={handleManualLocate}
-                    className="bg-white/90 backdrop-blur p-3 rounded-2xl shadow-lg border border-white/50 text-slate-600 hover:text-indigo-600 hover:bg-white transition-all hover:scale-105 active:scale-95"
-                    title="Locate Me"
+                    className="bg-zinc-900/90 backdrop-blur p-3 rounded shadow-lg border border-zinc-700 text-zinc-500 hover:text-orange-500 hover:border-orange-500 transition-colors"
+                    title="LOCATE_USER"
                 >
-                    {isLocating ? <Loader2 size={20} className="animate-spin" /> : <Navigation size={20} className={userLocationMarkerRef.current ? "fill-indigo-500 text-indigo-600" : ""} />}
+                    {isLocating ? <Loader2 size={16} className="animate-spin" /> : <Navigation size={16} className={userLocationMarkerRef.current ? "fill-orange-500 text-orange-600" : ""} />}
                 </button>
 
                 <button 
                     onClick={(e) => { e.stopPropagation(); setIsSatellite(!isSatellite); }}
-                    className="bg-white/90 backdrop-blur p-3 rounded-2xl shadow-lg border border-white/50 text-slate-600 hover:text-indigo-600 hover:bg-white transition-all hover:scale-105 active:scale-95"
-                    title="Layers"
+                    className="bg-zinc-900/90 backdrop-blur p-3 rounded shadow-lg border border-zinc-700 text-zinc-500 hover:text-orange-500 hover:border-orange-500 transition-colors"
+                    title="TOGGLE_LAYER"
                 >
-                    {isSatellite ? <Layers size={20} /> : <Box size={20} />}
+                    {isSatellite ? <Layers size={16} /> : <Box size={16} />}
                 </button>
             </div>
         </>
       )}
 
-      <div ref={mapRef} className="w-full h-full z-0 outline-none" />
+      <div ref={mapRef} className="w-full h-full z-0 outline-none bg-zinc-900" />
       
       <style>{`
-        .pulse-ring {
-            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
-            animation: pulse-blue 2s infinite;
+        /* Dark Leaflet Popups */
+        .dark-popup .leaflet-popup-content-wrapper {
+            background: #09090b; /* zinc-950 */
+            color: #e4e4e7; /* zinc-200 */
+            border: 1px solid #27272a; /* zinc-800 */
+            border-radius: 4px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
         }
-        @keyframes pulse-blue {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        .dark-popup .leaflet-popup-tip {
+            background: #27272a; /* zinc-800 */
         }
+        .dark-popup .leaflet-popup-close-button {
+            color: #71717a !important; /* zinc-500 */
+        }
+        .leaflet-container {
+            background: #09090b !important;
+        }
+
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }

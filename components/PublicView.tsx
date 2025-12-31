@@ -29,7 +29,7 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast }) => {
     const interval = setInterval(() => {
         const action = actions[Math.floor(Math.random() * actions.length)];
         const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        setLiveFeed(prev => [`${time} • ${action}`, ...prev].slice(0, 3));
+        setLiveFeed(prev => [`${time} • ${action.toUpperCase()}`, ...prev].slice(0, 3));
     }, 8000);
 
     return () => clearInterval(interval);
@@ -43,28 +43,28 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast }) => {
     const updatedList = dataService.saveFeedback(newFeedback);
     setFeedbackList(updatedList);
     setSelectedLocation(null);
-    if (showToast) showToast("Feedback submitted successfully! AI analysis complete.");
+    if (showToast) showToast("DATA_LOGGED: ANALYSIS_COMPLETE");
   };
 
   return (
-    <div className="relative h-screen w-full flex flex-col bg-slate-50 overflow-hidden">
+    <div className="relative h-screen w-full flex flex-col bg-zinc-950 overflow-hidden">
       {/* Header Overlay */}
       <header className="absolute top-0 left-0 right-0 z-20 p-4 pointer-events-none">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <button 
             onClick={onBack}
-            className="pointer-events-auto flex items-center space-x-2 px-4 py-2 bg-white/90 backdrop-blur-md shadow-lg rounded-full text-slate-700 hover:text-indigo-600 transition-all font-medium border border-white/20 hover:scale-105 active:scale-95"
+            className="pointer-events-auto flex items-center space-x-2 px-4 py-2 bg-zinc-900/80 backdrop-blur-md shadow-2xl rounded border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-600 transition-all group"
           >
-            <ArrowLeft size={18} />
-            <span className="hidden sm:inline">Back Home</span>
+            <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+            <span className="hidden sm:inline font-mono text-xs uppercase tracking-wide">Return_Base</span>
           </button>
 
-          <div className="hidden md:flex pointer-events-auto px-5 py-2 bg-indigo-600/90 backdrop-blur-md shadow-lg rounded-full text-white items-center space-x-3 border border-indigo-400/30">
-            <span className="relative flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-cyan-500"></span>
+          <div className="hidden md:flex pointer-events-auto px-5 py-2 bg-zinc-900/80 backdrop-blur-md shadow-2xl rounded border border-orange-900/50 text-orange-500 items-center space-x-3">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
             </span>
-            <span className="text-sm font-semibold tracking-wide">Live Mode</span>
+            <span className="text-xs font-mono font-bold tracking-widest uppercase">Live_Feed_Active</span>
           </div>
         </div>
       </header>
@@ -79,21 +79,21 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast }) => {
         
         {/* Floating Action Badge */}
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
-            <div className="bg-slate-900/90 backdrop-blur-md text-white px-6 py-3 rounded-full shadow-2xl flex items-center space-x-3 border border-slate-700 animate-bounce-slow">
-                <div className="bg-gradient-to-tr from-indigo-500 to-purple-500 p-1.5 rounded-full shadow-lg">
-                    <Plus size={18} className="text-white" />
+            <div className="bg-zinc-900/90 backdrop-blur-md text-zinc-300 px-6 py-3 rounded-full shadow-[0_0_30px_rgba(0,0,0,0.5)] flex items-center space-x-3 border border-zinc-700 animate-bounce-slow">
+                <div className="bg-orange-600 p-1.5 rounded-full shadow-lg text-black">
+                    <Plus size={16} />
                 </div>
-                <span className="text-sm font-medium">Tap map to report</span>
+                <span className="text-xs font-mono uppercase tracking-wider">Tap Map to Initialize Report</span>
             </div>
         </div>
 
         {/* Live Feed Ticker (Bottom Left) */}
-        <div className="absolute bottom-6 left-6 z-10 hidden md:block w-64 pointer-events-none">
+        <div className="absolute bottom-6 left-6 z-10 hidden md:block w-72 pointer-events-none">
             <div className="space-y-2">
                 {liveFeed.map((msg, i) => (
-                    <div key={i} className={`bg-white/80 backdrop-blur-sm p-2 rounded-lg shadow-sm border border-white/40 text-xs text-slate-600 flex items-center space-x-2 animate-fade-in-left`} style={{ opacity: 1 - (i * 0.3) }}>
-                        <Activity size={12} className="text-indigo-500" />
-                        <span>{msg}</span>
+                    <div key={i} className={`bg-black/80 backdrop-blur-sm p-2 rounded border-l-2 border-orange-500 text-[10px] font-mono text-zinc-400 flex items-center space-x-2 animate-fade-in-left shadow-lg`} style={{ opacity: 1 - (i * 0.3) }}>
+                        <Activity size={10} className="text-orange-500" />
+                        <span className="truncate">{msg}</span>
                     </div>
                 ))}
             </div>

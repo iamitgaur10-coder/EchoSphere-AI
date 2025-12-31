@@ -91,125 +91,119 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in-up">
-        <div className="flex items-center justify-between p-4 border-b border-slate-100">
-          <h3 className="text-lg font-bold text-slate-800">Submit Feedback</h3>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-500">
-            <X size={20} />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+      <div className="bg-zinc-950 rounded-lg shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in-up border border-zinc-800">
+        <div className="flex items-center justify-between p-4 border-b border-zinc-800 bg-zinc-900/50">
+          <div className="flex items-center space-x-2">
+            <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+            <h3 className="text-sm font-bold font-display uppercase tracking-wider text-zinc-200">New_Entry</h3>
+          </div>
+          <button onClick={onClose} className="p-1 hover:bg-zinc-800 rounded transition-colors text-zinc-500 hover:text-white">
+            <X size={16} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div className="flex items-center space-x-2 text-sm text-slate-500 bg-slate-50 p-3 rounded-lg">
-            <span className="font-mono text-xs bg-slate-200 px-2 py-1 rounded">
-              LAT: {location.y.toFixed(4)}
-            </span>
-            <span className="font-mono text-xs bg-slate-200 px-2 py-1 rounded">
-              LNG: {location.x.toFixed(4)}
-            </span>
-            <span>Pin Location</span>
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          {/* Location Badge */}
+          <div className="flex items-center space-x-2 text-xs text-zinc-500 bg-black/50 p-2 rounded border border-zinc-800 font-mono">
+            <span className="text-orange-500">LOC::</span>
+            <span>{location.y.toFixed(4)}, {location.x.toFixed(4)}</span>
           </div>
 
           {/* Identity Field */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-                Your Name <span className="text-slate-400 font-normal">(Optional)</span>
+            <label className="block text-[10px] font-mono text-zinc-500 mb-1 uppercase tracking-widest">
+                Identifier (Optional)
             </label>
-            <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                    <User size={16} />
+            <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-600 group-focus-within:text-orange-500 transition-colors">
+                    <User size={14} />
                 </div>
                 <input 
                     type="text"
                     value={authorName}
                     onChange={(e) => setAuthorName(e.target.value)}
-                    className="w-full pl-10 p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-slate-700"
-                    placeholder="Anonymous Citizen"
+                    className="w-full pl-9 p-2.5 bg-black border border-zinc-800 rounded focus:border-orange-500 outline-none text-sm text-zinc-300 placeholder-zinc-700 transition-colors font-mono"
+                    placeholder="ANONYMOUS_USER"
                 />
             </div>
           </div>
 
+          {/* Content Field */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              What's on your mind?
+            <label className="block text-[10px] font-mono text-zinc-500 mb-1 uppercase tracking-widest">
+              Observation Data
             </label>
-            <div className="relative">
+            <div className="relative group">
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                className="w-full h-32 p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none resize-none text-slate-700"
-                placeholder="Describe an issue, suggest an improvement, or share something you love..."
+                className="w-full h-32 p-3 bg-black border border-zinc-800 rounded focus:border-orange-500 outline-none resize-none text-sm text-zinc-300 placeholder-zinc-700 transition-colors leading-relaxed"
+                placeholder="Enter field report details..."
                 required
               />
-              <div className="absolute bottom-3 right-3 flex space-x-2">
+              <div className="absolute bottom-2 right-2 flex space-x-2">
                  <button 
                     type="button" 
                     onClick={toggleListening}
-                    className={`p-2 shadow-sm border rounded-full transition-all ${
+                    className={`p-1.5 rounded transition-all ${
                         isListening 
-                        ? 'bg-red-500 text-white border-red-600 animate-pulse' 
-                        : 'bg-white border-slate-200 text-slate-400 hover:text-indigo-500'
+                        ? 'bg-red-500/20 text-red-500 border border-red-500 animate-pulse' 
+                        : 'bg-zinc-900 border border-zinc-700 text-zinc-500 hover:text-white'
                     }`}
-                    title="Dictate Feedback"
+                    title="Dictate"
                 >
-                    {isListening ? <MicOff size={16} /> : <Mic size={16} />}
+                    {isListening ? <MicOff size={14} /> : <Mic size={14} />}
                 </button>
               </div>
             </div>
-            {isListening && <p className="text-xs text-red-500 mt-1 animate-pulse">Listening...</p>}
           </div>
           
           {/* Multimodal Inputs */}
           <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                Evidence
+            <label className="block text-[10px] font-mono text-zinc-500 mb-2 uppercase tracking-widest">
+                Media Attachments
             </label>
             
-            {/* Simulation of Files */}
             <div className="space-y-3">
                 {attachments.length > 0 && (
                     <div className="grid grid-cols-2 gap-2">
                         {attachments.includes('image') && (
-                            <div className="relative group bg-slate-100 rounded-lg overflow-hidden border border-slate-200 h-24 flex items-center justify-center">
-                                {/* Simulated Thumbnail */}
-                                <div className="absolute inset-0 bg-gradient-to-tr from-indigo-100 to-purple-100"></div>
-                                <ImageIcon className="text-indigo-300 relative z-10" size={32} />
-                                <button type="button" onClick={() => toggleAttachment('image')} className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-20"><X size={12} /></button>
-                                <span className="absolute bottom-1 left-2 text-[10px] font-mono text-slate-500 z-10">photo_01.jpg</span>
+                            <div className="relative group bg-zinc-900 rounded border border-zinc-800 h-20 flex items-center justify-center">
+                                <ImageIcon className="text-zinc-600" size={24} />
+                                <button type="button" onClick={() => toggleAttachment('image')} className="absolute top-1 right-1 text-zinc-600 hover:text-red-500"><X size={12} /></button>
+                                <span className="absolute bottom-1 left-2 text-[8px] font-mono text-zinc-600">IMG_001.JPG</span>
                             </div>
                         )}
                         {attachments.includes('video') && (
-                            <div className="relative group bg-slate-100 rounded-lg overflow-hidden border border-slate-200 h-24 flex items-center justify-center">
-                                {/* Simulated Thumbnail */}
-                                <div className="absolute inset-0 bg-gradient-to-tr from-cyan-100 to-blue-100"></div>
-                                <Video className="text-cyan-300 relative z-10" size={32} />
-                                <button type="button" onClick={() => toggleAttachment('video')} className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-20"><X size={12} /></button>
-                                <span className="absolute bottom-1 left-2 text-[10px] font-mono text-slate-500 z-10">video_clip.mp4</span>
+                            <div className="relative group bg-zinc-900 rounded border border-zinc-800 h-20 flex items-center justify-center">
+                                <Video className="text-zinc-600" size={24} />
+                                <button type="button" onClick={() => toggleAttachment('video')} className="absolute top-1 right-1 text-zinc-600 hover:text-red-500"><X size={12} /></button>
+                                <span className="absolute bottom-1 left-2 text-[8px] font-mono text-zinc-600">VID_SEQ_A.MP4</span>
                             </div>
                         )}
                     </div>
                 )}
 
-                <div className="flex gap-3">
+                <div className="flex gap-2">
                     {!attachments.includes('image') && (
                         <button 
                             type="button"
                             onClick={() => toggleAttachment('image')}
-                            className="flex-1 flex items-center justify-center p-3 rounded-xl border border-dashed border-slate-300 hover:border-indigo-400 hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 transition-all"
+                            className="flex-1 flex items-center justify-center p-2.5 rounded border border-dashed border-zinc-800 hover:border-zinc-600 hover:bg-zinc-900 text-zinc-500 hover:text-zinc-300 transition-all text-xs font-mono"
                         >
-                            <ImageIcon size={18} className="mr-2" />
-                            <span className="text-xs font-medium">Upload Photo</span>
+                            <ImageIcon size={14} className="mr-2" />
+                            ADD_IMAGE
                         </button>
                     )}
                     {!attachments.includes('video') && (
                         <button 
                             type="button"
                             onClick={() => toggleAttachment('video')}
-                            className="flex-1 flex items-center justify-center p-3 rounded-xl border border-dashed border-slate-300 hover:border-indigo-400 hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 transition-all"
+                            className="flex-1 flex items-center justify-center p-2.5 rounded border border-dashed border-zinc-800 hover:border-zinc-600 hover:bg-zinc-900 text-zinc-500 hover:text-zinc-300 transition-all text-xs font-mono"
                         >
-                            <Video size={18} className="mr-2" />
-                            <span className="text-xs font-medium">Upload Video</span>
+                            <Video size={14} className="mr-2" />
+                            ADD_VIDEO
                         </button>
                     )}
                 </div>
@@ -220,24 +214,24 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
             <button
               type="submit"
               disabled={isAnalyzing || !content.trim()}
-              className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white rounded-xl font-medium shadow-lg shadow-indigo-200 transition-all flex items-center justify-center space-x-2"
+              className="w-full py-3.5 px-4 bg-orange-600 hover:bg-orange-500 disabled:bg-zinc-800 disabled:text-zinc-600 text-black font-display font-bold uppercase tracking-widest text-sm rounded transition-all flex items-center justify-center space-x-2"
             >
               {isAnalyzing ? (
                 <>
-                  <Loader2 size={20} className="animate-spin" />
-                  <span>Analyzing with Gemini...</span>
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>Processing_Neural_Net...</span>
                 </>
               ) : (
                 <>
-                  <Send size={20} />
-                  <span>Submit Feedback</span>
+                  <Send size={16} />
+                  <span>Transmit_Data</span>
                 </>
               )}
             </button>
           </div>
           
-          <p className="text-xs text-center text-slate-400">
-            AI will analyze text and media for sentiment & safety.
+          <p className="text-[10px] text-center text-zinc-600 font-mono">
+            SECURE_CONNECTION // GEMINI_AI_ACTIVE
           </p>
         </form>
       </div>
