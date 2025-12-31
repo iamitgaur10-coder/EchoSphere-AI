@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Globe2, ArrowRight, MapPin, BarChart3, Radio, Scan, Zap, Activity, Hexagon, Fingerprint, MousePointer2, Database, Network, Cpu, Share2, Shield, Truck, Trees, Siren, Layers, Play, Mic, PenTool, LayoutDashboard, Building2, MousePointerClick } from 'lucide-react';
+import { Globe2, ArrowRight, MapPin, BarChart3, Radio, Scan, Zap, Activity, Hexagon, Fingerprint, MousePointer2, Database, Network, Cpu, Share2, Shield, Truck, Trees, Siren, Layers, Play, Mic, PenTool, LayoutDashboard, Building2, MousePointerClick, Github, Twitter, Linkedin } from 'lucide-react';
 import { AccountSetup, Organization, Feedback } from '../types';
 import { APP_CONFIG } from '../config/constants';
 import { dataService } from '../services/dataService';
@@ -61,20 +61,20 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-200 font-sans overflow-x-hidden selection:bg-orange-500 selection:text-white transition-colors duration-300">
       
       {/* --- Floating Nav --- */}
-      <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-5xl md:w-auto">
-        <div className="bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md border border-zinc-200 dark:border-zinc-800 rounded-full px-4 py-2 md:px-6 md:py-2.5 flex items-center justify-between md:space-x-6 shadow-xl transition-all hover:bg-white dark:hover:bg-zinc-900">
-            <div className="flex items-center space-x-2 cursor-pointer" onClick={() => setShowOrgList(!showOrgList)}>
+      <nav className="fixed top-2 md:top-4 left-1/2 -translate-x-1/2 z-50 w-[96%] max-w-5xl md:w-auto">
+        <div className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border border-zinc-200 dark:border-zinc-800 rounded-full px-3 py-2 md:px-6 md:py-2.5 flex items-center justify-between md:space-x-6 shadow-xl transition-all hover:bg-white dark:hover:bg-zinc-900">
+            <div className="flex items-center space-x-2 cursor-pointer flex-shrink-0" onClick={() => setShowOrgList(!showOrgList)}>
                 <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
                 <span className="font-display font-bold text-zinc-900 dark:text-white tracking-tight text-sm">EchoSphere</span>
             </div>
             <div className="hidden md:block h-3 w-[1px] bg-zinc-300 dark:bg-zinc-700"></div>
-            <div className="flex items-center space-x-3 md:space-x-4 text-xs font-medium">
+            <div className="flex items-center space-x-2 md:space-x-4 text-[10px] md:text-xs font-medium">
                 {account ? (
-                    <button onClick={onEnterPublic} className="text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white transition-colors truncate max-w-[80px] md:max-w-none font-bold">
+                    <button onClick={onEnterPublic} className="text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white transition-colors truncate max-w-[60px] md:max-w-none font-bold">
                         {account.organizationName}
                     </button>
                 ) : (
-                    <button onClick={onEnterWizard} className="text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white transition-colors">
+                    <button onClick={onEnterWizard} className="text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white transition-colors whitespace-nowrap">
                         Get Started
                     </button>
                 )}
@@ -489,7 +489,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
       {/* --- Section 6: Use Cases --- */}
       <section className="py-12 md:py-16 px-4 md:px-6 bg-zinc-50 dark:bg-black border-t border-zinc-200 dark:border-zinc-900">
         <div className="max-w-6xl mx-auto">
-             <div className="flex flex-col md:flex-row justify-between items-end mb-8 md:mb-12">
+             <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 md:mb-12">
                 <div>
                     <h2 className="font-display text-2xl md:text-3xl font-bold text-zinc-900 dark:text-white">Use Cases</h2>
                     <p className="text-sm text-zinc-500 mt-2">Works for any community need.</p>
@@ -518,15 +518,65 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
       </section>
 
       {/* --- Footer --- */}
-      <footer className="py-8 px-6 border-t border-zinc-200 dark:border-zinc-900 text-center bg-zinc-100 dark:bg-zinc-950">
-        <div className="flex items-center justify-center space-x-2 mb-3 opacity-50 grayscale hover:grayscale-0 transition-all">
-            <div className="w-3 h-3 bg-orange-500 rounded-sm"></div>
-            <span className="font-display font-bold text-sm text-zinc-900 dark:text-white tracking-tight">EchoSphere</span>
+      <footer className="bg-zinc-100 dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-900 pt-12 pb-8">
+        <div className="max-w-6xl mx-auto px-4 md:px-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 mb-12">
+                <div className="col-span-2 lg:col-span-2">
+                    <div className="flex items-center space-x-2 mb-4">
+                        <div className="w-4 h-4 bg-orange-500 rounded-sm"></div>
+                        <span className="font-display font-bold text-lg text-zinc-900 dark:text-white tracking-tight">EchoSphere</span>
+                    </div>
+                    <p className="text-xs text-zinc-500 leading-relaxed mb-6 max-w-xs">
+                        Empowering communities with AI-driven insights for better urban planning, faster issue resolution, and transparent governance.
+                    </p>
+                    <div className="flex space-x-4">
+                        <a href="#" className="text-zinc-400 hover:text-orange-500 transition-colors"><Twitter size={16} /></a>
+                        <a href="#" className="text-zinc-400 hover:text-orange-500 transition-colors"><Github size={16} /></a>
+                        <a href="#" className="text-zinc-400 hover:text-orange-500 transition-colors"><Linkedin size={16} /></a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 className="font-bold text-zinc-900 dark:text-white mb-4 text-xs uppercase tracking-wider">Product</h4>
+                    <ul className="space-y-2 text-xs text-zinc-500">
+                        <li><button onClick={onEnterPublic} className="hover:text-orange-500 transition-colors">Public Map</button></li>
+                        <li><button onClick={onEnterWizard} className="hover:text-orange-500 transition-colors">For Organizations</button></li>
+                        <li><a href="#" className="hover:text-orange-500 transition-colors">Case Studies</a></li>
+                        <li><a href="#" className="hover:text-orange-500 transition-colors">Pricing</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 className="font-bold text-zinc-900 dark:text-white mb-4 text-xs uppercase tracking-wider">Resources</h4>
+                    <ul className="space-y-2 text-xs text-zinc-500">
+                        <li><a href="#" className="hover:text-orange-500 transition-colors">Documentation</a></li>
+                        <li><a href="#" className="hover:text-orange-500 transition-colors">API Reference</a></li>
+                        <li><a href="#" className="hover:text-orange-500 transition-colors">Community Forum</a></li>
+                        <li><a href="#" className="hover:text-orange-500 transition-colors">Help Center</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 className="font-bold text-zinc-900 dark:text-white mb-4 text-xs uppercase tracking-wider">Legal</h4>
+                    <ul className="space-y-2 text-xs text-zinc-500">
+                        <li><a href="#" className="hover:text-orange-500 transition-colors">Privacy Policy</a></li>
+                        <li><a href="#" className="hover:text-orange-500 transition-colors">Terms of Service</a></li>
+                        <li><a href="#" className="hover:text-orange-500 transition-colors">Cookie Policy</a></li>
+                        <li><a href="#" className="hover:text-orange-500 transition-colors">Security</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div className="border-t border-zinc-200 dark:border-zinc-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                <p className="text-[10px] text-zinc-400">
+                    © 2024 EchoSphere AI Inc. All rights reserved.
+                </p>
+                <div className="flex items-center space-x-2 text-[10px] font-mono text-zinc-500 border border-zinc-200 dark:border-zinc-800 px-2 py-1 rounded-full bg-white dark:bg-black">
+                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                    <span>All Systems Operational</span>
+                </div>
+            </div>
         </div>
-        <p className="text-[10px] text-zinc-500">
-            System Operational <br/>
-            © 2024 EchoSphere AI
-        </p>
       </footer>
       
       <style>{`

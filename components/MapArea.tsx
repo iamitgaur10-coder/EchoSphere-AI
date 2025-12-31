@@ -184,7 +184,9 @@ const MapArea: React.FC<MapAreaProps> = ({
       } else {
         console.warn("Leaflet.markercluster not loaded");
         // Fallback group if cluster lib missing
-        clusterGroupRef.current = L.layerGroup().addTo(map);
+        const group = L.layerGroup();
+        group.addTo(map as any);
+        clusterGroupRef.current = group;
       }
 
       map.on('click', (e: any) => {

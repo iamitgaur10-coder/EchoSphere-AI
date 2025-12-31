@@ -45,7 +45,10 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
 const ThemeToggle = ({ isDark, toggle }: { isDark: boolean, toggle: () => void }) => (
     <button 
         onClick={toggle}
-        className={`fixed top-4 right-4 z-[9999] flex items-center gap-3 px-4 py-2 rounded-full border shadow-xl transition-all duration-300 group ${isDark ? 'bg-zinc-900 border-zinc-700' : 'bg-white border-zinc-200'}`}
+        className={`fixed z-[9999] flex items-center gap-3 px-4 py-2 rounded-full border shadow-xl transition-all duration-300 group
+            bottom-5 left-5
+            ${isDark ? 'bg-zinc-900 border-zinc-700' : 'bg-white border-zinc-200'}
+        `}
     >
         <span className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
             Dark Mode
