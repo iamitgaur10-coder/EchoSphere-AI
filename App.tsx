@@ -71,11 +71,15 @@ const App: React.FC = () => {
                 regionCode: currentOrg.slug,
                 focusArea: currentOrg.focusArea,
                 center: currentOrg.center,
-                questions: [] // Questions are loaded dynamically usually, but basic setup is fine
+                questions: [] 
             };
             setAccount(accountConfig);
             
-            // Optional: If specific view requested in future, handle here
+            // DEEP LINK CHECK: If ?org= is in URL, go straight to map
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('org')) {
+                setCurrentView('public');
+            }
         }
     };
     initApp();

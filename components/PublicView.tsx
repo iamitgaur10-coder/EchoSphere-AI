@@ -26,6 +26,15 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
 
         const list = await dataService.getFeedback();
         setFeedbackList(list);
+
+        // Pre-fill live feed with recent items so it isn't empty
+        if (list.length > 0) {
+            const recent = list.slice(0, 3).map(f => {
+                const time = f.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                return `${time} • ${f.category} (${f.sentiment})`;
+            });
+            setLiveFeed(recent);
+        }
     };
     load();
   }, []);
