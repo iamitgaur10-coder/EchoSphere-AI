@@ -8,7 +8,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 interface PublicViewProps {
   onBack: () => void;
-  showToast?: (msg: string) => void;
+  showToast?: (msg: string, type?: 'success' | 'error') => void;
   isDarkMode?: boolean;
 }
 
@@ -98,6 +98,10 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
     if (showToast) showToast("Feedback Submitted Successfully");
   };
 
+  const handleMapError = (msg: string) => {
+      if (showToast) showToast(msg, 'error');
+  };
+
   return (
     <div className="relative h-screen w-full flex flex-col bg-zinc-50 dark:bg-zinc-950 overflow-hidden">
       {/* Header Overlay */}
@@ -130,6 +134,7 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
           onMapClick={handleMapClick}
           center={currentOrg?.center}
           isDarkMode={isDarkMode}
+          onError={handleMapError}
         />
         
         {/* Floating Action Badge */}

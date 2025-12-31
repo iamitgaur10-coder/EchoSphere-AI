@@ -13,6 +13,7 @@ interface MapAreaProps {
   center?: Location;
   showSelectionMarker?: boolean;
   isDarkMode?: boolean;
+  onError?: (msg: string) => void;
 }
 
 const DEFAULT_CENTER = [40.7128, -74.0060];
@@ -37,7 +38,8 @@ const MapArea: React.FC<MapAreaProps> = ({
   interactive = true, 
   center,
   showSelectionMarker = false,
-  isDarkMode = true
+  isDarkMode = true,
+  onError
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [mapInstance, setMapInstance] = useState<any | null>(null);
@@ -154,6 +156,7 @@ const MapArea: React.FC<MapAreaProps> = ({
           onMapClick({ x: lng, y: lat });
       });
 
+      // Success Handler
       map.on('locationfound', (e: any) => {
         const radius = e.accuracy / 2;
         if (userLocationMarkerRef.current) map.removeLayer(userLocationMarkerRef.current);
@@ -171,12 +174,26 @@ const MapArea: React.FC<MapAreaProps> = ({
         setIsLocating(false);
       });
 
+      // Error Handler
+      map.on('locationerror', (e: any) => {
+        setIsLocating(false);
+        console.warn("Location Access Error:", e);
+        const msg = e.message === "User denied Geolocation" 
+            ? "Location permission denied. Please enable in browser settings." 
+            : e.message || "Could not access location.";
+            
+        if (onError) onError(msg);
+      });
+
       setMapInstance(map);
       setIsMapLoaded(true);
 
       setTimeout(() => {
         map.invalidateSize();
-        if (interactive && !center) map.locate({ setView: true, maxZoom: 16 });
+        // Only auto-locate if NO center is provided (e.g. during fresh setup)
+        if (interactive && !center) {
+            map.locate({ setView: true, maxZoom: 16 });
+        }
       }, 500);
   };
 
@@ -184,7 +201,7 @@ const MapArea: React.FC<MapAreaProps> = ({
     e.stopPropagation();
     if (!mapInstance) return;
     setIsLocating(true);
-    mapInstance.locate({ setView: true, maxZoom: 16 });
+    mapInstance.locate({ setView: true, maxZoom: 16, timeout: 10000 });
   };
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -295,7 +312,7 @@ const MapArea: React.FC<MapAreaProps> = ({
     <div className="relative w-full h-full bg-zinc-200 dark:bg-zinc-900 overflow-hidden group transition-colors duration-300">
       
       {!isMapLoaded && (
-          <div className="absolute inset-0 flex items-center justify-center bg-zinc-50 dark:bg-zinc-950 z-10 pointer-events-none">
+          <div className="absolute inset-0 flex items-center justify-center bg-zinc-50 dark:bg-zinc-900 z-10 pointer-events-none">
               <Loader2 className="animate-spin text-orange-600" size={32} />
           </div>
       )}
