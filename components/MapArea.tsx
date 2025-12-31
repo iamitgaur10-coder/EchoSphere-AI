@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Box, Layers, Loader2, Locate, Navigation, Search, X, Filter, Leaf, ShieldAlert, Trash2, Car, HardHat, Palette, HelpCircle } from 'lucide-react';
-import { Location, Feedback } from '../types';
+import { Location, Feedback, LeafletNamespace, LeafletMap, LeafletLayer, LeafletLayerGroup, LeafletLocationEvent, LeafletErrorEvent } from '../types';
 import { searchLocation } from '../services/geoService';
 import { renderToString } from 'react-dom/server';
 import { APP_CONFIG } from '../config/constants';
 
-declare var L: any;
+// Cast window.L to our strict interface
+const L = (window as any).L as LeafletNamespace;
 
 interface MapAreaProps {
   feedbackList: Feedback[];
@@ -38,8 +39,8 @@ const MapArea: React.FC<MapAreaProps> = ({
   onError
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const [mapInstance, setMapInstance] = useState<any | null>(null);
-  const [layers, setLayers] = useState<any | null>(null);
+  const [mapInstance, setMapInstance] = useState<LeafletMap | null>(null);
+  const [layers, setLayers] = useState<Record<string, LeafletLayer> | null>(null);
   const [isSatellite, setIsSatellite] = useState(false);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
@@ -50,11 +51,11 @@ const MapArea: React.FC<MapAreaProps> = ({
   const [searchError, setSearchError] = useState(false);
   const [activeFilter, setActiveFilter] = useState<string>('All');
   
-  const userLocationMarkerRef = useRef<any | null>(null);
-  const selectionMarkerRef = useRef<any | null>(null);
+  const userLocationMarkerRef = useRef<LeafletLayer | null>(null);
+  const selectionMarkerRef = useRef<LeafletLayer | null>(null);
   
   // Ref for Marker Cluster Group
-  const clusterGroupRef = useRef<any>(null);
+  const clusterGroupRef = useRef<LeafletLayerGroup | null>(null);
 
   // Use config for default center
   const initialCenter = center 
@@ -134,15 +135,16 @@ const MapArea: React.FC<MapAreaProps> = ({
             iconAnchor: [24, 48]
         });
 
-        selectionMarkerRef.current = L.marker([center.y, center.x], { icon: centerIcon }).addTo(mapInstance);
+        const marker = L.marker([center.y, center.x], { icon: centerIcon }).addTo(mapInstance as any);
+        selectionMarkerRef.current = marker;
     }
   }, [center, showSelectionMarker, mapInstance]);
 
   const initMap = () => {
       if (mapInstance) return;
 
-      const map = L.map(mapRef.current, {
-        center: initialCenter,
+      const map = L.map(mapRef.current!, {
+        center: initialCenter as [number, number],
         zoom: APP_CONFIG.MAP.DEFAULT_ZOOM,
         zoomControl: false,
         attributionControl: false
@@ -191,7 +193,7 @@ const MapArea: React.FC<MapAreaProps> = ({
           onMapClick({ x: lng, y: lat });
       });
 
-      map.on('locationfound', (e: any) => {
+      map.on('locationfound', (e: LeafletLocationEvent) => {
         const radius = e.accuracy / 2;
         if (userLocationMarkerRef.current) map.removeLayer(userLocationMarkerRef.current);
 
@@ -202,13 +204,13 @@ const MapArea: React.FC<MapAreaProps> = ({
             iconAnchor: [8, 8]
         });
 
-        const marker = L.marker(e.latlng, { icon: userIcon }).addTo(map);
+        const marker = L.marker(e.latlng as any, { icon: userIcon }).addTo(map as any);
         marker.bindPopup(`You are within ${Math.round(radius)} meters from this point`).openPopup();
         userLocationMarkerRef.current = marker;
         setIsLocating(false);
       });
 
-      map.on('locationerror', (e: any) => {
+      map.on('locationerror', (e: LeafletErrorEvent) => {
         setIsLocating(false);
         console.warn("Location Access Error:", e);
         const msg = e.message === "User denied Geolocation" 

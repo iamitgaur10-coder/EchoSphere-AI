@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Loader2, Send, Mic, MicOff, Image as ImageIcon, Video, Paperclip, User, Trash2, ThumbsUp, AlertTriangle } from 'lucide-react';
+import { X, Loader2, Send, Mic, MicOff, Image as ImageIcon, Video, Paperclip, User, Trash2, ThumbsUp, AlertTriangle, Clock } from 'lucide-react';
 import { analyzeFeedbackContent, checkDuplicates } from '../services/geminiService';
 import { storageService } from '../services/storageService';
+import { rateLimitService } from '../services/rateLimitService';
 import { Location, Feedback } from '../types';
 import { getTranslation } from '../config/constants';
 
@@ -21,6 +22,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [rateLimitWait, setRateLimitWait] = useState<number>(0);
   
   // Duplicate Detection State
   const [isCheckingDupes, setIsCheckingDupes] = useState(false);
@@ -37,6 +39,13 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
   useEffect(() => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
        return;
+    }
+  }, []);
+
+  // Check Rate Limit on Mount
+  useEffect(() => {
+    if (!rateLimitService.check()) {
+        setRateLimitWait(rateLimitService.getTimeUntilReset());
     }
   }, []);
 
@@ -124,16 +133,21 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
   };
 
   const handleUpvoteDuplicate = () => {
-      // Logic to handle upvote would go here (update existing item)
-      // For now, we just close the modal as if successful
       onClose();
-      // In a real app, you'd call an API to increment votes on `duplicateId`
       alert("Duplicate report upvoted! Thank you for validating this issue.");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!content.trim() && !imageBase64) return;
+
+    // Rate Limit Guard
+    if (!rateLimitService.check()) {
+        const wait = rateLimitService.getTimeUntilReset();
+        setRateLimitWait(wait);
+        setErrorMsg(`Rate limit exceeded. Please wait ${wait} seconds.`);
+        return;
+    }
 
     setIsAnalyzing(true);
     setErrorMsg(null);
@@ -173,6 +187,9 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
             riskScore: analysis.riskScore
         };
 
+        // Record successful submission for rate limiting
+        rateLimitService.record();
+
         onSubmit(newFeedback);
     } catch (err: any) {
         console.error(err);
@@ -187,7 +204,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
       <div className="bg-zinc-950 rounded-lg shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in-up border border-zinc-800">
         <div className="flex items-center justify-between p-4 border-b border-zinc-800 bg-zinc-900/50">
           <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+            <div className={`w-2 h-2 rounded-full ${rateLimitWait > 0 ? 'bg-red-500' : 'bg-orange-500 animate-pulse'}`}></div>
             <h3 className="text-sm font-bold font-display uppercase tracking-wider text-zinc-200">
                 {t.submitBtn}
             </h3>
@@ -199,8 +216,18 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5 relative">
           
+          {/* Rate Limit Banner */}
+          {rateLimitWait > 0 && (
+              <div className="bg-orange-900/30 border border-orange-500/50 rounded p-3 flex items-center space-x-3 text-orange-200 mb-4">
+                  <Clock className="flex-shrink-0 text-orange-500" size={18} />
+                  <div className="text-xs font-medium">
+                      You are posting too fast. Please wait <span className="font-bold text-white">{rateLimitWait}s</span> before submitting again.
+                  </div>
+              </div>
+          )}
+
           {/* Safety Error Banner */}
-          {errorMsg && (
+          {errorMsg && !rateLimitWait && (
               <div className="bg-red-900/30 border border-red-500/50 rounded p-3 flex items-start space-x-3 text-red-200 mb-4 animate-pulse">
                   <AlertTriangle className="flex-shrink-0 text-red-500" size={18} />
                   <div className="text-xs font-medium">{errorMsg}</div>
@@ -332,7 +359,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
           <div className="pt-2">
             <button
               type="submit"
-              disabled={isAnalyzing || (!content.trim() && !imageBase64)}
+              disabled={isAnalyzing || (!content.trim() && !imageBase64) || rateLimitWait > 0}
               className="w-full py-3.5 px-4 bg-orange-600 hover:bg-orange-500 disabled:bg-zinc-800 disabled:text-zinc-600 text-black font-display font-bold uppercase tracking-widest text-sm rounded transition-all flex items-center justify-center space-x-2"
             >
               {isAnalyzing ? (

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle, AlertCircle, Terminal, Cloud, Database, UserPlus, LogIn, Moon, Sun } from 'lucide-react';
+import { X, CheckCircle, AlertCircle, Terminal, Sun, Moon, Database, Key, CloudLightning } from 'lucide-react';
 import PublicView from './components/PublicView';
 import AdminDashboard from './components/AdminDashboard';
 import Wizard from './components/Wizard';
@@ -7,24 +7,127 @@ import LandingPage from './components/LandingPage';
 import { ViewState, AccountSetup } from './types';
 import { dataService } from './services/dataService';
 import { authService } from './services/authService';
+import { isSupabaseConfigured, saveAppConfiguration } from './lib/supabase';
 
 // -- Toast Component --
 interface ToastProps {
   message: string;
-  type: 'success' | 'error';
+  type: 'success' | 'error' | 'warning';
   onClose: () => void;
 }
 const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
     useEffect(() => {
-        const timer = setTimeout(onClose, 4000);
+        const timer = setTimeout(onClose, 6000); 
         return () => clearTimeout(timer);
     }, [onClose]);
 
+    let bgClass = 'bg-zinc-900/90 text-zinc-200 border-zinc-700';
+    let icon = <CheckCircle size={14} className="text-green-500" />;
+
+    if (type === 'error') {
+        bgClass = 'bg-red-950/90 text-red-200 border-red-500/30';
+        icon = <AlertCircle size={14} className="text-red-500" />;
+    } else if (type === 'warning') {
+        bgClass = 'bg-orange-950/90 text-orange-200 border-orange-500/30';
+        icon = <AlertCircle size={14} className="text-orange-500" />;
+    }
+
     return (
-        <div className={`fixed bottom-6 right-6 z-[9999] flex items-center space-x-3 px-4 py-3 rounded border backdrop-blur-md animate-fade-in-up transition-all font-medium text-xs shadow-2xl ${type === 'success' ? 'bg-zinc-900/90 text-zinc-200 border-green-500/30' : 'bg-zinc-900/90 text-red-200 border-red-500/30'}`}>
-            {type === 'success' ? <CheckCircle size={14} className="text-green-500" /> : <AlertCircle size={14} className="text-red-500" />}
+        <div className={`fixed bottom-6 right-6 z-[9999] flex items-center space-x-3 px-4 py-3 rounded border backdrop-blur-md animate-fade-in-up transition-all font-medium text-xs shadow-2xl ${bgClass}`}>
+            {icon}
             <p className="tracking-wide">{message}</p>
             <button onClick={onClose} className="ml-4 opacity-70 hover:opacity-100 hover:text-white"><X size={12} /></button>
+        </div>
+    );
+};
+
+const SetupScreen: React.FC = () => {
+    const [url, setUrl] = useState('');
+    const [key, setKey] = useState('');
+    const [aiKey, setAiKey] = useState('');
+
+    const handleSave = (e: React.FormEvent) => {
+        e.preventDefault();
+        saveAppConfiguration(url, key, aiKey);
+    };
+
+    return (
+        <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-4 text-zinc-200 selection:bg-orange-500 selection:text-white">
+            <div className="max-w-md w-full bg-zinc-900 border border-zinc-800 rounded-lg p-8 shadow-2xl animate-fade-in-up">
+                <div className="flex flex-col items-center mb-8">
+                    <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-amber-600 rounded-full flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(249,115,22,0.4)]">
+                        <CloudLightning className="text-white" size={32} />
+                    </div>
+                    <h1 className="text-2xl font-display font-bold text-white mb-2">Connect to Cloud</h1>
+                    <p className="text-sm text-zinc-400 text-center leading-relaxed">
+                        To run EchoSphere in production mode, please connect your infrastructure.
+                    </p>
+                </div>
+
+                <div className="bg-orange-900/30 border border-orange-500/30 rounded p-4 mb-6 text-xs text-orange-200 leading-relaxed">
+                    <strong>Have you added environment variables?</strong><br/>
+                    If you just added keys to Vercel/Netlify, you must <u>Redeploy</u> your project for the changes to take effect.
+                </div>
+
+                <form onSubmit={handleSave} className="space-y-6">
+                    <div className="space-y-4">
+                        <div>
+                            <label className="flex items-center space-x-2 text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">
+                                <Database size={12} />
+                                <span>Supabase Project URL</span>
+                            </label>
+                            <input 
+                                type="url" 
+                                required
+                                value={url}
+                                onChange={e => setUrl(e.target.value)}
+                                placeholder="https://your-project.supabase.co"
+                                className="w-full p-3 bg-black border border-zinc-800 rounded focus:border-orange-500 outline-none text-sm text-white transition-colors"
+                            />
+                        </div>
+                        <div>
+                            <label className="flex items-center space-x-2 text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">
+                                <Key size={12} />
+                                <span>Supabase Anon Key</span>
+                            </label>
+                            <input 
+                                type="password" 
+                                required
+                                value={key}
+                                onChange={e => setKey(e.target.value)}
+                                placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6Ik..."
+                                className="w-full p-3 bg-black border border-zinc-800 rounded focus:border-orange-500 outline-none text-sm text-white transition-colors"
+                            />
+                        </div>
+                         <div>
+                            <label className="flex items-center space-x-2 text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">
+                                <Key size={12} />
+                                <span>Gemini API Key (VITE_API_KEY)</span>
+                            </label>
+                            <input 
+                                type="password" 
+                                required
+                                value={aiKey}
+                                onChange={e => setAiKey(e.target.value)}
+                                placeholder="AIzaSy..."
+                                className="w-full p-3 bg-black border border-zinc-800 rounded focus:border-orange-500 outline-none text-sm text-white transition-colors"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="bg-zinc-800/50 p-4 rounded border border-zinc-800 text-xs text-zinc-400">
+                        Alternatively, you can manually enter keys here for this browser session only.
+                    </div>
+
+                    <button 
+                        type="submit" 
+                        disabled={!url || !key || !aiKey}
+                        className="w-full py-3 bg-orange-600 hover:bg-orange-500 text-white font-bold uppercase tracking-widest text-sm rounded shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Initialize System
+                    </button>
+                </form>
+            </div>
         </div>
     );
 };
@@ -32,11 +135,7 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('landing');
   const [account, setAccount] = useState<AccountSetup | null>(null);
-  
-  // Theme State
   const [isDarkMode, setIsDarkMode] = useState(true);
-
-  // Auth State
   const [showLogin, setShowLogin] = useState(false);
   const [isSignUpMode, setIsSignUpMode] = useState(false);
   const [pendingView, setPendingView] = useState<ViewState>('landing');
@@ -44,28 +143,24 @@ const App: React.FC = () => {
   const [password, setPassword] = useState('');
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [toast, setToast] = useState<{msg: string, type: 'success' | 'error' | 'warning'} | null>(null);
+  
+  // Initialize lazily to prevent flash
+  const [needsSetup, setNeedsSetup] = useState(!isSupabaseConfigured());
 
-  // Toast State
-  const [toast, setToast] = useState<{msg: string, type: 'success' | 'error'} | null>(null);
-  const [systemMode, setSystemMode] = useState<'LOCAL' | 'CLOUD'>('LOCAL');
-
-  const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
+  const showToast = (msg: string, type: 'success' | 'error' | 'warning' = 'success') => {
       setToast({ msg, type });
   };
 
   useEffect(() => {
-    // 1. Initialize System Mode
-    setSystemMode(dataService.isProduction() ? 'CLOUD' : 'LOCAL');
-    
     // 2. Initialize Theme
     document.documentElement.classList.add('dark');
 
-    // 3. Initialize Data / Multi-tenancy from URL
+    // 3. Initialize Data
     const initApp = async () => {
         const currentOrg = await dataService.getCurrentOrganization();
         
         if (currentOrg) {
-            // Map the Organization object back to AccountSetup structure for the LandingPage UI
             const accountConfig: AccountSetup = {
                 organizationName: currentOrg.name,
                 regionCode: currentOrg.slug,
@@ -75,7 +170,6 @@ const App: React.FC = () => {
             };
             setAccount(accountConfig);
             
-            // DEEP LINK CHECK: If ?org= is in URL, go straight to map
             const params = new URLSearchParams(window.location.search);
             if (params.get('org')) {
                 setCurrentView('public');
@@ -83,7 +177,6 @@ const App: React.FC = () => {
         }
     };
     initApp();
-
   }, []);
 
   const toggleTheme = () => {
@@ -132,12 +225,15 @@ const App: React.FC = () => {
   };
 
   const handleProvision = (config: AccountSetup) => {
-    // Wizard complete
     dataService.saveAccount(config);
     setAccount(config);
     setCurrentView('admin');
     showToast(`Organization '${config.organizationName}' configured successfully`);
   };
+
+  if (needsSetup) {
+      return <SetupScreen />;
+  }
 
   const renderView = () => {
     switch (currentView) {
@@ -168,21 +264,9 @@ const App: React.FC = () => {
 
   return (
     <div className="font-sans antialiased min-h-screen transition-colors duration-300">
-        
-        {/* System Status Indicator */}
-        <div className="fixed top-0 left-0 right-0 h-1 z-[100] flex">
-            {systemMode === 'CLOUD' ? (
-                <div className="flex-1 bg-green-500 shadow-[0_0_10px_#22c55e]"></div>
-            ) : (
-                <div className="flex-1 bg-zinc-800 dark:bg-zinc-700"></div>
-            )}
-        </div>
-
-        {/* Global Theme Toggle */}
         <button 
             onClick={toggleTheme}
             className="fixed top-4 right-4 z-[9999] p-2 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-lg text-zinc-600 dark:text-zinc-400 hover:text-orange-500 dark:hover:text-orange-500 transition-all"
-            title="Toggle Theme"
         >
             {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
         </button>
@@ -191,40 +275,32 @@ const App: React.FC = () => {
         
         {toast && <Toast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
 
-        {/* Global Admin Login Modal */}
         {showLogin && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in-up">
                 <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-200 rounded-lg shadow-2xl p-8 w-full max-w-sm relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-orange-500 to-transparent opacity-50"></div>
-                    
                     <div className="text-center mb-6">
                         <div className="mx-auto w-12 h-12 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg flex items-center justify-center mb-4 text-orange-500">
                              <Terminal size={24} />
                         </div>
                         <h3 className="text-xl font-display font-bold dark:text-white tracking-tight">{isSignUpMode ? 'Create Admin Account' : 'Admin Login'}</h3>
-                        <p className="text-xs text-zinc-500 mt-2">Access your organization's dashboard</p>
                     </div>
 
                     <form onSubmit={handleAuth} className="space-y-4">
-                        <div>
-                            <input 
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="Email Address"
-                                className="w-full p-3 bg-zinc-50 dark:bg-black border border-zinc-300 dark:border-zinc-800 rounded focus:border-orange-500 outline-none text-sm font-medium text-center placeholder-zinc-500 dark:placeholder-zinc-700 transition-colors text-black dark:text-white"
-                                autoFocus
-                            />
-                        </div>
-                        <div>
-                            <input 
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                placeholder="Password"
-                                className="w-full p-3 bg-zinc-50 dark:bg-black border border-zinc-300 dark:border-zinc-800 rounded focus:border-orange-500 outline-none text-sm font-medium text-center placeholder-zinc-500 dark:placeholder-zinc-700 transition-colors text-black dark:text-white"
-                            />
-                        </div>
+                        <input 
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="Email Address"
+                            className="w-full p-3 bg-zinc-50 dark:bg-black border border-zinc-300 dark:border-zinc-800 rounded focus:border-orange-500 outline-none text-sm"
+                            autoFocus
+                        />
+                        <input 
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Password"
+                            className="w-full p-3 bg-zinc-50 dark:bg-black border border-zinc-300 dark:border-zinc-800 rounded focus:border-orange-500 outline-none text-sm"
+                        />
                         <button 
                             type="submit"
                             disabled={isAuthLoading}
@@ -234,26 +310,11 @@ const App: React.FC = () => {
                         </button>
 
                         <div className="pt-2 flex justify-center">
-                            <button
-                                type="button"
-                                onClick={() => setIsSignUpMode(!isSignUpMode)}
-                                className="text-xs font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-white flex items-center space-x-1"
-                            >
-                                {isSignUpMode ? (
-                                    <><span>Have an account?</span> <LogIn size={10} /></>
-                                ) : (
-                                    <><span>Need an account?</span> <UserPlus size={10} /></>
-                                )}
+                            <button type="button" onClick={() => setIsSignUpMode(!isSignUpMode)} className="text-xs font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-white">
+                                {isSignUpMode ? "Have an account? Login" : "Need an account? Sign Up"}
                             </button>
                         </div>
-
-                        <button 
-                            type="button"
-                            onClick={() => setShowLogin(false)}
-                            className="w-full py-2 text-zinc-600 hover:text-zinc-400 text-xs font-bold uppercase tracking-wider"
-                        >
-                            Cancel
-                        </button>
+                        <button type="button" onClick={() => setShowLogin(false)} className="w-full py-2 text-zinc-600 hover:text-zinc-400 text-xs font-bold uppercase tracking-wider">Cancel</button>
                     </form>
                 </div>
             </div>

@@ -11,6 +11,7 @@ export const dataService = {
   
   createOrganization: async (setup: AccountSetup): Promise<Organization | null> => {
     if (isSupabaseConfigured()) {
+      console.log("EchoSphere: Attempting to create organization in DB...", setup);
       const { data, error } = await supabase!
         .from('organizations')
         .insert({
@@ -23,16 +24,18 @@ export const dataService = {
         .single();
       
       if (error) {
-        console.error("Org Creation Error:", error);
+        console.error("EchoSphere: DB Create Org Error:", error.message, error.details);
         return null;
       }
       
+      console.log("EchoSphere: Organization created successfully:", data);
       // Save ID locally to persist session
       localStorage.setItem(STORAGE_KEY_CURRENT_ORG_ID, data.id);
       return data as Organization;
     }
 
     // Local Fallback
+    console.log("EchoSphere: Supabase not configured. Creating local fallback org.");
     const newOrg: Organization = {
       id: 'local-org-' + Date.now(),
       name: setup.organizationName,
@@ -53,8 +56,14 @@ export const dataService = {
         .eq('slug', slug.toLowerCase())
         .single();
         
-        if (data) return data as Organization;
-        if (error) console.error("Error fetching org by slug:", error);
+        if (error) {
+           // Ignore PGRST116 (No rows found) as it's a valid "not found" state
+           if (error.code !== 'PGRST116') {
+             console.error("EchoSphere: Error fetching org by slug:", error.message);
+           }
+           return null;
+        }
+        return data as Organization;
      }
      return null;
   },
@@ -77,13 +86,17 @@ export const dataService = {
     const orgId = localStorage.getItem(STORAGE_KEY_CURRENT_ORG_ID);
     
     if (isSupabaseConfigured() && orgId) {
-      const { data } = await supabase!
+      const { data, error } = await supabase!
         .from('organizations')
         .select('*')
         .eq('id', orgId)
         .single();
         
-      if (data) return data as Organization;
+      if (error) {
+          console.warn("EchoSphere: Could not validate session Org ID:", error.message);
+      } else if (data) {
+          return data as Organization;
+      }
     }
 
     // 3. Fallback to LocalStorage (Legacy/Offline)
@@ -113,7 +126,9 @@ export const dataService = {
         .order('timestamp', { ascending: false })
         .range(offset, offset + limit - 1); // Supabase range is inclusive
       
-      if (!error && data) {
+      if (error) {
+        console.error("EchoSphere: Supabase Feedback Fetch Error:", error.message);
+      } else if (data) {
         return data.map((item: any) => ({
           ...item,
           organizationId: item.organization_id,
@@ -151,6 +166,7 @@ export const dataService = {
 
     // 1. Try Supabase
     if (isSupabaseConfigured() && orgId) {
+        console.log("EchoSphere: Saving feedback to Supabase...");
         // We do NOT await this in the UI thread for optimistic rendering, 
         // but the service function itself is async.
         const { error } = await supabase!.from('feedback').insert({
@@ -168,8 +184,10 @@ export const dataService = {
         });
         
         if (error) {
-            console.error("Supabase Save Error:", error);
+            console.error("EchoSphere: Supabase Save Error:", error.message, error.details);
             // In a real app, we might revert the optimistic update here or show an error toast.
+        } else {
+            console.log("EchoSphere: Feedback saved successfully to DB.");
         }
     }
 
