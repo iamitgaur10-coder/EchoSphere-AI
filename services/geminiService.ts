@@ -15,7 +15,7 @@ const SAFETY_SETTINGS = [
   { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE },
 ];
 
-export const analyzeFeedbackContent = async (text: string, imageBase64?: string): Promise<AnalysisResponse> => {
+export const analyzeFeedbackContent = async (text: string, imageBase64?: string, userCategory?: string): Promise<AnalysisResponse> => {
   if (!apiKey || !ai) throw new Error("System Error: Gemini API Key is not configured. Please add VITE_API_KEY to your environment.");
 
   try {
@@ -27,7 +27,11 @@ export const analyzeFeedbackContent = async (text: string, imageBase64?: string)
     }
 
     parts.push({
-        text: `${APP_CONFIG.AI.GET_SYSTEM_INSTRUCTION(userLang)} Feedback Content: "${text}"`
+        text: `${APP_CONFIG.AI.GET_SYSTEM_INSTRUCTION(userLang)} 
+        Context: User explicitly selected category: "${userCategory || 'Unspecified'}".
+        If this category is relevant, please use it. If the content is clearly unrelated to this category or civic issues in general, mark isCivicIssue as false.
+        
+        Feedback Content: "${text}"`
     });
 
     const response = await ai.models.generateContent({

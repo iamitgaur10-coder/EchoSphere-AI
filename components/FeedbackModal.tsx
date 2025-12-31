@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Loader2, Send, Mic, MicOff, Image as ImageIcon, Video, Paperclip, User, Trash2, ThumbsUp, AlertTriangle, Clock, Mail, CheckCircle2 } from 'lucide-react';
+import { X, Loader2, Send, Mic, MicOff, Image as ImageIcon, Video, Paperclip, User, Trash2, ThumbsUp, AlertTriangle, Clock, Mail, CheckCircle2, Tag } from 'lucide-react';
 import { analyzeFeedbackContent, checkDuplicates } from '../services/geminiService';
 import { storageService } from '../services/storageService';
 import { rateLimitService } from '../services/rateLimitService';
 import { Location, Feedback } from '../types';
-import { getTranslation } from '../config/constants';
+import { getTranslation, APP_CONFIG } from '../config/constants';
 
 interface FeedbackModalProps {
   location: Location;
@@ -16,6 +15,7 @@ interface FeedbackModalProps {
 
 const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubmit, existingFeedback = [] }) => {
   const [content, setContent] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState(''); // New Category State
   const [authorName, setAuthorName] = useState('');
   const [contactEmail, setContactEmail] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -140,7 +140,12 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!content.trim() && !imageBase64) return;
+    if ((!content.trim() && !imageBase64)) return;
+
+    if (!selectedCategory) {
+        setErrorMsg("Please select a category for your report.");
+        return;
+    }
 
     // Rate Limit Guard
     if (!rateLimitService.check()) {
@@ -154,11 +159,11 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
     setErrorMsg(null);
     
     try {
-        // 1. Analyze Content (Text + Local Image Base64)
+        // 1. Analyze Content (Text + Local Image Base64) + User Category Hint
         const textToAnalyze = content || "Analyze this image for urban planning issues.";
         
         // This will now throw if Safety filters trigger
-        const analysis = await analyzeFeedbackContent(textToAnalyze, imageBase64 || undefined);
+        const analysis = await analyzeFeedbackContent(textToAnalyze, imageBase64 || undefined, selectedCategory);
 
         // --- NEW: AI Gatekeeper ---
         if (analysis.isCivicIssue === false) {
@@ -184,7 +189,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
             content,
             timestamp: new Date(),
             sentiment: analysis.sentiment,
-            category: analysis.category,
+            category: analysis.category, // AI decides final category, likely same as user's if valid
             summary: analysis.summary,
             votes: 0,
             status: 'received',
@@ -203,9 +208,16 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
         onSubmit(newFeedback);
     } catch (err: any) {
         console.error(err);
-        if (err.message && (err.message.includes("API key") || err.message.includes("403"))) {
-             setErrorMsg("System Error: AI Service Key Expired or Invalid. Please contact admin.");
-        } else {
+        const msg = err.message || JSON.stringify(err);
+        
+        // Handle specific Leaked Key error from Google
+        if (msg.includes("leaked") || msg.includes("API key")) {
+            setErrorMsg("Critical: Your API Key was revoked by Google because it was exposed. Please create a new one.");
+        } 
+        else if (msg.includes("403")) {
+            setErrorMsg("System Error: AI Service Permission Denied (403). Check API Key.");
+        } 
+        else {
              setErrorMsg(err.message || "An unexpected error occurred.");
         }
     } finally {
@@ -343,11 +355,36 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
                 </div>
             </div>
           </div>
+          
+          {/* Category Selector - NEW */}
+          <div>
+            <label className="block text-xs font-bold text-zinc-500 uppercase mb-1 tracking-widest">
+              Category <span className="text-orange-500">*</span>
+            </label>
+            <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400 dark:text-zinc-600 group-focus-within:text-orange-500 transition-colors">
+                    <Tag size={14} />
+                </div>
+                <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className={`w-full pl-9 p-3 bg-white dark:bg-black border rounded focus:border-orange-500 outline-none text-sm appearance-none transition-colors ${!selectedCategory ? 'text-zinc-400 dark:text-zinc-600 border-zinc-300 dark:border-zinc-800' : 'text-zinc-900 dark:text-zinc-200 border-orange-500 dark:border-orange-500'}`}
+                >
+                    <option value="" disabled>Select a topic that matches your issue...</option>
+                    {APP_CONFIG.CATEGORIES.map(cat => (
+                        <option key={cat.name} value={cat.name}>{cat.name}</option>
+                    ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                     <div className="h-0 w-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-zinc-400 dark:border-t-zinc-600"></div>
+                </div>
+            </div>
+          </div>
 
           {/* Content Field */}
           <div>
             <label className="block text-xs font-bold text-zinc-500 uppercase mb-1 tracking-widest">
-              Description
+              Description <span className="text-orange-500">*</span>
             </label>
             <div className="relative group">
               <textarea
@@ -417,7 +454,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
           <div className="pt-2">
             <button
               type="submit"
-              disabled={isAnalyzing || (!content.trim() && !imageBase64) || rateLimitWait > 0}
+              disabled={isAnalyzing || (!content.trim() && !imageBase64) || rateLimitWait > 0 || !selectedCategory}
               className="w-full py-3.5 px-4 bg-orange-600 hover:bg-orange-500 disabled:bg-zinc-200 dark:disabled:bg-zinc-800 disabled:text-zinc-400 dark:disabled:text-zinc-600 text-white dark:text-black font-display font-bold uppercase tracking-widest text-sm rounded transition-all flex items-center justify-center space-x-2 shadow-lg"
             >
               {isAnalyzing ? (
