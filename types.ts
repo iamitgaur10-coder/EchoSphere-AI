@@ -50,6 +50,8 @@ export interface AnalysisResponse {
   riskScore: number;
   ecoImpactScore: number;
   ecoImpactReasoning: string;
+  isCivicIssue: boolean; // NEW: Gatekeeper field
+  refusalReason?: string; // NEW: Why it was rejected
 }
 
 export interface AccountSetup {

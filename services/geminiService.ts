@@ -44,9 +44,11 @@ export const analyzeFeedbackContent = async (text: string, imageBase64?: string)
             summary: { type: Type.STRING },
             riskScore: { type: Type.INTEGER },
             ecoImpactScore: { type: Type.INTEGER },
-            ecoImpactReasoning: { type: Type.STRING }
+            ecoImpactReasoning: { type: Type.STRING },
+            isCivicIssue: { type: Type.BOOLEAN, description: "True if related to city infrastructure, safety, sanitation, environment. False if commercial review, personal spam, or unrelated." },
+            refusalReason: { type: Type.STRING, description: "Short message to user explaining why this was rejected if isCivicIssue is false." }
           },
-          required: ['sentiment', 'category', 'summary', 'riskScore', 'ecoImpactScore', 'ecoImpactReasoning']
+          required: ['sentiment', 'category', 'summary', 'riskScore', 'ecoImpactScore', 'ecoImpactReasoning', 'isCivicIssue']
         }
       }
     });

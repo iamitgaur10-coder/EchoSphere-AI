@@ -160,6 +160,13 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
         // This will now throw if Safety filters trigger
         const analysis = await analyzeFeedbackContent(textToAnalyze, imageBase64 || undefined);
 
+        // --- NEW: AI Gatekeeper ---
+        if (analysis.isCivicIssue === false) {
+            setIsAnalyzing(false);
+            setErrorMsg(analysis.refusalReason || "This platform is for city services and maintenance issues only.");
+            return;
+        }
+
         // 2. Upload Image to Cloud (if present)
         let publicImageUrl = undefined;
         if (imageFile) {
