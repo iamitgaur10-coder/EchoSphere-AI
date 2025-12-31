@@ -16,6 +16,7 @@ export interface Feedback {
   authorName?: string;
   votes: number;
   attachments?: ('image' | 'video' | 'audio')[];
+  imageUrl?: string; // Base64 string for local preview/analysis
   ecoImpactScore?: number; // 0-100, where 100 is high positive impact
   ecoImpactReasoning?: string;
   riskScore?: number;

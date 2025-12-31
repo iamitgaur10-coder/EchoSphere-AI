@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Loader2, Send, Mic, MicOff, Image as ImageIcon, Video, Paperclip, User, Trash2 } from 'lucide-react';
 import { analyzeFeedbackContent } from '../services/geminiService';
 import { Location, Feedback } from '../types';
@@ -14,12 +14,13 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
   const [authorName, setAuthorName] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [attachments, setAttachments] = useState<string[]>([]);
+  const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Simple browser speech recognition setup
   useEffect(() => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-       // Browser doesn't support speech API
        return;
     }
   }, []);
@@ -27,7 +28,6 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
   const toggleListening = () => {
     if (isListening) {
         setIsListening(false);
-        // Stop logic would normally go here if we kept a ref to the recognition instance
         return;
     }
 
@@ -50,24 +50,42 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
     }
   };
 
-  const toggleAttachment = (type: string) => {
-    if (attachments.includes(type)) {
-        setAttachments(prev => prev.filter(t => t !== type));
-    } else {
-        setAttachments(prev => [...prev, type]);
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImageBase64(reader.result as string);
+        if (!attachments.includes('image')) {
+            setAttachments(prev => [...prev, 'image']);
+        }
+      };
+      reader.readAsDataURL(file);
     }
+  };
+
+  const triggerFileUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  const removeImage = () => {
+    setImageBase64(null);
+    setAttachments(prev => prev.filter(t => t !== 'image'));
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!content.trim()) return;
+    if (!content.trim() && !imageBase64) return;
 
     setIsAnalyzing(true);
     
-    // Call Gemini API to analyze the text
-    const analysis = await analyzeFeedbackContent(content);
+    // Call Gemini API to analyze the text AND image
+    // If no text is provided but image is, we use a default prompt
+    const textToAnalyze = content || "Analyze this image for urban planning issues.";
+    
+    const analysis = await analyzeFeedbackContent(textToAnalyze, imageBase64 || undefined);
 
-    // Generate a simple ID (safer than crypto.randomUUID in some envs)
     const newId = Date.now().toString(36) + Math.random().toString(36).substr(2);
 
     const newFeedback: Feedback = {
@@ -81,6 +99,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
       votes: 0,
       authorName: authorName.trim() || 'Anonymous Citizen',
       attachments: attachments as any,
+      imageUrl: imageBase64 || undefined,
       ecoImpactScore: analysis.ecoImpactScore,
       ecoImpactReasoning: analysis.ecoImpactReasoning,
       riskScore: analysis.riskScore
@@ -139,8 +158,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 className="w-full h-32 p-3 bg-black border border-zinc-800 rounded focus:border-orange-500 outline-none resize-none text-sm text-zinc-300 placeholder-zinc-700 transition-colors leading-relaxed"
-                placeholder="Enter field report details..."
-                required
+                placeholder="Enter field report details or upload an image..."
               />
               <div className="absolute bottom-2 right-2 flex space-x-2">
                  <button 
@@ -165,55 +183,40 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
                 Media Attachments
             </label>
             
+            <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleImageUpload} 
+                accept="image/*" 
+                className="hidden" 
+            />
+
             <div className="space-y-3">
-                {attachments.length > 0 && (
-                    <div className="grid grid-cols-2 gap-2">
-                        {attachments.includes('image') && (
-                            <div className="relative group bg-zinc-900 rounded border border-zinc-800 h-20 flex items-center justify-center">
-                                <ImageIcon className="text-zinc-600" size={24} />
-                                <button type="button" onClick={() => toggleAttachment('image')} className="absolute top-1 right-1 text-zinc-600 hover:text-red-500"><X size={12} /></button>
-                                <span className="absolute bottom-1 left-2 text-[8px] font-mono text-zinc-600">IMG_001.JPG</span>
-                            </div>
-                        )}
-                        {attachments.includes('video') && (
-                            <div className="relative group bg-zinc-900 rounded border border-zinc-800 h-20 flex items-center justify-center">
-                                <Video className="text-zinc-600" size={24} />
-                                <button type="button" onClick={() => toggleAttachment('video')} className="absolute top-1 right-1 text-zinc-600 hover:text-red-500"><X size={12} /></button>
-                                <span className="absolute bottom-1 left-2 text-[8px] font-mono text-zinc-600">VID_SEQ_A.MP4</span>
-                            </div>
-                        )}
+                {imageBase64 ? (
+                    <div className="relative group bg-zinc-900 rounded border border-zinc-800 h-32 flex items-center justify-center overflow-hidden">
+                        <img src={imageBase64} alt="Preview" className="h-full w-full object-cover opacity-80" />
+                        <button type="button" onClick={removeImage} className="absolute top-2 right-2 bg-black/80 text-white p-1 rounded-full hover:bg-red-600 transition-colors"><X size={14} /></button>
+                        <span className="absolute bottom-1 left-2 text-[8px] font-mono text-white bg-black/50 px-1 rounded">IMAGE_LOADED</span>
+                    </div>
+                ) : (
+                    <div className="flex gap-2">
+                        <button 
+                            type="button"
+                            onClick={triggerFileUpload}
+                            className="flex-1 flex items-center justify-center p-4 rounded border border-dashed border-zinc-800 hover:border-orange-500 hover:bg-zinc-900 text-zinc-500 hover:text-orange-500 transition-all text-xs font-mono group"
+                        >
+                            <ImageIcon size={18} className="mr-2 group-hover:scale-110 transition-transform" />
+                            UPLOAD_VISUAL_DATA
+                        </button>
                     </div>
                 )}
-
-                <div className="flex gap-2">
-                    {!attachments.includes('image') && (
-                        <button 
-                            type="button"
-                            onClick={() => toggleAttachment('image')}
-                            className="flex-1 flex items-center justify-center p-2.5 rounded border border-dashed border-zinc-800 hover:border-zinc-600 hover:bg-zinc-900 text-zinc-500 hover:text-zinc-300 transition-all text-xs font-mono"
-                        >
-                            <ImageIcon size={14} className="mr-2" />
-                            ADD_IMAGE
-                        </button>
-                    )}
-                    {!attachments.includes('video') && (
-                        <button 
-                            type="button"
-                            onClick={() => toggleAttachment('video')}
-                            className="flex-1 flex items-center justify-center p-2.5 rounded border border-dashed border-zinc-800 hover:border-zinc-600 hover:bg-zinc-900 text-zinc-500 hover:text-zinc-300 transition-all text-xs font-mono"
-                        >
-                            <Video size={14} className="mr-2" />
-                            ADD_VIDEO
-                        </button>
-                    )}
-                </div>
             </div>
           </div>
 
           <div className="pt-2">
             <button
               type="submit"
-              disabled={isAnalyzing || !content.trim()}
+              disabled={isAnalyzing || (!content.trim() && !imageBase64)}
               className="w-full py-3.5 px-4 bg-orange-600 hover:bg-orange-500 disabled:bg-zinc-800 disabled:text-zinc-600 text-black font-display font-bold uppercase tracking-widest text-sm rounded transition-all flex items-center justify-center space-x-2"
             >
               {isAnalyzing ? (

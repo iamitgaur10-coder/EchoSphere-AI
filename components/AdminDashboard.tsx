@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, TrendingUp, AlertTriangle, MessageSquare, ThumbsUp, ThumbsDown, Minus, Leaf, Download, FileText, Loader2, RefreshCw } from 'lucide-react';
+import { ArrowLeft, TrendingUp, AlertTriangle, MessageSquare, ThumbsUp, ThumbsDown, Minus, Leaf, Download, FileText, Loader2, RefreshCw, Image as ImageIcon } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Feedback } from '../types';
 import { generateExecutiveReport } from '../services/geminiService';
@@ -55,13 +55,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
   };
 
   const handleDownloadCSV = () => {
-    const headers = ["ID", "Category", "Sentiment", "Content", "Eco Score"];
+    const headers = ["ID", "Category", "Sentiment", "Content", "Eco Score", "Has Image"];
     const rows = data.map(f => [
         f.id, 
         f.category, 
         f.sentiment, 
         `"${f.content.replace(/"/g, '""')}"`, 
-        f.ecoImpactScore || 0
+        f.ecoImpactScore || 0,
+        f.imageUrl ? "Yes" : "No"
     ]);
     
     const csvContent = [
@@ -253,6 +254,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
                     <div className="flex items-center justify-between mb-1">
                         <div className="flex space-x-2">
                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 uppercase tracking-wide border border-zinc-700">{item.category}</span>
+                             {item.imageUrl && (
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-900/30 text-blue-400 border border-blue-900 flex items-center" title="Has Image Evidence">
+                                    <ImageIcon size={8} className="mr-1" /> IMG
+                                </span>
+                             )}
                              {item.ecoImpactScore && item.ecoImpactScore > 70 && (
                                 <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-green-900/30 text-green-500 border border-green-900 flex items-center">
                                     <Leaf size={8} className="mr-1" /> ECO+

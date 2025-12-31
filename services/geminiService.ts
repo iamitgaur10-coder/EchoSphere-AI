@@ -2,16 +2,29 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { AnalysisResponse, Feedback } from '../types';
 
 // The API key must be obtained exclusively from the environment variable.
-// We fallback to an empty string to prevent constructor errors if the env var is missing during initial load.
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 
-export const analyzeFeedbackContent = async (text: string): Promise<AnalysisResponse> => {
+export const analyzeFeedbackContent = async (text: string, imageBase64?: string): Promise<AnalysisResponse> => {
   try {
     if (!process.env.API_KEY) throw new Error("API Key is missing");
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: `Analyze the following public feedback for a city planning tool. 
+    const parts: any[] = [];
+    
+    // Add Image Part if exists
+    if (imageBase64) {
+        // Remove data URL prefix if present (e.g. "data:image/jpeg;base64,")
+        const cleanBase64 = imageBase64.split(',')[1];
+        parts.push({
+            inlineData: {
+                mimeType: 'image/jpeg',
+                data: cleanBase64
+            }
+        });
+    }
+
+    // Add Text Part
+    parts.push({
+        text: `Analyze the following public feedback for a city planning tool. 
       
       Tasks:
       1. Identify sentiment (positive/negative/neutral).
@@ -21,7 +34,12 @@ export const analyzeFeedbackContent = async (text: string): Promise<AnalysisResp
       5. Assign an Eco-Impact Score (0-100) assessing if this suggestion helps the environment (e.g. planting trees = high, more parking = low).
       6. Provide 1 sentence reasoning for the Eco-Impact.
 
-      Feedback: "${text}"`,
+      Feedback Content: "${text}"`
+    });
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash-image', // Using Flash Image for multimodal
+      contents: { parts: parts },
       config: {
         responseMimeType: "application/json",
         responseSchema: {
