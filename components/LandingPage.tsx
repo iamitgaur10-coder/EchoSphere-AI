@@ -142,10 +142,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
         <div className="absolute inset-0 z-0 bg-gradient-to-t from-zinc-50 dark:from-zinc-950 via-zinc-50/80 dark:via-zinc-950/80 to-transparent"></div>
         <div className="absolute inset-0 z-0 bg-gradient-to-r from-zinc-50 dark:from-zinc-950 via-zinc-50/80 dark:via-zinc-950/80 to-transparent"></div>
 
-        <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-12 lg:gap-24 items-center relative z-10 pb-20">
+        <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-12 gap-8 items-center relative z-10 pb-20">
             
             {/* Left: Typography */}
-            <div className="space-y-8">
+            <div className="lg:col-span-5 space-y-8">
                 <div className="inline-flex items-center space-x-2 border border-orange-500/30 bg-orange-500/10 px-3 py-1 rounded text-orange-600 dark:text-orange-400 text-xs font-medium tracking-wide">
                     <Activity size={12} />
                     <span>System Online</span>
@@ -205,7 +205,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
             </div>
 
             {/* Right: 3D Interface Simulation */}
-            <div className="relative h-[750px] hidden lg:block perspective-1000 -mr-12">
+            <div className="lg:col-span-7 relative h-[500px] xl:h-[550px] hidden lg:block perspective-1000 -mr-20">
                 {/* The Tilted Plane */}
                 <div className="absolute inset-0 bg-white dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl transform rotate-y-12 rotate-x-6 hover:rotate-y-0 hover:rotate-x-0 transition-transform duration-1000 overflow-hidden group">
                     
