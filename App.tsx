@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate, useLocation, Navigate, useParams } from 'react-router-dom';
 import { X, CheckCircle, AlertCircle, Terminal, Sun, Moon, Database, Key, CloudLightning, ShieldCheck, XCircle, HardDrive, HelpCircle, Globe } from 'lucide-react';
 import PublicView from './components/PublicView';
 import AdminDashboard from './components/AdminDashboard';
 import Wizard from './components/Wizard';
 import LandingPage from './components/LandingPage';
 import ContentPage from './components/ContentPage';
-import { ViewState, AccountSetup } from './types';
+import { AccountSetup } from './types';
 import { dataService } from './services/dataService';
 import { authService } from './services/authService';
 import { supabase, isSupabaseConfigured, saveAppConfiguration, getEnvDebugInfo, getFallbackConfig } from './lib/supabase';
@@ -75,12 +76,11 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onBypass, isDarkMode, toggleT
     const defaults = getFallbackConfig();
     const [url, setUrl] = useState(defaults.url || '');
     const [key, setKey] = useState(defaults.key || '');
-    const [aiKey, setAiKey] = useState(defaults.aiKey || '');
     const [debugInfo, setDebugInfo] = useState(getEnvDebugInfo());
 
     const handleSave = (e: React.FormEvent) => {
         e.preventDefault();
-        saveAppConfiguration(url, key, aiKey);
+        saveAppConfiguration(url, key, '');
     };
 
     return (
@@ -98,7 +98,6 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onBypass, isDarkMode, toggleT
                     </p>
                 </div>
 
-                {/* Diagnostics Panel */}
                 <div className="bg-zinc-100 dark:bg-black/50 border border-zinc-200 dark:border-zinc-800 rounded p-4 mb-6 text-xs space-y-2">
                     <h3 className="text-zinc-500 font-bold uppercase tracking-wider mb-2">Environment Diagnostics</h3>
                     <div className="flex justify-between items-center">
@@ -113,20 +112,6 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onBypass, isDarkMode, toggleT
                         <span className={`flex items-center ${debugInfo.keyStatus === 'Configured' ? 'text-green-600 dark:text-green-500' : 'text-red-500'}`}>
                             {debugInfo.keyStatus === 'Configured' ? <ShieldCheck size={14} className="mr-1" /> : <XCircle size={14} className="mr-1" />}
                             {debugInfo.keyStatus}
-                        </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                        <span className="text-zinc-500 dark:text-zinc-400">Gemini API Key</span>
-                        <span className={`flex items-center ${debugInfo.aiStatus === 'Configured' ? 'text-green-600 dark:text-green-500' : 'text-red-500'}`}>
-                            {debugInfo.aiStatus === 'Configured' ? <ShieldCheck size={14} className="mr-1" /> : <XCircle size={14} className="mr-1" />}
-                            {debugInfo.aiStatus}
-                        </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                        <span className="text-zinc-500 dark:text-zinc-400">Site URL (Prod)</span>
-                        <span className={`flex items-center ${debugInfo.siteUrlStatus === 'Configured' ? 'text-green-600 dark:text-green-500' : 'text-zinc-500'}`}>
-                            {debugInfo.siteUrlStatus === 'Configured' ? <ShieldCheck size={14} className="mr-1" /> : <Globe size={14} className="mr-1" />}
-                            {debugInfo.siteUrlStatus}
                         </span>
                     </div>
                 </div>
@@ -146,10 +131,6 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onBypass, isDarkMode, toggleT
                                 placeholder="https://your-project.supabase.co"
                                 className="w-full p-3 bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded focus:border-orange-500 outline-none text-sm text-zinc-900 dark:text-white transition-colors"
                             />
-                            <p className="text-[10px] text-zinc-500 dark:text-zinc-600 mt-1 flex items-center">
-                                <HelpCircle size={10} className="mr-1" />
-                                Find this in Supabase Dashboard: Settings &gt; API.
-                            </p>
                         </div>
                         <div>
                             <label className="flex items-center space-x-2 text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">
@@ -165,25 +146,11 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onBypass, isDarkMode, toggleT
                                 className="w-full p-3 bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded focus:border-orange-500 outline-none text-sm text-zinc-900 dark:text-white transition-colors"
                             />
                         </div>
-                         <div>
-                            <label className="flex items-center space-x-2 text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">
-                                <Key size={12} />
-                                <span>Gemini API Key (VITE_API_KEY)</span>
-                            </label>
-                            <input 
-                                type="password" 
-                                required
-                                value={aiKey}
-                                onChange={e => setAiKey(e.target.value)}
-                                placeholder="AIzaSy..."
-                                className="w-full p-3 bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded focus:border-orange-500 outline-none text-sm text-zinc-900 dark:text-white transition-colors"
-                            />
-                        </div>
                     </div>
 
                     <button 
                         type="submit" 
-                        disabled={!url || !key || !aiKey}
+                        disabled={!url || !key}
                         className="w-full py-3 bg-orange-600 hover:bg-orange-500 text-white font-bold uppercase tracking-widest text-sm rounded shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Initialize System
@@ -209,25 +176,50 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onBypass, isDarkMode, toggleT
     );
 };
 
+// Moved RequireAuth outside App to avoid remounting issues
+interface RequireAuthProps {
+  isAuthenticated: boolean;
+  isConfigured: boolean;
+  locationPath: string;
+  onTriggerLogin: (path: string) => void;
+  children: React.ReactNode;
+}
+
+const RequireAuth: React.FC<RequireAuthProps> = ({ 
+  isAuthenticated, 
+  isConfigured, 
+  locationPath, 
+  onTriggerLogin, 
+  children 
+}) => {
+  useEffect(() => {
+      if (!isAuthenticated && isConfigured) {
+          onTriggerLogin(locationPath);
+      }
+  }, [isAuthenticated, isConfigured, locationPath, onTriggerLogin]);
+
+  if (!isAuthenticated && isConfigured) {
+      return null;
+  }
+  return <>{children}</>;
+};
+
 const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<ViewState>('landing');
-  const [contentPageId, setContentPageId] = useState<string>('pricing'); // Track sub-page for content view
+  const navigate = useNavigate();
+  const location = useLocation();
   const [account, setAccount] = useState<AccountSetup | null>(null);
   
-  // 1. Default to LIGHT mode (false)
   const [isDarkMode, setIsDarkMode] = useState(false);
   
   const [showLogin, setShowLogin] = useState(false);
   const [isSignUpMode, setIsSignUpMode] = useState(false);
-  const [pendingView, setPendingView] = useState<ViewState>('landing');
+  const [pendingRoute, setPendingRoute] = useState<string | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [toast, setToast] = useState<{msg: string, type: 'success' | 'error' | 'warning'} | null>(null);
   
-  // Initialize lazily to prevent flash
-  // We check Supabase Config AND Local Skip Flag
   const [needsSetup, setNeedsSetup] = useState(() => {
      if (isSupabaseConfigured()) return false;
      if (typeof window !== 'undefined' && localStorage.getItem('echosphere_skip_setup') === 'true') return false;
@@ -239,88 +231,66 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    // 2. Manage Theme via DOM Class
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
 
-    // 3. Initialize Data & Listen for Auth Redirects
     const initApp = async () => {
-        // Handle URL Hash Errors (Supabase redirects with #error=...)
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const errorDescription = hashParams.get('error_description');
-        if (errorDescription) {
-            showToast(decodeURIComponent(errorDescription), 'error');
-            // Clear hash to clean up URL
-            window.history.replaceState(null, '', window.location.pathname);
-        }
-
-        // Listen for Auth Session (Login via Email Link)
+        // Handle URL parameters for org routing
+        const params = new URLSearchParams(window.location.search);
+        const orgSlug = params.get('org');
+        
         if (isSupabaseConfigured()) {
-            const { data: { subscription } } = supabase!.auth.onAuthStateChange((event, session) => {
+            const { data: { subscription } } = supabase!.auth.onAuthStateChange(async (event, session) => {
                 if (event === 'SIGNED_IN' && session) {
                     setIsAuthenticated(true);
                     setShowLogin(false);
                     showToast("Verified & Logged In Successfully!");
-                    
-                    // Clean URL if it has hash tokens (production polish)
-                    if (window.location.hash && window.location.hash.includes('access_token')) {
-                        window.history.replaceState(null, '', window.location.pathname);
-                    }
                 } else if (event === 'SIGNED_OUT') {
                     setIsAuthenticated(false);
-                    setCurrentView('landing');
+                    navigate('/');
                     showToast("Logged out successfully");
                 }
             });
-            
-            // Cleanup on unmount (though App.tsx rarely unmounts)
-            // return () => subscription.unsubscribe(); 
         }
-
-        const currentOrg = await dataService.getCurrentOrganization();
         
-        if (currentOrg) {
-            const accountConfig: AccountSetup = {
-                organizationName: currentOrg.name,
-                regionCode: currentOrg.slug,
-                focusArea: currentOrg.focusArea,
-                center: currentOrg.center,
-                questions: [] 
-            };
-            setAccount(accountConfig);
-            
-            const params = new URLSearchParams(window.location.search);
-            if (params.get('org')) {
-                setCurrentView('public');
+        if (orgSlug) {
+            // If org param exists, try to load it
+            const org = await dataService.getOrganizationBySlug(orgSlug);
+            if(org) {
+                 const accountConfig: AccountSetup = {
+                    organizationName: org.name,
+                    regionCode: org.slug,
+                    focusArea: org.focusArea,
+                    center: org.center,
+                    questions: [] 
+                };
+                setAccount(accountConfig);
+            }
+        } else {
+            const currentOrg = await dataService.getCurrentOrganization();
+            if (currentOrg) {
+                const accountConfig: AccountSetup = {
+                    organizationName: currentOrg.name,
+                    regionCode: currentOrg.slug,
+                    focusArea: currentOrg.focusArea,
+                    center: currentOrg.center,
+                    questions: [] 
+                };
+                setAccount(accountConfig);
             }
         }
     };
     initApp();
-  }, [isDarkMode]);
+  }, [isDarkMode, navigate]);
 
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
-  };
+  const toggleTheme = () => setIsDarkMode(!isDarkMode);
 
-  const handleProtectedAction = (targetView: ViewState) => {
-    if (isAuthenticated) {
-        setCurrentView(targetView);
-    } else {
-        setPendingView(targetView);
-        setShowLogin(true);
-        setEmail('');
-        setPassword('');
-        setIsSignUpMode(false);
-    }
-  };
-
-  const handleOpenContent = (page: string) => {
-      setContentPageId(page);
-      setCurrentView('content');
-      window.scrollTo(0, 0);
+  const handleTriggerLogin = (path: string) => {
+      setPendingRoute(path);
+      setShowLogin(true);
   };
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -339,16 +309,16 @@ const App: React.FC = () => {
     if (result.user && !result.error) {
         setIsAuthenticated(true);
         setShowLogin(false);
-        // If we were pending a view, go there. Otherwise stay where we are (PublicView)
-        if (pendingView) setCurrentView(pendingView);
-        
+        if (pendingRoute) {
+            navigate(pendingRoute);
+            setPendingRoute(null);
+        }
         showToast(isSignUpMode ? `Account created for ${result.user.email}` : `Welcome back, ${result.user.email}`);
     } else {
-        // If in Local/Demo mode, allow admin access with mock auth
         if (!isSupabaseConfigured()) {
             setIsAuthenticated(true);
             setShowLogin(false);
-            setCurrentView(pendingView);
+            if (pendingRoute) navigate(pendingRoute);
             showToast("Demo Mode: Admin Access Granted", 'warning');
         } else {
             showToast(result.error?.message || "Authentication Failed", 'error');
@@ -359,14 +329,14 @@ const App: React.FC = () => {
   const handleSignOut = async () => {
     await authService.signOut();
     setIsAuthenticated(false);
-    setCurrentView('landing');
+    navigate('/');
     showToast("Logged out successfully");
   };
 
   const handleProvision = (config: AccountSetup) => {
     dataService.saveAccount(config);
     setAccount(config);
-    setCurrentView('admin');
+    navigate('/admin');
     showToast(`Organization '${config.organizationName}' configured successfully`);
   };
 
@@ -375,58 +345,56 @@ const App: React.FC = () => {
       setNeedsSetup(false);
   };
 
-  // Helper to open login from Public View
-  const handleTriggerLogin = () => {
-      setPendingView('public'); // Stay on public after login
-      setShowLogin(true);
-      setIsSignUpMode(false);
-      setEmail('');
-      setPassword('');
-  };
-
   if (needsSetup) {
       return <SetupScreen onBypass={handleBypassSetup} isDarkMode={isDarkMode} toggleTheme={toggleTheme} />;
   }
 
-  const renderView = () => {
-    switch (currentView) {
-      case 'wizard':
-        return <Wizard onComplete={handleProvision} onCancel={() => setCurrentView('landing')} />;
-      case 'public':
-        return (
-          <PublicView 
-            onBack={() => setCurrentView('landing')} 
-            showToast={(msg, type) => showToast(msg, type)} 
-            isDarkMode={isDarkMode}
-            onTriggerLogin={handleTriggerLogin}
-          />
-        );
-      case 'admin':
-        return <AdminDashboard onBack={() => setCurrentView('landing')} onSignOut={handleSignOut} />;
-      case 'content':
-        return <ContentPage pageId={contentPageId} onBack={() => setCurrentView('landing')} />;
-      case 'landing':
-      default:
-        return (
-          <LandingPage 
-            onEnterPublic={() => setCurrentView('public')}
-            onEnterAdmin={() => handleProtectedAction('admin')}
-            onEnterWizard={() => handleProtectedAction('wizard')}
-            onOpenContent={handleOpenContent}
-            account={account}
-            isDarkMode={isDarkMode}
-          />
-        );
-    }
-  };
-
   return (
     <div className="font-sans antialiased min-h-screen transition-colors duration-300">
-        
         <ThemeToggle isDark={isDarkMode} toggle={toggleTheme} />
-
-        {renderView()}
         
+        <Routes>
+            <Route path="/" element={
+                <LandingPage 
+                    onEnterPublic={() => navigate('/map')}
+                    onEnterAdmin={() => navigate('/admin')}
+                    onEnterWizard={() => navigate('/setup')}
+                    onOpenContent={(page) => navigate(`/content/${page}`)}
+                    account={account}
+                    isDarkMode={isDarkMode}
+                />
+            } />
+            <Route path="/map" element={
+                <PublicView 
+                    onBack={() => navigate('/')} 
+                    showToast={showToast} 
+                    isDarkMode={isDarkMode}
+                    onTriggerLogin={() => setShowLogin(true)}
+                />
+            } />
+            <Route path="/admin" element={
+                <RequireAuth 
+                    isAuthenticated={isAuthenticated} 
+                    isConfigured={isSupabaseConfigured()}
+                    locationPath={location.pathname}
+                    onTriggerLogin={handleTriggerLogin}
+                >
+                    <AdminDashboard onBack={() => navigate('/')} onSignOut={handleSignOut} />
+                </RequireAuth>
+            } />
+            <Route path="/setup" element={
+                <RequireAuth 
+                    isAuthenticated={isAuthenticated} 
+                    isConfigured={isSupabaseConfigured()}
+                    locationPath={location.pathname}
+                    onTriggerLogin={handleTriggerLogin}
+                >
+                    <Wizard onComplete={handleProvision} onCancel={() => navigate('/')} />
+                </RequireAuth>
+            } />
+            <Route path="/content/:pageId" element={<ContentPageWrapper onBack={() => navigate('/')} />} />
+        </Routes>
+
         {toast && <Toast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
 
         {showLogin && (
@@ -437,6 +405,9 @@ const App: React.FC = () => {
                              <Terminal size={24} />
                         </div>
                         <h3 className="text-xl font-display font-bold dark:text-white tracking-tight">{isSignUpMode ? 'Create Account' : 'Login'}</h3>
+                        <p className="text-xs text-zinc-500 mt-2">
+                             Access Secure Area
+                        </p>
                         {!isSupabaseConfigured() && (
                             <p className="text-xs text-orange-500 mt-2 font-bold uppercase tracking-wide">Demo Mode Enabled</p>
                         )}
@@ -478,6 +449,11 @@ const App: React.FC = () => {
         )}
     </div>
   );
+};
+
+const ContentPageWrapper = ({ onBack }: { onBack: () => void }) => {
+    const { pageId } = useParams();
+    return <ContentPage pageId={pageId || 'pricing'} onBack={onBack} />;
 };
 
 export default App;
