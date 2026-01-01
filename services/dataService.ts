@@ -1,4 +1,3 @@
-
 import { Feedback, AccountSetup, Organization } from '../types';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
@@ -7,36 +6,52 @@ const STORAGE_KEY_FEEDBACK = 'echosphere_feedback';
 const STORAGE_KEY_ACCOUNT = 'echosphere_account';
 const STORAGE_KEY_CURRENT_ORG_ID = 'echosphere_current_org_id';
 
+// Helper to map DB columns to Types
+const mapOrg = (row: any): Organization => ({
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    center: row.center,
+    focusArea: row.focus_area // Map snake_case to camelCase
+});
+
 export const dataService = {
   // --- ORGANIZATION MANAGEMENT ---
   
   createOrganization: async (setup: AccountSetup): Promise<Organization | null> => {
     if (isSupabaseConfigured()) {
       console.log("EchoSphere: Attempting to create organization in DB...", setup);
-      const { data, error } = await supabase!
-        .from('organizations')
-        .insert({
-          name: setup.organizationName,
-          slug: setup.regionCode.toLowerCase(),
-          center: setup.center,
-          focus_area: setup.focusArea
-        })
-        .select()
-        .single();
-      
-      if (error) {
-        console.error("EchoSphere: DB Create Org Error:", error.message, error.details);
-        return null;
+      try {
+          const { data, error } = await supabase!
+            .from('organizations')
+            .insert({
+              id: `org-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              name: setup.organizationName,
+              slug: setup.regionCode.toLowerCase(),
+              center: setup.center,
+              focus_area: setup.focusArea
+            })
+            .select()
+            .single();
+          
+          if (error) {
+            if (error.message && (error.message.includes('fetch') || error.message.includes('network'))) {
+                throw new Error("Network error");
+            }
+            console.error("❌ [DataService] DB Create Org Error:", error);
+            return null;
+          }
+          
+          console.log("✅ EchoSphere: Organization created successfully:", data);
+          localStorage.setItem(STORAGE_KEY_CURRENT_ORG_ID, data.id);
+          return mapOrg(data);
+      } catch (e) {
+          console.warn("⚠️ [DataService] Connection failed. Falling back to local mode.");
       }
-      
-      console.log("EchoSphere: Organization created successfully:", data);
-      // Save ID locally to persist session
-      localStorage.setItem(STORAGE_KEY_CURRENT_ORG_ID, data.id);
-      return data as Organization;
     }
 
     // Local Fallback
-    console.log("EchoSphere: Supabase not configured. Creating local fallback org.");
+    console.log("⚠️ EchoSphere: Using local fallback org.");
     const newOrg: Organization = {
       id: 'local-org-' + Date.now(),
       name: setup.organizationName,
@@ -51,25 +66,30 @@ export const dataService = {
 
   getOrganizationBySlug: async (slug: string): Promise<Organization | null> => {
      if (isSupabaseConfigured()) {
-        const { data, error } = await supabase!
-        .from('organizations')
-        .select('*')
-        .eq('slug', slug.toLowerCase())
-        .single();
-        
-        if (error) {
-           if (error.code !== 'PGRST116') {
-             console.error("EchoSphere: Error fetching org by slug:", error.message);
-           }
-           return null;
+        try {
+            const { data, error } = await supabase!
+            .from('organizations')
+            .select('*')
+            .eq('slug', slug.toLowerCase())
+            .single();
+            
+            if (error) {
+               if (error.code !== 'PGRST116') {
+                 console.error("❌ [DataService] Error fetching org by slug:", error.message);
+               }
+               return null;
+            }
+            return mapOrg(data);
+        } catch (e) {
+            console.warn("⚠️ [DataService] Network error fetching slug.");
+            return null;
         }
-        return data as Organization;
      }
      return null;
   },
 
   getCurrentOrganization: async (): Promise<Organization | null> => {
-    // 1. Priority: Check URL Query Param (e.g. ?org=nyc)
+    // 1. Priority: Check URL Query Param
     const params = new URLSearchParams(window.location.search);
     const urlSlug = params.get('org');
 
@@ -85,17 +105,19 @@ export const dataService = {
     const orgId = localStorage.getItem(STORAGE_KEY_CURRENT_ORG_ID);
     
     if (isSupabaseConfigured() && orgId) {
-      const { data, error } = await supabase!
-        .from('organizations')
-        .select('*')
-        .eq('id', orgId)
-        .single();
-        
-      if (error) {
-          console.warn("EchoSphere: Could not validate session Org ID:", error.message);
-      } else if (data) {
-          return data as Organization;
-      }
+      try {
+          const { data, error } = await supabase!
+            .from('organizations')
+            .select('*')
+            .eq('id', orgId)
+            .single();
+            
+          if (error) {
+              // Silent fail
+          } else if (data) {
+              return mapOrg(data);
+          }
+      } catch (e) {}
     }
 
     // 3. Fallback to LocalStorage (Legacy/Offline)
@@ -105,13 +127,23 @@ export const dataService = {
 
   listOrganizations: async (): Promise<Organization[]> => {
       if (isSupabaseConfigured()) {
-          const { data, error } = await supabase!
-            .from('organizations')
-            .select('*')
-            .order('name');
-            
-          if (error) return [];
-          return data as Organization[];
+          try {
+              const { data, error } = await supabase!
+                .from('organizations')
+                .select('*')
+                .order('name');
+                
+              if (error) {
+                  if (error.message && (error.message.includes('fetch') || error.message.includes('Failed to fetch'))) {
+                      throw new Error("Fetch failed");
+                  }
+                  console.error("❌ [DataService] List Orgs Error:", error.message);
+                  return [];
+              }
+              return data.map(mapOrg);
+          } catch (e) {
+              console.warn("⚠️ [DataService] Network unavailable for listing. Using local storage.");
+          }
       }
       
       const stored = localStorage.getItem(STORAGE_KEY_ACCOUNT);
@@ -129,30 +161,37 @@ export const dataService = {
     }
 
     if (isSupabaseConfigured() && orgId) {
-      const { data, error } = await supabase!
-        .from('feedback')
-        .select('*')
-        .eq('organization_id', orgId)
-        .order('timestamp', { ascending: false })
-        .range(offset, offset + limit - 1);
-      
-      if (error) {
-        console.error("EchoSphere: Supabase Feedback Fetch Error:", error.message);
-      } else if (data) {
-        return data.map((item: any) => ({
-          ...item,
-          organizationId: item.organization_id,
-          userId: item.user_id, // Map DB user_id to type userId
-          imageUrl: item.image_url,
-          ecoImpactScore: item.eco_impact_score,
-          riskScore: item.risk_score,
-          ecoImpactReasoning: item.eco_impact_reasoning,
-          contactEmail: item.contact_email,
-          status: item.status || 'received',
-          adminNotes: item.admin_notes || [],
-          timestamp: new Date(item.timestamp),
-          location: typeof item.location === 'string' ? JSON.parse(item.location) : item.location
-        }));
+      try {
+          const { data, error } = await supabase!
+            .from('feedback')
+            .select('*')
+            .eq('organization_id', orgId)
+            .order('timestamp', { ascending: false })
+            .range(offset, offset + limit - 1);
+          
+          if (error) {
+            if (error.message && (error.message.includes('fetch') || error.message.includes('network'))) {
+                throw new Error("Network error");
+            }
+            console.error("❌ [DataService] Feedback Fetch Error:", error.message);
+          } else if (data) {
+            return data.map((item: any) => ({
+              ...item,
+              organizationId: item.organization_id,
+              userId: item.user_id, 
+              imageUrl: item.image_url,
+              ecoImpactScore: item.eco_impact_score,
+              riskScore: item.risk_score,
+              ecoImpactReasoning: item.eco_impact_reasoning,
+              contactEmail: item.contact_email,
+              status: item.status || 'received',
+              adminNotes: item.admin_notes || [],
+              timestamp: new Date(item.timestamp),
+              location: typeof item.location === 'string' ? JSON.parse(item.location) : item.location
+            }));
+          }
+      } catch (e) {
+          console.warn("⚠️ [DataService] Using local feedback cache.");
       }
     }
 
@@ -177,11 +216,27 @@ export const dataService = {
   saveFeedback: async (newFeedback: Feedback): Promise<Feedback[]> => {
     const orgId = localStorage.getItem(STORAGE_KEY_CURRENT_ORG_ID);
 
+    // Save to LocalStorage first (Optimistic)
+    let current: Feedback[] = [];
+    try {
+        const stored = localStorage.getItem(STORAGE_KEY_FEEDBACK);
+        if (stored) {
+             const parsed = JSON.parse(stored);
+             current = parsed.map((item: any) => ({ ...item, timestamp: new Date(item.timestamp) }));
+        }
+    } catch(e) {}
+    
+    const updated = [newFeedback, ...current];
+    localStorage.setItem(STORAGE_KEY_FEEDBACK, JSON.stringify(updated));
+
+    // Try Sync to DB
     if (isSupabaseConfigured() && orgId) {
-        console.log("EchoSphere: Saving feedback to Supabase...");
-        const { error } = await supabase!.from('feedback').insert({
+        console.log("EchoSphere: Syncing feedback to Supabase...");
+        
+        supabase!.from('feedback').insert({
+            id: newFeedback.id, 
             organization_id: orgId,
-            user_id: newFeedback.userId, // Save User ID
+            user_id: newFeedback.userId, 
             location: newFeedback.location,
             content: newFeedback.content,
             sentiment: newFeedback.sentiment,
@@ -194,43 +249,36 @@ export const dataService = {
             contact_email: newFeedback.contactEmail,
             status: 'received',
             timestamp: new Date().toISOString()
+        })
+        .then(({ error }) => {
+            if (error) console.error("❌ [DataService] Sync Failed:", error.message);
+            else console.log("✅ [DataService] Sync Success");
+        })
+        .catch(err => {
+            console.warn("⚠️ [DataService] Sync network error (Background):", err);
         });
-        
-        if (error) {
-            console.error("EchoSphere: Supabase Save Error:", error.message);
-        }
     }
-
-    let current: Feedback[] = [];
-    try {
-        const stored = localStorage.getItem(STORAGE_KEY_FEEDBACK);
-        if (stored) {
-             const parsed = JSON.parse(stored);
-             current = parsed.map((item: any) => ({ ...item, timestamp: new Date(item.timestamp) }));
-        }
-    } catch(e) {}
-    
-    const updated = [newFeedback, ...current];
-    localStorage.setItem(STORAGE_KEY_FEEDBACK, JSON.stringify(updated));
     
     return updated;
   },
 
-  // NEW: Update existing feedback (Status, Notes)
   updateFeedback: async (updatedItem: Feedback): Promise<void> => {
      const orgId = localStorage.getItem(STORAGE_KEY_CURRENT_ORG_ID);
 
      if (isSupabaseConfigured() && orgId) {
-         await supabase!
+         supabase!
              .from('feedback')
              .update({
                  status: updatedItem.status,
                  admin_notes: updatedItem.adminNotes
              })
-             .eq('id', updatedItem.id);
+             .eq('id', updatedItem.id)
+             .then(({ error }) => {
+                 if (error) console.error("❌ [DataService] Update Failed:", error.message);
+             })
+             .catch(err => console.warn("Update network error (Background)", err));
      }
 
-     // Local Update
      try {
         const stored = localStorage.getItem(STORAGE_KEY_FEEDBACK);
         if (stored) {
