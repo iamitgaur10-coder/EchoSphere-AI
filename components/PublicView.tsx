@@ -170,6 +170,7 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
               
               <button
                 onClick={handleShare}
+                aria-label="Share Map"
                 className="pointer-events-auto flex items-center space-x-2 px-3 py-2 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md shadow-lg rounded-full border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-orange-500 transition-colors"
                 title="Share Map"
               >
@@ -259,7 +260,7 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
                               <p className="text-xs text-zinc-500">{currentUser?.email}</p>
                           </div>
                       </div>
-                      <button onClick={() => setShowProfile(false)} className="text-zinc-400 hover:text-black dark:hover:text-white"><X size={20}/></button>
+                      <button onClick={() => setShowProfile(false)} aria-label="Close Profile" className="text-zinc-400 hover:text-black dark:hover:text-white"><X size={20}/></button>
                   </div>
 
                   <div className="p-6 grid grid-cols-2 gap-4">

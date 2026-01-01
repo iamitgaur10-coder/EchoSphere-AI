@@ -235,7 +235,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
                 {t.submitBtn}
             </h3>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded transition-colors text-zinc-500 hover:text-black dark:hover:text-white">
+          <button onClick={onClose} aria-label="Close Modal" className="p-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded transition-colors text-zinc-500 hover:text-black dark:hover:text-white">
             <X size={16} />
           </button>
         </div>
@@ -309,6 +309,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
               <button 
                 type="button" 
                 onClick={toggleListening}
+                aria-label="Use Voice Input"
                 className={`absolute bottom-2 right-2 p-1.5 rounded transition-all ${isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-zinc-100 text-zinc-500'}`}
               >
                 <Mic size={14} />

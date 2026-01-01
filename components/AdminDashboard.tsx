@@ -218,7 +218,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onSignOut }) =>
       <div className="bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 sticky top-0 z-20">
         <div className="max-w-[1920px] mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-4">
-             <button onClick={onBack} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded text-zinc-500 hover:text-black dark:hover:text-white transition-colors">
+             <button onClick={onBack} aria-label="Go Back" className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded text-zinc-500 hover:text-black dark:hover:text-white transition-colors">
                 <ArrowLeft size={18} />
              </button>
              <div>
@@ -227,11 +227,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onSignOut }) =>
              </div>
           </div>
           <div className="flex items-center space-x-3">
-             <button onClick={() => refreshData()} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded text-zinc-500 hover:text-black dark:hover:text-white transition-colors">
+             <button onClick={() => refreshData()} aria-label="Refresh Data" className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded text-zinc-500 hover:text-black dark:hover:text-white transition-colors">
                 <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
              </button>
              <div className="h-6 w-[1px] bg-zinc-200 dark:bg-zinc-800 mx-2"></div>
-             <button onClick={onSignOut} className="flex items-center space-x-2 text-zinc-500 hover:text-red-600 dark:hover:text-red-500 transition-colors px-2 py-1.5">
+             <button onClick={onSignOut} aria-label="Sign Out" className="flex items-center space-x-2 text-zinc-500 hover:text-red-600 dark:hover:text-red-500 transition-colors px-2 py-1.5">
                  <LogOut size={16} />
              </button>
           </div>
@@ -246,7 +246,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onSignOut }) =>
                 <div className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Inbox ({data.length})</div>
                 <div className="flex space-x-2">
                     {/* Placeholder for Filters */}
-                    <button className="p-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded text-zinc-400"><Filter size={14}/></button>
+                    <button aria-label="Filter" className="p-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded text-zinc-400"><Filter size={14}/></button>
                 </div>
             </div>
             
