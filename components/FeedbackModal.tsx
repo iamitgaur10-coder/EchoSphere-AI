@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Loader2, Send, Mic, MicOff, Image as ImageIcon, Video, Paperclip, User, Trash2, ThumbsUp, AlertTriangle, Clock, Mail, CheckCircle2, Tag, Shield, Eye, EyeOff } from 'lucide-react';
+import { X, Loader2, Send, Mic, MicOff, Image as ImageIcon, Video, Paperclip, User, Trash2, ThumbsUp, AlertTriangle, Clock, Mail, CheckCircle2, Tag, Shield, Eye, EyeOff, Trophy } from 'lucide-react';
 import DOMPurify from 'dompurify'; // Sanitization
 import { analyzeFeedbackContent, checkDuplicates } from '../services/geminiService';
 import { storageService } from '../services/storageService';
@@ -12,9 +12,11 @@ interface FeedbackModalProps {
   onClose: () => void;
   onSubmit: (feedback: Feedback) => void;
   existingFeedback?: Feedback[];
+  isLoggedIn?: boolean;
+  onLogin?: () => void;
 }
 
-const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubmit, existingFeedback = [] }) => {
+const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubmit, existingFeedback = [], isLoggedIn, onLogin }) => {
   const [content, setContent] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [authorName, setAuthorName] = useState('');
@@ -340,6 +342,23 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ location, onClose, onSubm
 
           {/* Cloudflare Turnstile Placeholder */}
           <div ref={turnstileRef} className="flex justify-center my-2 min-h-[65px]"></div>
+          
+          {/* Gamification Nudge */}
+          {!isLoggedIn && onLogin && (
+            <div className="mb-4 p-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-lg flex items-center justify-between group">
+                <div className="flex items-center gap-2 text-indigo-700 dark:text-indigo-300 text-xs">
+                    <Trophy size={14} className="text-indigo-500" />
+                    <span>Earn <strong>10 Karma</strong> for this report.</span>
+                </div>
+                <button 
+                    type="button" 
+                    onClick={onLogin}
+                    className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 underline"
+                >
+                    Login / Sign Up
+                </button>
+            </div>
+          )}
 
           <button
             type="submit"

@@ -61,15 +61,6 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
         const list = await dataService.getFeedback(100, 0, org.id);
         setFeedbackList(list);
 
-        // Calculate Karma & History if logged in
-        if (user) {
-            const myItems = list.filter(f => f.userId === user.id);
-            setUserHistory(myItems);
-            // Karma formula: 10 pts per report, 50 pts per resolution
-            const karma = myItems.reduce((acc, curr) => acc + 10 + (curr.status === 'resolved' ? 50 : 0), 0);
-            setUserKarma(karma);
-        }
-
         // Pre-fill live feed
         if (list.length > 0) {
             const recent = list.slice(0, 3).map(f => {
@@ -83,10 +74,11 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
     load();
   }, [slug]);
 
-  // 2. Real-time Subscription
+  // 2. Real-time Subscription & Auth Listener
   useEffect(() => {
     if (!isSupabaseConfigured() || !currentOrg) return;
 
+    // A. Feedback Subscription
     const channel = supabase!
       .channel('public:feedback')
       .on(
@@ -99,7 +91,7 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
           const newFeedback: Feedback = {
             id: newRow.id,
             organizationId: newRow.organization_id,
-            userId: newRow.user_id, // Capture Owner
+            userId: newRow.user_id,
             location: newRow.location, 
             content: newRow.content,
             timestamp: new Date(newRow.timestamp),
@@ -116,12 +108,7 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
              return [newFeedback, ...prev];
           });
 
-          // If this is MY report, update my history/karma in real-time
-          if (currentUser && newFeedback.userId === currentUser.id) {
-              setUserHistory(prev => [newFeedback, ...prev]);
-              setUserKarma(prev => prev + 10);
-          }
-
+          // Live Feed Update
           const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
           const msg = `${time} • New Report: ${newFeedback.category} (${newFeedback.sentiment})`;
           setLiveFeed(prev => [msg, ...prev].slice(0, 3));
@@ -131,10 +118,33 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
       )
       .subscribe();
 
+    // B. Auth Subscription (Updates Karma/Profile when user logs in via overlay)
+    const { data: { subscription: authSub } } = supabase!.auth.onAuthStateChange((event, session) => {
+        if (session?.user) {
+            setCurrentUser(session.user);
+        } else {
+            setCurrentUser(null);
+            setUserHistory([]);
+            setUserKarma(0);
+        }
+    });
+
     return () => {
       supabase!.removeChannel(channel);
+      authSub.unsubscribe();
     };
-  }, [currentOrg, showToast, currentUser]);
+  }, [currentOrg, showToast]);
+
+  // 3. Recalculate Karma whenever Feedback List or Current User changes
+  useEffect(() => {
+      if (currentUser && feedbackList.length > 0) {
+          const myItems = feedbackList.filter(f => f.userId === currentUser.id);
+          setUserHistory(myItems);
+          const karma = myItems.reduce((acc, curr) => acc + 10 + (curr.status === 'resolved' ? 50 : 0), 0);
+          setUserKarma(karma);
+      }
+  }, [currentUser, feedbackList]);
+
 
   const handleMapClick = (loc: Location) => {
     setSelectedLocation(loc);
@@ -160,7 +170,7 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
     try {
         await dataService.saveFeedback(newFeedback);
         
-        // Update local karma immediately for UX
+        // Optimistic Karma Update (The useEffect above will also catch it, but this is instant)
         if (currentUser) {
             setUserHistory(prev => [newFeedback, ...prev]);
             setUserKarma(prev => prev + 10);
@@ -332,6 +342,8 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
           onClose={() => setSelectedLocation(null)}
           onSubmit={handleFeedbackSubmit}
           existingFeedback={feedbackList}
+          isLoggedIn={!!currentUser}
+          onLogin={onTriggerLogin}
         />
       )}
 
