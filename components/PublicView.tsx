@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Plus, Activity, User, LogIn, Trophy, Clock, History, X, Share2, Check } from 'lucide-react';
+import { ArrowLeft, Plus, Activity, User, LogIn, Trophy, Clock, History, X, Share2, Check, Download } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MapArea from './MapArea';
 import FeedbackModal from './FeedbackModal';
@@ -54,7 +54,6 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
         setCurrentUser(user);
 
         // Initial load allows more items
-        // NOTE: We now fetch using the org ID we just found
         const list = await dataService.getFeedback(100, 0, org.id);
         setFeedbackList(list);
 
@@ -175,6 +174,20 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
       const url = window.location.href;
       navigator.clipboard.writeText(url);
       if (showToast) showToast("Link copied! Share this map with your community.");
+  };
+  
+  const handleExportData = () => {
+      const dataStr = JSON.stringify(userHistory, null, 2);
+      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+      
+      const exportFileDefaultName = 'my-echosphere-data.json';
+      
+      const linkElement = document.createElement('a');
+      linkElement.setAttribute('href', dataUri);
+      linkElement.setAttribute('download', exportFileDefaultName);
+      linkElement.click();
+      
+      if (showToast) showToast("Data export started.");
   };
 
   return (
@@ -326,6 +339,14 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
                               <p className="text-xs mt-1">Tap the map to earn your first karma!</p>
                           </div>
                       )}
+                  </div>
+                  
+                  {/* GDPR Export Button */}
+                  <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 sm:rounded-b-2xl">
+                       <button onClick={handleExportData} className="flex items-center gap-2 text-xs text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors w-full justify-center">
+                           <Download size={14} /> 
+                           <span>Export My Personal Data (JSON)</span>
+                       </button>
                   </div>
               </div>
           </div>

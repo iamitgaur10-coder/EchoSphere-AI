@@ -1,6 +1,6 @@
 // Follow this setup guide to deploy: https://supabase.com/docs/guides/functions
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from "https://esm.sh/@google/genai@^1.34.0";
+import { GoogleGenAI } from "https://esm.sh/@google/genai@^1.34.0";
 
 declare const Deno: any;
 

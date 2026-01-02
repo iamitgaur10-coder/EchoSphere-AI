@@ -129,4 +129,5 @@ export interface LeafletNamespace {
   divIcon: (options: LeafletIconOptions) => any;
   markerClusterGroup?: (options?: any) => LeafletLayerGroup;
   layerGroup: () => LeafletLayerGroup;
+  Browser: { mobile: boolean };
 }

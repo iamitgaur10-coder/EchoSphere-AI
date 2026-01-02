@@ -11,6 +11,41 @@ import { dataService } from './services/dataService';
 import { authService } from './services/authService';
 import { supabase, isSupabaseConfigured, saveAppConfiguration, getEnvDebugInfo, getFallbackConfig } from './lib/supabase';
 
+// -- Cookie Consent Component --
+const CookieConsent = () => {
+    const [accepted, setAccepted] = useState(() => {
+        if (typeof window !== 'undefined') return localStorage.getItem('echosphere_cookie_consent');
+        return null;
+    });
+
+    if (accepted) return null;
+
+    return (
+        <div className="fixed bottom-0 left-0 right-0 z-[1000] bg-zinc-900 border-t border-zinc-800 p-4 shadow-2xl animate-fade-in-up">
+            <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="text-xs text-zinc-400 text-center sm:text-left">
+                    <span className="font-bold text-white">We use cookies</span> to analyze traffic and improve your experience. 
+                    By using EchoSphere, you agree to our Privacy Policy.
+                </div>
+                <div className="flex gap-3">
+                    <button 
+                        onClick={() => { localStorage.setItem('echosphere_cookie_consent', 'declined'); setAccepted('declined'); }}
+                        className="px-4 py-2 text-xs font-bold text-zinc-400 hover:text-white transition-colors"
+                    >
+                        Decline
+                    </button>
+                    <button 
+                        onClick={() => { localStorage.setItem('echosphere_cookie_consent', 'accepted'); setAccepted('accepted'); }}
+                        className="px-6 py-2 bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold uppercase tracking-wider rounded transition-colors"
+                    >
+                        Accept
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // -- Toast Component --
 interface ToastProps {
   message: string;
@@ -335,7 +370,8 @@ const App: React.FC = () => {
   return (
     <div className="font-sans antialiased min-h-screen transition-colors duration-300">
         <ThemeToggle isDark={isDarkMode} toggle={toggleTheme} />
-        
+        <CookieConsent />
+
         <Routes>
             <Route path="/" element={
                 <LandingPage 
