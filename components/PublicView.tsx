@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Plus, Activity, User, LogIn, Trophy, Clock, History, X, Share2, Check, Download } from 'lucide-react';
+import { ArrowLeft, Plus, Activity, User, LogIn, Trophy, Clock, History, X, Share2, Check, Download, Building2, Map as MapIcon, ArrowRight } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MapArea from './MapArea';
 import FeedbackModal from './FeedbackModal';
@@ -23,6 +23,8 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [liveFeed, setLiveFeed] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [orgNotFound, setOrgNotFound] = useState(false);
   
   // Auth State
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -33,6 +35,8 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
   // 1. Initial Data Load
   useEffect(() => {
     const load = async () => {
+        setIsLoading(true);
+        setOrgNotFound(false);
         let org: Organization | null = null;
         
         if (slug) {
@@ -42,8 +46,8 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
         }
 
         if (!org) {
-            // Fallback or Redirect if org not found
-            if (showToast) showToast("Organization not found", "error");
+            setOrgNotFound(true);
+            setIsLoading(false);
             return;
         }
 
@@ -74,6 +78,7 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
             });
             setLiveFeed(recent);
         }
+        setIsLoading(false);
     };
     load();
   }, [slug]);
@@ -190,6 +195,52 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
       if (showToast) showToast("Data export started.");
   };
 
+  const handleActivateCity = () => {
+      if (slug) {
+          navigate(`/setup?region=${slug}`);
+      } else {
+          navigate('/setup');
+      }
+  };
+
+  if (orgNotFound) {
+      return (
+          <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex flex-col items-center justify-center p-4 text-center">
+              <div className="w-20 h-20 bg-zinc-200 dark:bg-zinc-800 rounded-full flex items-center justify-center mb-6">
+                  <MapIcon size={32} className="text-zinc-400" />
+              </div>
+              <h2 className="text-2xl font-display font-bold text-zinc-900 dark:text-white mb-2 uppercase">
+                  {slug ? slug.toUpperCase() : 'City'} Not Found
+              </h2>
+              <p className="text-zinc-600 dark:text-zinc-400 max-w-md mb-8">
+                  This community hasn't been activated on EchoSphere yet. Residents can't post feedback until an administrator sets it up.
+              </p>
+              
+              <div className="space-y-3 w-full max-w-sm">
+                  <button 
+                      onClick={handleActivateCity}
+                      className="w-full py-3 bg-orange-600 hover:bg-orange-500 text-white font-bold uppercase tracking-widest text-sm rounded flex items-center justify-center gap-2 transition-all shadow-lg"
+                  >
+                      <Plus size={16} />
+                      <span>Activate {slug || 'New City'}</span>
+                  </button>
+                  <button 
+                      onClick={() => navigate('/org/demo')}
+                      className="w-full py-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 text-zinc-900 dark:text-white font-bold uppercase tracking-widest text-sm rounded transition-all"
+                  >
+                      Visit Demo City
+                  </button>
+                  <button 
+                      onClick={() => navigate('/')}
+                      className="w-full py-2 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 text-xs font-bold uppercase tracking-wider"
+                  >
+                      Go Home
+                  </button>
+              </div>
+          </div>
+      );
+  }
+
   return (
     <div className="relative h-screen w-full flex flex-col bg-zinc-50 dark:bg-zinc-950 overflow-hidden">
       {/* Header Overlay */}
@@ -248,14 +299,16 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
         />
         
         {/* Floating Action Badge */}
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
-            <div className="bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md text-zinc-600 dark:text-zinc-300 px-6 py-3 rounded-full shadow-lg flex items-center space-x-3 border border-zinc-200 dark:border-zinc-700 animate-bounce-slow">
-                <div className="bg-orange-600 p-1.5 rounded-full shadow-lg text-white dark:text-black">
-                    <Plus size={16} />
+        {!isLoading && currentOrg && (
+            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
+                <div className="bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md text-zinc-600 dark:text-zinc-300 px-6 py-3 rounded-full shadow-lg flex items-center space-x-3 border border-zinc-200 dark:border-zinc-700 animate-bounce-slow">
+                    <div className="bg-orange-600 p-1.5 rounded-full shadow-lg text-white dark:text-black">
+                        <Plus size={16} />
+                    </div>
+                    <span className="text-xs font-bold uppercase tracking-wider">Tap map to add feedback</span>
                 </div>
-                <span className="text-xs font-bold uppercase tracking-wider">Tap map to add feedback</span>
             </div>
-        </div>
+        )}
 
         {/* Live Feed Ticker */}
         {liveFeed.length > 0 && (

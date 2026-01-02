@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowRight, ArrowLeft, Check, Wand2, MapPin, Building2, Layers, Loader2, AlertCircle, Share2, Copy, ExternalLink } from 'lucide-react';
 import { generateSurveyQuestions } from '../services/geminiService';
 import { AccountSetup, Location } from '../types';
 import { dataService } from '../services/dataService';
 import MapArea from './MapArea';
 import { APP_CONFIG } from '../config/constants';
+import { useSearchParams } from 'react-router-dom';
 
 interface WizardProps {
   onComplete: (config: AccountSetup) => void;
@@ -17,6 +18,8 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+
   const [formData, setFormData] = useState<AccountSetup>({
     organizationName: '',
     regionCode: '',
@@ -24,6 +27,18 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel }) => {
     center: { ...APP_CONFIG.MAP.DEFAULT_CENTER },
     questions: []
   });
+
+  // Pre-fill from URL if coming from "City Not Found" screen
+  useEffect(() => {
+      const regionParam = searchParams.get('region');
+      if (regionParam) {
+          setFormData(prev => ({
+              ...prev,
+              organizationName: regionParam.charAt(0).toUpperCase() + regionParam.slice(1) + " City",
+              regionCode: regionParam.toUpperCase().slice(0, 4)
+          }));
+      }
+  }, [searchParams]);
 
   const handleNext = async () => {
     setError(null);
