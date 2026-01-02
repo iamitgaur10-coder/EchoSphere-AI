@@ -4,6 +4,7 @@ import { AccountSetup, Organization, Feedback } from '../types';
 import { APP_CONFIG } from '../config/constants';
 import { dataService } from '../services/dataService';
 import MapArea from './MapArea';
+import { useNavigate } from 'react-router-dom';
 
 interface LandingPageProps {
   onEnterPublic: () => void;
@@ -31,6 +32,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
   const [tutorialMode, setTutorialMode] = useState<'citizen' | 'admin'>('citizen');
   const [availableOrgs, setAvailableOrgs] = useState<Organization[]>([]);
   const [showOrgList, setShowOrgList] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
       const loadOrgs = async () => {
@@ -41,8 +43,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterPublic, onEnterAdmin, 
   }, []);
 
   const handleSwitchOrg = (slug: string) => {
-      // Reloading with query param forces app to re-initialize with new context
-      window.location.href = `/?org=${slug}`;
+      navigate(`/org/${slug}`);
   };
 
   // Fake "Data Stream" for the marquee

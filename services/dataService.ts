@@ -53,7 +53,10 @@ export const dataService = {
         .eq('slug', slug.toLowerCase())
         .single();
         
-        if (!error && data) return mapOrg(data);
+        if (!error && data) {
+            localStorage.setItem(STORAGE_KEY_CURRENT_ORG_ID, data.id);
+            return mapOrg(data);
+        }
      }
      return null;
   },
@@ -95,8 +98,8 @@ export const dataService = {
 
   // --- FEEDBACK MANAGEMENT ---
 
-  getFeedback: async (limit: number = 50, offset: number = 0): Promise<Feedback[]> => {
-    let orgId = localStorage.getItem(STORAGE_KEY_CURRENT_ORG_ID);
+  getFeedback: async (limit: number = 50, offset: number = 0, specificOrgId?: string): Promise<Feedback[]> => {
+    let orgId = specificOrgId || localStorage.getItem(STORAGE_KEY_CURRENT_ORG_ID);
     
     if (!orgId) {
         const org = await dataService.getCurrentOrganization();
@@ -105,9 +108,18 @@ export const dataService = {
 
     if (isSupabaseConfigured() && orgId) {
       try {
-          // Select with PostGIS conversion to GeoJSON
+          // SECURITY: Use the Secure View 'public_feedback_safe' for public reads
+          // Note: If you are logged in as admin, you can query 'feedback' directly, 
+          // but for simplicity in this isomorphic service, we check session or use View.
+          // Since we want public map to work, we use the View.
+          
+          // However, the View doesn't have email/notes. Admin needs those.
+          // We can check if we have a session.
+          const { data: { session } } = await supabase!.auth.getSession();
+          const tableToQuery = session ? 'feedback' : 'public_feedback_safe';
+
           const { data, error } = await supabase!
-            .from('feedback')
+            .from(tableToQuery)
             .select('*, location_geojson:location::geojson')
             .eq('organization_id', orgId)
             .order('timestamp', { ascending: false })
@@ -130,7 +142,7 @@ export const dataService = {
                   ecoImpactScore: item.eco_impact_score,
                   riskScore: item.risk_score,
                   ecoImpactReasoning: item.eco_impact_reasoning,
-                  contactEmail: item.contact_email,
+                  contactEmail: item.contact_email, // Might be undefined if public view
                   status: item.status || 'received',
                   adminNotes: item.admin_notes || [],
                   timestamp: new Date(item.timestamp),
@@ -146,7 +158,7 @@ export const dataService = {
   },
 
   saveFeedback: async (newFeedback: Feedback): Promise<Feedback[]> => {
-    const orgId = localStorage.getItem(STORAGE_KEY_CURRENT_ORG_ID);
+    const orgId = newFeedback.organizationId || localStorage.getItem(STORAGE_KEY_CURRENT_ORG_ID);
 
     // Save to LocalStorage (Optimistic)
     let current: Feedback[] = [];
@@ -161,10 +173,10 @@ export const dataService = {
     // Sync to DB
     if (isSupabaseConfigured() && orgId) {
         
-        // Convert to PostGIS Point format: POINT(lng lat)
-        const pointWKT = `POINT(${newFeedback.location.x} ${newFeedback.location.y})`;
+        // Convert to PostGIS Point format: POINT(lng lat) (SRID 4326)
+        const pointWKT = `SRID=4326;POINT(${newFeedback.location.x} ${newFeedback.location.y})`;
 
-        supabase!.from('feedback').insert({
+        const { error } = await supabase!.from('feedback').insert({
             id: newFeedback.id, 
             organization_id: orgId,
             user_id: newFeedback.userId, 
@@ -180,10 +192,12 @@ export const dataService = {
             contact_email: newFeedback.contactEmail,
             status: 'received',
             timestamp: new Date().toISOString()
-        })
-        .then(({ error }) => {
-            if (error) console.error("Sync Failed:", error.message);
         });
+        
+        if (error) {
+            console.error("Sync Failed:", error.message);
+            throw new Error("Failed to save: " + error.message);
+        }
     }
     
     return updated;

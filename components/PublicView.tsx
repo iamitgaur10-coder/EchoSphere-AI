@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Plus, Activity, User, LogIn, Trophy, Clock, History, X, Share2, Check } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
 import MapArea from './MapArea';
 import FeedbackModal from './FeedbackModal';
 import { Feedback, Location, Organization } from '../types';
@@ -15,6 +16,9 @@ interface PublicViewProps {
 }
 
 const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode = true, onTriggerLogin }) => {
+  const { slug } = useParams();
+  const navigate = useNavigate();
+
   const [feedbackList, setFeedbackList] = useState<Feedback[]>([]);
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
@@ -29,7 +33,20 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
   // 1. Initial Data Load
   useEffect(() => {
     const load = async () => {
-        const org = await dataService.getCurrentOrganization();
+        let org: Organization | null = null;
+        
+        if (slug) {
+            org = await dataService.getOrganizationBySlug(slug);
+        } else {
+            org = await dataService.getCurrentOrganization();
+        }
+
+        if (!org) {
+            // Fallback or Redirect if org not found
+            if (showToast) showToast("Organization not found", "error");
+            return;
+        }
+
         setCurrentOrg(org);
         
         // Load User
@@ -37,7 +54,8 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
         setCurrentUser(user);
 
         // Initial load allows more items
-        const list = await dataService.getFeedback(100, 0);
+        // NOTE: We now fetch using the org ID we just found
+        const list = await dataService.getFeedback(100, 0, org.id);
         setFeedbackList(list);
 
         // Calculate Karma & History if logged in
@@ -59,7 +77,7 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
         }
     };
     load();
-  }, []);
+  }, [slug]);
 
   // 2. Real-time Subscription
   useEffect(() => {
@@ -126,6 +144,11 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
         newFeedback.contactEmail = currentUser.email;
     }
 
+    // Assign to current Org
+    if (currentOrg) {
+        newFeedback.organizationId = currentOrg.id;
+    }
+
     setFeedbackList(prev => [newFeedback, ...prev]);
     setSelectedLocation(null);
     if (showToast) showToast("Feedback Submitted Successfully");
@@ -138,9 +161,9 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
             setUserHistory(prev => [newFeedback, ...prev]);
             setUserKarma(prev => prev + 10);
         }
-    } catch (e) {
-        console.error("Background sync failed", e);
-        if (showToast) showToast("Synced locally. Will retry connection.", "error");
+    } catch (e: any) {
+        console.error("Submission failed", e);
+        if (showToast) showToast(e.message || "Submission failed", "error");
     }
   };
 

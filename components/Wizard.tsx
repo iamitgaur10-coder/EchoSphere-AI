@@ -50,7 +50,8 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel }) => {
     if (result) {
         // Success! Generate Link
         const origin = window.location.origin;
-        const link = `${origin}/?org=${result.slug}`;
+        // Use proper routing path instead of query params
+        const link = `${origin}/org/${result.slug}`;
         setGeneratedLink(link);
         setStep(4); // Move to Success Step
     } else {

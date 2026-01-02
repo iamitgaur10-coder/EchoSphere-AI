@@ -238,10 +238,7 @@ const App: React.FC = () => {
     }
 
     const initApp = async () => {
-        // Handle URL parameters for org routing
-        const params = new URLSearchParams(window.location.search);
-        const orgSlug = params.get('org');
-        
+        // Auth Listener
         if (isSupabaseConfigured()) {
             const { data: { subscription } } = supabase!.auth.onAuthStateChange(async (event, session) => {
                 if (event === 'SIGNED_IN' && session) {
@@ -256,31 +253,17 @@ const App: React.FC = () => {
             });
         }
         
-        if (orgSlug) {
-            // If org param exists, try to load it
-            const org = await dataService.getOrganizationBySlug(orgSlug);
-            if(org) {
-                 const accountConfig: AccountSetup = {
-                    organizationName: org.name,
-                    regionCode: org.slug,
-                    focusArea: org.focusArea,
-                    center: org.center,
-                    questions: [] 
-                };
-                setAccount(accountConfig);
-            }
-        } else {
-            const currentOrg = await dataService.getCurrentOrganization();
-            if (currentOrg) {
-                const accountConfig: AccountSetup = {
-                    organizationName: currentOrg.name,
-                    regionCode: currentOrg.slug,
-                    focusArea: currentOrg.focusArea,
-                    center: currentOrg.center,
-                    questions: [] 
-                };
-                setAccount(accountConfig);
-            }
+        // Load default org if we are in admin mode or root
+        const currentOrg = await dataService.getCurrentOrganization();
+        if (currentOrg) {
+            const accountConfig: AccountSetup = {
+                organizationName: currentOrg.name,
+                regionCode: currentOrg.slug,
+                focusArea: currentOrg.focusArea,
+                center: currentOrg.center,
+                questions: [] 
+            };
+            setAccount(accountConfig);
         }
     };
     initApp();
@@ -356,7 +339,7 @@ const App: React.FC = () => {
         <Routes>
             <Route path="/" element={
                 <LandingPage 
-                    onEnterPublic={() => navigate('/map')}
+                    onEnterPublic={() => navigate('/org/demo')}
                     onEnterAdmin={() => navigate('/admin')}
                     onEnterWizard={() => navigate('/setup')}
                     onOpenContent={(page) => navigate(`/content/${page}`)}
@@ -364,7 +347,7 @@ const App: React.FC = () => {
                     isDarkMode={isDarkMode}
                 />
             } />
-            <Route path="/map" element={
+            <Route path="/org/:slug" element={
                 <PublicView 
                     onBack={() => navigate('/')} 
                     showToast={showToast} 
@@ -372,6 +355,8 @@ const App: React.FC = () => {
                     onTriggerLogin={() => setShowLogin(true)}
                 />
             } />
+            <Route path="/map" element={<Navigate to="/org/demo" replace />} />
+            
             <Route path="/admin" element={
                 <RequireAuth 
                     isAuthenticated={isAuthenticated} 
