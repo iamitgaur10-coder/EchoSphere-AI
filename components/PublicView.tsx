@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Plus, Activity, User, LogIn, Trophy, Clock, History, X, Share2, Check, Download, Building2, Map as MapIcon, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Plus, Activity, User, LogIn, LogOut, Trophy, Clock, History, X, Share2, Check, Download, Building2, Map as MapIcon, ArrowRight } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MapArea from './MapArea';
 import FeedbackModal from './FeedbackModal';
@@ -183,6 +183,16 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
 
   const handleLogin = () => {
       if (onTriggerLogin) onTriggerLogin();
+  };
+
+  const handleLogout = async () => {
+      await authService.signOut();
+      setShowProfile(false);
+      // Reset local state
+      setCurrentUser(null);
+      setUserHistory([]);
+      setUserKarma(0);
+      if (showToast) showToast("Logged out successfully");
   };
 
   const handleShare = () => {
@@ -406,11 +416,15 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
                       )}
                   </div>
                   
-                  {/* GDPR Export Button */}
-                  <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 sm:rounded-b-2xl">
+                  {/* GDPR Export & Logout */}
+                  <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 sm:rounded-b-2xl space-y-3">
                        <button onClick={handleExportData} className="flex items-center gap-2 text-xs text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors w-full justify-center">
                            <Download size={14} /> 
                            <span>Export My Personal Data (JSON)</span>
+                       </button>
+                       <button onClick={handleLogout} className="flex items-center gap-2 text-xs text-red-500 hover:text-red-600 dark:hover:text-red-400 transition-colors w-full justify-center border-t border-zinc-200 dark:border-zinc-800 pt-3">
+                           <LogOut size={14} /> 
+                           <span>Sign Out</span>
                        </button>
                   </div>
               </div>
