@@ -14,10 +14,26 @@ const mapOrg = (row: any): Organization => ({
     focusArea: row.focus_area 
 });
 
+// --- MOCK DATA FOR DEMO MODE ---
+const MOCK_DEMO_ORG: Organization = {
+    id: 'demo-org',
+    name: 'Demo City',
+    slug: 'demo',
+    center: { x: -118.2437, y: 34.0522 }, // Los Angeles
+    focusArea: 'Urban Planning'
+};
+
+const MOCK_FEEDBACK_DATA: Feedback[] = [
+    { id: 'm1', location: { x: -118.25, y: 34.05 }, content: 'Traffic light sync issue causing delays.', sentiment: 'negative', category: 'Traffic', timestamp: new Date(Date.now() - 86400000), votes: 3, status: 'received', summary: "Traffic signal sync problem", riskScore: 45, ecoImpactScore: 20, ecoImpactReasoning: "Idling cars increase emissions." },
+    { id: 'm2', location: { x: -118.24, y: 34.06 }, content: 'Park clean up needed near the fountain.', sentiment: 'neutral', category: 'Sanitation', timestamp: new Date(Date.now() - 172800000), votes: 8, status: 'triaged', summary: "Park litter report", riskScore: 10, ecoImpactScore: 80, ecoImpactReasoning: "Cleaning improves local ecosystem." },
+    { id: 'm3', location: { x: -118.235, y: 34.045 }, content: 'Love the new bike lane protections!', sentiment: 'positive', category: 'Infrastructure', timestamp: new Date(Date.now() - 250000000), votes: 12, status: 'resolved', summary: "Positive bike lane feedback", riskScore: 0, ecoImpactScore: 95, ecoImpactReasoning: "Promotes cycling over driving." },
+    { id: 'm4', location: { x: -118.26, y: 34.055 }, content: 'Streetlight flickering constantly.', sentiment: 'negative', category: 'Safety', timestamp: new Date(Date.now() - 4000000), votes: 1, status: 'received', summary: "Broken streetlight", riskScore: 60, ecoImpactScore: 30, ecoImpactReasoning: "Energy waste from malfunction." }
+];
+
 export const dataService = {
   // --- ORGANIZATION MANAGEMENT ---
   
-  createOrganization: async (setup: AccountSetup): Promise<Organization | null> => {
+  createOrganization: async (setup: AccountSetup): Promise<{ org: Organization | null, error: string | null }> => {
     if (isSupabaseConfigured()) {
       try {
           const { data, error } = await supabase!
@@ -36,13 +52,14 @@ export const dataService = {
           if (error) throw error;
           
           localStorage.setItem(STORAGE_KEY_CURRENT_ORG_ID, data.id);
-          return mapOrg(data);
-      } catch (e) {
+          return { org: mapOrg(data), error: null };
+      } catch (e: any) {
           console.warn("DB Create Org Error", e);
-          return null;
+          return { org: null, error: e.message || "Unknown database error" };
       }
     }
-    return null;
+    // Not configured
+    return { org: null, error: null };
   },
 
   getOrganizationBySlug: async (slug: string): Promise<Organization | null> => {
@@ -58,6 +75,13 @@ export const dataService = {
             return mapOrg(data);
         }
      }
+     
+     // FALLBACK: Always load Demo City if real one is missing
+     if (slug.toLowerCase() === 'demo') {
+         localStorage.setItem(STORAGE_KEY_CURRENT_ORG_ID, MOCK_DEMO_ORG.id);
+         return MOCK_DEMO_ORG;
+     }
+
      return null;
   },
 
@@ -65,6 +89,9 @@ export const dataService = {
     // Check LocalStorage Session
     const orgId = localStorage.getItem(STORAGE_KEY_CURRENT_ORG_ID);
     
+    // Return Mock if ID matches
+    if (orgId === MOCK_DEMO_ORG.id) return MOCK_DEMO_ORG;
+
     if (isSupabaseConfigured() && orgId) {
       const { data } = await supabase!
         .from('organizations')
@@ -84,7 +111,7 @@ export const dataService = {
             .order('name');
           if (data) return data.map(mapOrg);
       }
-      return [];
+      return [MOCK_DEMO_ORG]; // Ensure at least demo exists
   },
 
   saveAccount: (setup: AccountSetup): void => {
@@ -101,6 +128,12 @@ export const dataService = {
   getFeedback: async (limit: number = 50, offset: number = 0, specificOrgId?: string): Promise<Feedback[]> => {
     let orgId = specificOrgId || localStorage.getItem(STORAGE_KEY_CURRENT_ORG_ID);
     
+    // Serve Mock Data for Demo
+    if (orgId === MOCK_DEMO_ORG.id) {
+        // Simple pagination for mock data
+        return MOCK_FEEDBACK_DATA.slice(offset, offset + limit);
+    }
+
     if (!orgId) {
         const org = await dataService.getCurrentOrganization();
         if (org) orgId = org.id;
@@ -109,12 +142,6 @@ export const dataService = {
     if (isSupabaseConfigured() && orgId) {
       try {
           // SECURITY: Use the Secure View 'public_feedback_safe' for public reads
-          // Note: If you are logged in as admin, you can query 'feedback' directly, 
-          // but for simplicity in this isomorphic service, we check session or use View.
-          // Since we want public map to work, we use the View.
-          
-          // However, the View doesn't have email/notes. Admin needs those.
-          // We can check if we have a session.
           const { data: { session } } = await supabase!.auth.getSession();
           const tableToQuery = session ? 'feedback' : 'public_feedback_safe';
 
@@ -169,6 +196,11 @@ export const dataService = {
     
     const updated = [newFeedback, ...current];
     localStorage.setItem(STORAGE_KEY_FEEDBACK, JSON.stringify(updated));
+
+    // If Demo Mode, just return local update
+    if (orgId === MOCK_DEMO_ORG.id) {
+        return updated;
+    }
 
     // Sync to DB
     if (isSupabaseConfigured() && orgId) {

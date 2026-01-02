@@ -76,7 +76,7 @@ const PublicView: React.FC<PublicViewProps> = ({ onBack, showToast, isDarkMode =
 
   // 2. Real-time Subscription & Auth Listener
   useEffect(() => {
-    if (!isSupabaseConfigured() || !currentOrg) return;
+    if (!isSupabaseConfigured() || !currentOrg || currentOrg.id === 'demo-org') return;
 
     // A. Feedback Subscription
     const channel = supabase!

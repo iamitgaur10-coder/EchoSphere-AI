@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, ArrowLeft, Check, Wand2, MapPin, Building2, Layers, Loader2, AlertCircle, Share2, Copy, ExternalLink } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Check, Wand2, MapPin, Building2, Layers, Loader2, AlertCircle, Share2, Copy, ExternalLink, HardDrive } from 'lucide-react';
 import { generateSurveyQuestions } from '../services/geminiService';
 import { AccountSetup, Location } from '../types';
 import { dataService } from '../services/dataService';
@@ -58,20 +58,21 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel }) => {
     setError(null);
     
     // Create actual DB entry for tenant
-    const result = await dataService.createOrganization(formData);
+    const { org, error: dbError } = await dataService.createOrganization(formData);
     
     setIsSaving(false);
     
-    if (result) {
+    if (org) {
         // Success! Generate Link
         const origin = window.location.origin;
         // Use proper routing path instead of query params
-        const link = `${origin}/org/${result.slug}`;
+        const link = `${origin}/org/${org.slug}`;
         setGeneratedLink(link);
         setStep(4); // Move to Success Step
     } else {
         if (dataService.isProduction()) {
-            setError("Failed to create organization in database. Check your connection or API keys.");
+            // DB Error in Production Mode
+            setError(dbError || "Failed to create organization. Please ensure you have run the 'supabase_schema.sql' script in your Supabase SQL Editor.");
         } else {
             // Local mode fallback
             onComplete(formData);
@@ -80,6 +81,11 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel }) => {
   };
   
   const handleFinalize = () => {
+      onComplete(formData);
+  };
+  
+  const handleForceLocal = () => {
+      // Allow user to bypass the DB error and continue in session-only mode
       onComplete(formData);
   };
 
@@ -178,9 +184,18 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel }) => {
       )}
       
       {error && (
-        <div className="p-4 bg-red-100 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 rounded flex items-start space-x-3 text-red-600 dark:text-red-400">
-            <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
-            <p className="text-xs">{error}</p>
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 rounded-lg p-4 space-y-3">
+            <div className="flex items-start space-x-3 text-red-600 dark:text-red-400">
+                <AlertCircle size={18} className="mt-0.5 flex-shrink-0" />
+                <p className="text-xs font-medium">{error}</p>
+            </div>
+            <button 
+                onClick={handleForceLocal}
+                className="w-full py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 text-xs font-bold uppercase rounded flex items-center justify-center space-x-2 transition-all"
+            >
+                <HardDrive size={12} />
+                <span>Continue Locally (Ignore DB Error)</span>
+            </button>
         </div>
       )}
     </div>
