@@ -265,6 +265,15 @@ const App: React.FC = () => {
       setToast({ msg, type });
   };
 
+  // UX Fix: Close login modal if user hits browser back button
+  useEffect(() => {
+      setShowLogin(false);
+      // Also clear pending route if we navigate away manually
+      if (location.pathname === '/') {
+          setPendingRoute(null);
+      }
+  }, [location.pathname]);
+
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -463,7 +472,7 @@ const App: React.FC = () => {
                                 {isSignUpMode ? "Have an account? Login" : "Need an account? Sign Up"}
                             </button>
                         </div>
-                        <button type="button" onClick={() => setShowLogin(false)} className="w-full py-2 text-zinc-600 hover:text-zinc-400 text-xs font-bold uppercase tracking-wider">Cancel</button>
+                        <button type="button" onClick={() => { setShowLogin(false); setPendingRoute(null); }} className="w-full py-2 text-zinc-600 hover:text-zinc-400 text-xs font-bold uppercase tracking-wider">Cancel</button>
                     </form>
                 </div>
             </div>
