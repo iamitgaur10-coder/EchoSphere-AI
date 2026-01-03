@@ -16,7 +16,8 @@
     "recharts": "2.12.7",
     "lucide-react": "0.395.0",
     "react-router-dom": "6.23.1",
-    "dompurify": "3.1.5"
+    "dompurify": "3.1.5",
+    "@sentry/react": "7.114.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
